@@ -4,7 +4,8 @@ title: "NA Hackathon 2026 — Nucleic Acid Structure Annotation & Prediction"
 version: "0.1.0"
 date-released: "2026-02-10"
 authors:
-  - family-names: "ADD"
-    given-names: "Organizer"
-repository-code: "https://github.com/<ORG>/<REPO>"
+  - family-names: "Biedermannova"
+    given-names: "Lada"
+
+repository-code: "https://github.com/na-hackathon/na-hackathon-2026"
 license: "MIT"

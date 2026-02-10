@@ -7,7 +7,7 @@ This repository is the collaborative workspace for the **Nucleic Acid Structure 
 
 ## Quick links
 
-- Event website: **<ADD LINK>**
+- Event website: XXXXXXXXXXXXX
 - Registration form: <https://forms.gle/PWbaPSEobkxPY6uQ8>
 - Venue: Hotel Globus <https://www.hotel-globus.cz/en/>
 - Agenda: [`docs/agenda.md`](docs/agenda.md)
@@ -43,8 +43,6 @@ Goal: clarify interoperable representations for canonical + non-canonical base p
 
 - Code: MIT License (see `LICENSE`)
 - Documentation/spec text: CC BY 4.0 (see `LICENSE-docs`)
-
-If you prefer a different licensing approach (e.g., Apache-2.0), update these files early.
 
 ## Contact
 

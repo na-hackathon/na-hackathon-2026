@@ -1,10 +1,12 @@
 # Workstream 2 — RNA prediction & non-canonical base pairs
 
 ## Goals
+
 - Interoperable representations for canonical + non-canonical base pairs
 - Connect 2D representation to mmCIF
 - Support benchmarking and case studies
 
 ## Where to start
+
 - Open Issues labeled `workstream-2`
 - Draft/iterate spec notes under this folder and `docs/`
