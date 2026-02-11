@@ -1,0 +1,28 @@
+name: "Proposal / decision"
+description: "Propose a change that needs discussion/decision"
+title: "[Proposal]: "
+labels: ["proposal", "needs-decision"]
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why are we discussing this?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What are you proposing?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decision / next steps
+      description: Capture the decision once made.
