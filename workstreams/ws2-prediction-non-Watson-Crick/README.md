@@ -1,8 +1,8 @@
-# Workstream 2 — RNA prediction & non-Watson_Crick base pairs
+# Workstream 2 — RNA prediction & non-Watson-Crick base pairs
 
 ## Goals
 
-- Interoperable representations for Watson_Crick + non-Watson_Crick base pairs
+- Interoperable representations for Watson-Crick + non-Watson-Crick base pairs
 - Connect 2D representation to mmCIF
 - Support benchmarking and case studies
 

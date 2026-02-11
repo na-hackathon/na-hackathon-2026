@@ -7,13 +7,13 @@ This repository is the collaborative workspace for the **Nucleic Acid Structure 
 
 ## Quick links
 
-- Event website: XXXXXXXXXXXXX
+- Event website: <https://www.ibt.cas.cz/en/events/Nucleic-Acid-Structure-Annotation-Prediction-Hackathon-2026/>
 - Registration form: <https://forms.gle/PWbaPSEobkxPY6uQ8>
 - Venue: Hotel Globus <https://www.hotel-globus.cz/en/>
 - Agenda: [`docs/agenda.md`](docs/agenda.md)
 - Getting started (tools/access): [`docs/getting-started.md`](docs/getting-started.md)
 - Workstream 1 (Annotation & validation workflow): [`workstreams/ws1-annotation-validation/`](workstreams/ws1-annotation-validation/)
-- Workstream 2 (RNA prediction & non-Watson-Crick base pairs): [`workstreams/ws2-nonWatson-Crick-rna/`](workstreams/ws2-nonWatson-Crick-rna/)
+- Workstream 2 (RNA prediction & non-Watson-Crick base pairs): [`workstreams/ws2-prediction-non-Watson-Crick/`](workstreams/ws2-prediction-non-Watson-Crick/)
 
 ## How we work here
 
