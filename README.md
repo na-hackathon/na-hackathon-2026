@@ -13,7 +13,7 @@ This repository is the collaborative workspace for the **Nucleic Acid Structure 
 - Agenda: [`docs/agenda.md`](docs/agenda.md)
 - Getting started (tools/access): [`docs/getting-started.md`](docs/getting-started.md)
 - Workstream 1 (Annotation & validation workflow): [`workstreams/ws1-annotation-validation/`](workstreams/ws1-annotation-validation/)
-- Workstream 2 (RNA prediction & non-canonical base pairs): [`workstreams/ws2-noncanonical-rna/`](workstreams/ws2-noncanonical-rna/)
+- Workstream 2 (RNA prediction & non-Watson-Crick base pairs): [`workstreams/ws2-nonWatson-Crick-rna/`](workstreams/ws2-nonWatson-Crick-rna/)
 
 ## How we work here
 
@@ -27,9 +27,9 @@ This repository is the collaborative workspace for the **Nucleic Acid Structure 
 
 Goal: integrate key annotation + validation steps into a reproducible workflow with consistent outputs and agreed case studies.
 
-### Workstream 2 — RNA prediction & non-canonical base pairs
+### Workstream 2 — RNA prediction & non-Watson-Crick base pairs
 
-Goal: clarify interoperable representations for canonical + non-canonical base pairs (2D + mmCIF mapping), and support benchmarking / case studies.
+Goal: clarify interoperable representations for Watson-Crick + non-Watson-Crick base pairs (2D + mmCIF mapping), and support benchmarking / case studies.
 
 ## Repo structure (high level)
 
