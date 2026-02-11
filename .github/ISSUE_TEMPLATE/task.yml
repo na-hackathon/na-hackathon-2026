@@ -1,0 +1,26 @@
+name: "Task"
+description: "A concrete piece of work with clear outcome"
+title: "[Task]: "
+labels: ["task"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal / outcome
+      description: What will be true when this is done?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Suggested steps
+      description: Optional checklist.
+  - type: input
+    id: workstream
+    attributes:
+      label: Workstream (ws1 / ws2 / cross-cutting)
+  - type: textarea
+    id: definition
+    attributes:
+      label: Definition of done
+      description: How do we verify this is complete?
