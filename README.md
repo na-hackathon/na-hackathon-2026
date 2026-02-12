@@ -5,15 +5,16 @@
 
 This repository is the collaborative workspace for the **Nucleic Acid Structure Annotation & Prediction Hackathon 2026**.
 
-## Quick links
+- ## Quick links
 
 - Event website: <https://www.ibt.cas.cz/en/events/Nucleic-Acid-Structure-Annotation-Prediction-Hackathon-2026/>
 - Registration form: <https://forms.gle/PWbaPSEobkxPY6uQ8>
 - Venue: Hotel Globus <https://www.hotel-globus.cz/en/>
+- **Create a new issue (task/proposal/question): <https://github.com/na-hackathon/na-hackathon-2026/issues/new/choose>**
+- Issues (all): <https://github.com/na-hackathon/na-hackathon-2026/issues>
 - Agenda: [`docs/agenda.md`](docs/agenda.md)
 - Getting started (tools/access): [`docs/getting-started.md`](docs/getting-started.md)
-- Workstream 1 (Annotation & validation workflow): [`workstreams/ws1-annotation-validation/`](workstreams/ws1-annotation-validation/)
-- Workstream 2 (RNA prediction & non-Watson-Crick base pairs): [`workstreams/ws2-prediction-non-Watson-Crick/`](workstreams/ws2-prediction-non-Watson-Crick/)
+
 
 ## How we work here
 
