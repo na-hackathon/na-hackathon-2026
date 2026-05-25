@@ -39,7 +39,7 @@ CLOSE_TO_OPEN = {")": "(", "]": "[", "}": "{", ">": "<",
 
 def _flip_lw(lw: str) -> str:
     """Flip an LW code direction (cWH <-> cHW) when the pair is reordered."""
-    if len(lw) == 3 and lw[0] in "ct":
+    if lw and len(lw) == 3 and lw[0] in "ct":
         return lw[0] + lw[2] + lw[1]
     return lw
 
@@ -250,20 +250,21 @@ def build(cif: Path, tsv: Path, chains: list[str], name: str = "RNA",
     for Ra, Rb, lw in pairs:
         by_type.setdefault(lw, []).append((Ra, Rb, lw))
 
-    layers, overflow = [], []
+    layers, overflow = [], []           # overflow: (type, bucket), packed per type
     for t in DIRECTED:
         if t not in by_type:
             continue
-        placed, used = [], set()
+        placed, used, extra = [], set(), []
         for Ra, Rb, lw in sorted(by_type[t]):
             if Ra in used or Rb in used:        # residue already used on this layer
-                overflow.append((Ra, Rb, lw))
+                extra.append((Ra, Rb, lw))
             else:
                 placed.append((Ra, Rb, lw))
                 used |= {Ra, Rb}
         layers.append((f"L{slot[t]} {t}", placed))
-    for k, bucket in enumerate(_pack(overflow)):
-        layers.append((f"L{19 + k} overflow", bucket))
+        overflow += [(t, bucket) for bucket in _pack(extra)]
+    for k, (t, bucket) in enumerate(overflow):
+        layers.append((f"L{19 + k} {t}", bucket))   # type kept in the label
 
     seq_line = "".join(col[2] if col[0] == "res" else SEP for col in columns)
     rendered = [(label, render(p, key_to_col, width, sep_cols)) for label, p in layers]
@@ -284,13 +285,15 @@ def build(cif: Path, tsv: Path, chains: list[str], name: str = "RNA",
 
 
 def _roundtrip(rendered: list, col_to_key: dict, pairs: list) -> bool:
-    """Parse the written lines back to pairs and require the exact input set."""
-    type_by_keys = {frozenset((Ra, Rb)): lw for Ra, Rb, lw in pairs}
+    """Parse the written lines back to pairs and require the exact input set. The
+    LW type is taken from each layer's label, not from the input pairs, so this
+    also checks that the type is recoverable from the notation alone."""
     recovered = set()
-    for _, s in rendered:
+    for label, s in rendered:
+        lw = label.split()[1]            # the LW type named by the layer label
         for keyset in parse(s, col_to_key):
             Ra, Rb = sorted(keyset)
-            recovered.add((Ra, Rb, type_by_keys.get(keyset)))
+            recovered.add((Ra, Rb, lw))
     return recovered == set(pairs)
 
 
