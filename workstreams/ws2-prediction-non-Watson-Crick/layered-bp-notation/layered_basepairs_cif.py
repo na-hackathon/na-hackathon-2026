@@ -10,6 +10,7 @@ from pdbx_poly_seq_scheme (or _atom_site as a fallback). Each base is keyed by
 
 Usage:
     python3 layered_basepairs_cif.py <cif> [chains...] [--name NAME] [--block N]
+                                     [--compact]
 
 With no chains, all nucleic-acid chains that form pairs are used automatically,
 so the CIF is the only required input.
@@ -265,8 +266,20 @@ def _span(residues: list, strand: tuple[str, str]) -> str:
     return f"{nums[0]}-{nums[-1]}" if nums else "absent"
 
 
+def _res_id(R: tuple) -> str:
+    """Compact residue label: chain+number, with the operator only when it is a
+    symmetry mate (e.g. 'A24', or 'A1012[2_755]')."""
+    ch, sym, num = R
+    return f"{ch}{num}" if sym == IDENTITY else f"{ch}{num}[{sym}]"
+
+
+def _compact_line(pairs: list) -> str:
+    """A sparse layer as an explicit pair list, e.g. 'A24,A31 A25,A29'."""
+    return " ".join(f"{_res_id(Ra)},{_res_id(Rb)}" for Ra, Rb, _ in sorted(pairs))
+
+
 def build(cif: Path, chains: list[str], name: str = "RNA",
-          block: int | None = None) -> tuple[str, bool]:
+          block: int | None = None, compact: bool = False) -> tuple[str, bool]:
     """Build the layered notation. Returns the text and the round-trip result.
 
     Args:
@@ -274,6 +287,10 @@ def build(cif: Path, chains: list[str], name: str = "RNA",
         chains: chain ids to render, in the order to lay them on the ruler.
         name: label for the header line.
         block: if set, wrap the lines into blocks of this many columns.
+        compact: print the sparse non-cWW layers as explicit pair lists
+            (e.g. 'A24,A31') instead of full-width dot-bracket; cWW stays
+            dot-bracket. Saves space on large RNA, where most non-WC lines are
+            almost all dots.
     """
     if not chains:
         chains = list_chains(cif)
@@ -330,7 +347,13 @@ def build(cif: Path, chains: list[str], name: str = "RNA",
     spans = ", ".join(f"{_label(s)}({_span(residues, s)})" for s in strands)
     head = f">{name} complex: chains {spans}   ('{SEP}' separates chains)"
 
-    if block:
+    if compact:        # cWW stays dot-bracket; sparse non-cWW layers become pair lists
+        rows = [f"{'seq':12}: " + seq_line]
+        for (label, layer_pairs), (_, dbstr) in zip(layers, rendered):
+            line = dbstr if label.split()[1] == "cWW" else _compact_line(layer_pairs)
+            rows.append(f"{label:12}: " + line)
+        text = head + "\n" + "\n".join(rows)
+    elif block:
         body = "\n\n".join(_wrap(seq_line, rendered, columns, block))
         text = head + "\n\n" + body
     else:
@@ -386,8 +409,12 @@ if __name__ == "__main__":
     ap.add_argument("--block", type=int, nargs="?", const=BLOCK, default=None,
                     help=f"wrap lines into blocks of this many columns "
                          f"(default {BLOCK} when given with no value)")
+    ap.add_argument("--compact", action="store_true",
+                    help="print sparse non-cWW layers as explicit pair lists "
+                         "(e.g. A24,A31) instead of dot-bracket; saves space on "
+                         "large RNA")
     a = ap.parse_args()
-    text, ok = build(a.cif, a.chains, name=a.name, block=a.block)
+    text, ok = build(a.cif, a.chains, name=a.name, block=a.block, compact=a.compact)
     print(text)
     print(f"\n# round-trip recovers all pairs exactly: {ok}", file=sys.stderr)
     sys.exit(0 if ok else 1)
