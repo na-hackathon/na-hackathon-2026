@@ -13,11 +13,15 @@ otherwise from _atom_site (the coordinates), so structures lacking that category
 (e.g. modeling results) still work.
 
 Usage:
-    python3 layered_basepairs.py <cif> <tsv> <chains...> [--name NAME] [--block N]
+    python3 layered_basepairs.py <cif> <tsv> [chains...] [--name NAME] [--block N]
+
+With no chains, all chains present in the FR3D TSV are used automatically.
 
 Examples (mmCIF from files.rcsb.org/download/<ID>.cif, basepairs TSV from FR3D):
     # single chain, non-WC pairs and multi-pairing
     python3 layered_basepairs.py 9CFN.cif 9cfn_fr3d_basepairs.tsv A --name 9CFN
+    # no chains given -> all chains in the TSV are used
+    python3 layered_basepairs.py 9CFN.cif 9cfn_fr3d_basepairs.tsv --name 9CFN
     # pairs across chains (1XPE kissing-loop dimer)
     python3 layered_basepairs.py 1XPE.cif 1xpe_fr3d_basepairs.tsv A B --name 1XPE
     # crystal-symmetry duplex; the symmetry copy is picked up automatically
@@ -155,6 +159,21 @@ def read_pairs(tsv: Path, chains: set[str]) -> list[tuple[tuple, tuple, str]]:
     return sorted(seen.values())
 
 
+def list_chains(tsv: Path) -> list[str]:
+    """Chains that appear in the FR3D pair list, sorted. Used as the default when
+    no chains are given on the command line."""
+    chains: set[str] = set()
+    for line in tsv.read_text().splitlines():
+        c = line.strip().split("\t")
+        if len(c) < 3:
+            continue
+        a, b = c[0].split("|"), c[2].split("|")
+        if len(a) > 2 and len(b) > 2:
+            chains.add(a[2])
+            chains.add(b[2])
+    return sorted(chains)
+
+
 def _pack(pairs: list) -> list[list]:
     """Pack same-type overflow pairs into as few layers as possible, each residue
     used at most once per layer."""
@@ -215,10 +234,13 @@ def build(cif: Path, tsv: Path, chains: list[str], name: str = "RNA",
     Args:
         cif: mmCIF file, used for the sequence and residue numbers.
         tsv: FR3D base-pair list.
-        chains: chain ids to render, in the order to lay them on the ruler.
+        chains: chain ids to render, in the order to lay them on the ruler;
+            if empty, all chains in the TSV are used.
         name: label for the header line.
         block: if set, wrap the lines into blocks of this many columns.
     """
+    if not chains:
+        chains = list_chains(tsv)
     per_chain = read_residues(cif, chains)
     pairs = read_pairs(tsv, set(chains))
 
@@ -320,8 +342,9 @@ if __name__ == "__main__":
         description="Layered base-pair notation for an RNA complex (symmetry-aware).")
     ap.add_argument("cif", type=Path, help="mmCIF file (sequence + residue numbers)")
     ap.add_argument("tsv", type=Path, help="FR3D basepairs TSV")
-    ap.add_argument("chains", nargs="+",
-                    help="chain ids, in the order to lay them on the ruler")
+    ap.add_argument("chains", nargs="*",
+                    help="chain ids, in the order to lay them on the ruler; "
+                         "default: all chains present in the TSV")
     ap.add_argument("--name", default="RNA", help="label for the header line")
     ap.add_argument("--block", type=int, nargs="?", const=BLOCK, default=None,
                     help=f"wrap lines into blocks of this many columns "

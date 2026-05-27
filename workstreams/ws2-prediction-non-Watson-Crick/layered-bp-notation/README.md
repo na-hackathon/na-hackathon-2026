@@ -106,13 +106,26 @@ L12 tWS     : ....(....................)..(.............)............
 L13 tHW     : ....(....................................).............
 ```
 
+## Requirements
+
+Python **3.10 or newer** (the script uses the `X | None` type-hint syntax, which
+3.10 introduced); tested on Python 3.12. Only the Python standard library is
+used, so there is nothing else to install. The easy way to get a recent Python
+is a conda environment:
+
+```
+conda create -n lbn python=3.12
+conda activate lbn
+```
+
 ## Reproducing
 
-`layered_basepairs.py` uses only the Python standard library, nothing to install.
+```
+python3 layered_basepairs.py <cif> <tsv> [chains...] [--name NAME] [--block N]
+```
 
-```
-python3 layered_basepairs.py <cif> <tsv> <chains...> [--name NAME] [--block N]
-```
+The chain ids are optional — with none given, all chains present in the FR3D TSV
+are used automatically.
 
 Base pairs come from the FR3D basepairs TSV (provided in `examples/`); the
 matching mmCIF is downloaded from RCSB. For example, the 1XPE kissing-loop dimer:
@@ -120,6 +133,8 @@ matching mmCIF is downloaded from RCSB. For example, the 1XPE kissing-loop dimer
 ```
 wget https://files.rcsb.org/download/1XPE.cif
 python3 layered_basepairs.py 1XPE.cif examples/1xpe_fr3d_basepairs.tsv A B --name 1XPE
+# or let it pick up the chains itself:
+python3 layered_basepairs.py 1XPE.cif examples/1xpe_fr3d_basepairs.tsv --name 1XPE
 ```
 
 The notation goes to stdout; the round-trip check (`True` = lossless) is printed
