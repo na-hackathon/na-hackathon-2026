@@ -1,0 +1,52 @@
+%% RNA structure analysis workflow
+%% Translated from whiteboard sketch — edit on https://mermaid.live
+
+flowchart TD
+    subgraph Skeleton["🔵 Workflow Skeleton — Nextflow + UI + Tests"]
+        direction TB
+        Input([Input])
+
+        subgraph T1["🟢 Conversion"]
+            direction TB
+            InHandler[Input Handler]
+            MAxIT[MAxIT]
+            Val1[Validation]
+            InHandler -->|PDB| MAxIT
+            MAxIT -.->|mmCIF?| Val1
+        end
+
+        subgraph T2["🔴 Core Module"]
+            direction TB
+            Tools["FR3D · NApair · RNAview · RNApolis"]
+            Parser[Parser]
+            Tools --> Parser
+        end
+
+        subgraph T3["⚫ Exploration"]
+            direction TB
+            Val2[Validation]
+            Dashboard["User Data /<br/>Dashboard Display"]
+            Val2 --> Dashboard
+        end
+
+        Input --> InHandler
+        InHandler -->|mmCIF| Tools
+        Val1 -.->|mmCIF| Tools
+        Parser -->|mmCIF| Val2
+    end
+
+    %% Brainstorm-only group, no implementation ownership
+    Downstream["🟡 Downstream Task<br/>(brainstorming)"]
+    Downstream -.->|informs| Dashboard
+
+    classDef green fill:#d4f4dd,stroke:#2a9d4a,stroke-width:2px,color:#000
+    classDef red fill:#fde2e2,stroke:#c0392b,stroke-width:2px,color:#000
+    classDef black fill:#eaeaea,stroke:#333,stroke-width:2px,color:#000
+    classDef yellow fill:#fff4cc,stroke:#d4a017,stroke-width:2px,stroke-dasharray: 5 5,color:#000
+    classDef blue fill:#d6e4ff,stroke:#2c5aa0,stroke-width:3px,color:#000
+
+    class T1 green
+    class T2 red
+    class T3 black
+    class Downstream yellow
+    class Skeleton blue

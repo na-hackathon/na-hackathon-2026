@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""WS1 skeleton STUB — Validator (T3).
+
+Contract (do not change; the Nextflow VALIDATE process depends on it):
+    ws1-validate --annotations <a.cif> [<b.cif> ...] --out <prefix>
+    => writes <prefix>.json and <prefix>.tsv
+
+Validation team: replace the body with the real cross-tool comparison (agreement
+per base pair / family, discrepancies, etc.). A reference parser for the
+standardized mmCIF already exists in read_write_mmcif/parse_basepairs.py.
+This stub counts base-pair rows per tool so the skeleton produces a report.
+"""
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+
+def count_pairs(cif_path):
+    """Count data rows in the _ndb_base_pair_list loop (crude, stub-only)."""
+    in_loop = False
+    n = 0
+    for raw_line in Path(cif_path).read_text().splitlines():
+        line = raw_line.strip()
+        if line.startswith("_ndb_base_pair_list."):
+            in_loop = True
+            continue
+        if in_loop:
+            if not line or line[0] in "#_" or line.startswith(("loop_", "data_")):
+                if line.startswith(("#", "data_", "loop_")):
+                    in_loop = False
+                continue
+            n += 1
+    return n
+
+
+def tool_of(path):
+    m = re.match(r"(.+?)_basepairs\.cif$", Path(path).name)
+    return m.group(1) if m else Path(path).stem
+
+
+def main():
+    ap = argparse.ArgumentParser(description="WS1 validator (stub)")
+    ap.add_argument("--annotations", nargs="+", required=True)
+    ap.add_argument("--out", required=True)
+    args = ap.parse_args()
+
+    counts = {tool_of(p): count_pairs(p) for p in args.annotations}
+    report = {"tools": list(counts), "pair_counts": counts}
+
+    Path(f"{args.out}.json").write_text(json.dumps(report, indent=2) + "\n")
+    tsv = ["tool\tbase_pairs"] + [f"{t}\t{n}" for t, n in counts.items()]
+    Path(f"{args.out}.tsv").write_text("\n".join(tsv) + "\n")
+    print(f"[ws1-validate] compared {len(counts)} tool(s): {counts}", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()
