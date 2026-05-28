@@ -7,3 +7,6 @@ results/
 # nf-test artifacts
 .nf-test/
 .nf-test.log
+
+# control-plane API run dirs (per-run work/results + uploads)
+.api_runs/
