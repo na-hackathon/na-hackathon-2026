@@ -79,6 +79,18 @@ Reference implementations of the FR3D/RNApolis → base-pairing-mmCIF conversion
 comparison step already exist in [`read_write_mmcif/`](read_write_mmcif/) (from PR #46) and
 can be adapted into `ws1-parse` / `ws1-validate`.
 
+## Conversion (T1): the `tzok/maxit` image
+
+`modules/convert.nf` standardizes input structures to mmCIF with **MAXIT**, run inside the
+prebuilt **`tzok/maxit`** Docker image — Nextflow pulls it automatically when Docker is enabled
+(`-profile docker`). MAXIT has no conda/pip package, so this is the supported conversion path.
+
+We deliberately **don't vendor** MAXIT or its build context. The image is maintained upstream at
+[`tzok/maxit-docker`](https://github.com/tzok/maxit-docker), whose `Dockerfile` compiles MAXIT
+from the official [RCSB source distribution](https://sw-tools.rcsb.org/apps/MAXIT/). To rebuild
+or pin a different MAXIT version, clone that repo and run its `build.sh` — it is not needed for
+normal runs, which only consume the published image.
+
 ## Adding an annotator
 
 1. Implement `bin/ws1-annotate` behaviour for the tool (or branch on `--tool`).
