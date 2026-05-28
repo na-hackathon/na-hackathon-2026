@@ -9,11 +9,14 @@ include { PARSE    } from './modules/parse.nf'
 include { VALIDATE } from './modules/validate.nf'
 
 workflow {
-    if( !params.input )
-        error "No input. Use --input <structure.pdb|.cif>  (or -profile test for the bundled 9CFN)"
+    // Input accepted either as a bare positional arg (nextflow run main.nf <file>)
+    // or via the --input flag; -profile test sets it to the bundled 9CFN.
+    def input = params.input ?: ( args ? args[0] : null )
+    if( !input )
+        error "No input. Pass a structure positionally (nextflow run main.nf <file>) or with --input <file>  (or -profile test for the bundled 9CFN)"
 
     // Input
-    structure_ch = Channel.fromPath(params.input, checkIfExists: true)
+    structure_ch = Channel.fromPath(input, checkIfExists: true)
 
     // T1 Conversion: any structure -> standardized mmCIF
     mmcif_ch = CONVERT(structure_ch)
