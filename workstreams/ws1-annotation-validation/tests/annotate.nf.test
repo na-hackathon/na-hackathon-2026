@@ -1,0 +1,98 @@
+// nf-test for the ANNOTATE module, runs the FR3D and RNApolis dispatch
+// branches against every sample input under data/tests/Inputs and asserts
+// the process emits the expected (tool, raw, mmcif) tuple with a non-empty
+// raw output file.
+// it can be ran using nf-test test tests/annotate.nf.test
+nextflow_process {
+
+    name "Test Process ANNOTATE"
+    script "../modules/annotate.nf"
+    process "ANNOTATE"
+
+    def PDB_IDS = ['8bwt', '8vjt', '8xzn', '9e5i', '9hrf', '9sfq']
+
+    PDB_IDS.each { pdbId ->
+
+        test("FR3D annotates ${pdbId}") {
+
+            when {
+                params {
+                    outdir = "${outputDir}"
+                }
+                process {
+                    """
+                    input[0] = [
+                        'fr3d',
+                        file("${projectDir}/../../data/tests/Inputs/${pdbId}.cif")
+                    ]
+                    """
+                }
+            }
+
+            then {
+                assert process.success
+
+                def emitted = process.out[0][0]
+                assert emitted[0] == 'fr3d'
+                assert emitted[1].toString().endsWith('fr3d_raw.txt')
+                assert emitted[2].toString().endsWith("${pdbId}.cif")
+
+                def raw = path(emitted[1].toString())
+                assert raw.exists()
+                assert raw.text.size() > 0
+            }
+        }
+
+        test("RNApolis annotates ${pdbId}") {
+
+            when {
+                params {
+                    outdir = "${outputDir}"
+                }
+                process {
+                    """
+                    input[0] = [
+                        'rnapolis',
+                        file("${projectDir}/../../data/tests/Inputs/${pdbId}.cif")
+                    ]
+                    """
+                }
+            }
+
+            then {
+                assert process.success
+
+                def emitted = process.out[0][0]
+                assert emitted[0] == 'rnapolis'
+                assert emitted[1].toString().endsWith('rnapolis_raw.json')
+                assert emitted[2].toString().endsWith("${pdbId}.cif")
+
+                def raw = path(emitted[1].toString())
+                assert raw.exists()
+                // rnapolis -e -j emits a JSON envelope with a base_pairs key
+                assert raw.text.contains('base_pairs')
+            }
+        }
+    }
+
+    test("unsupported tool fails with a clear error") {
+
+        when {
+            params {
+                outdir = "${outputDir}"
+            }
+            process {
+                """
+                input[0] = [
+                    'mc-annotate',
+                    file("${projectDir}/../../data/tests/Inputs/8xzn.cif")
+                ]
+                """
+            }
+        }
+
+        then {
+            assert process.failed
+        }
+    }
+}

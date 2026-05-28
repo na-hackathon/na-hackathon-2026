@@ -42,11 +42,15 @@ def convert_pdb_to_mmcif(input_path: Path, output_path: Path, image: str) -> Non
     output_path.parent.mkdir(parents=True, exist_ok=True)
     log(f"converting {input_path} -> {output_path}")
 
-    with input_path.open("rb") as fin, output_path.open("wb") as fout:
-        proc = subprocess.run(
-            ["docker", "run", "--rm", "-i", image],
-            stdin=fin, stdout=fout, stderr=subprocess.PIPE,
-        )
+    # call to docker
+    #proc = subprocess.run(
+    #    ["docker", "run", "--rm", "-i", image, 'maxit', '-input', input_path, '-output', output_path],
+    #)
+    
+    # no docker call
+    proc = subprocess.run(
+        ['maxit', '-input', input_path, '-output', output_path],
+    )
 
     if proc.returncode != 0:
         output_path.unlink(missing_ok=True)  # don't leave a half-written file behind

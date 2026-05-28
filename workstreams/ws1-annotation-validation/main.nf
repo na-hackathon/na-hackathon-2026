@@ -4,6 +4,7 @@
 // See workflow.mmd for the diagram this implements.
 
 include { CONVERT  } from './modules/convert.nf'
+//include { GEMMI_CONVERTPDB2MMCIF  } from './modules/GEMMIconvertpdb2cif.nf'
 include { ANNOTATE } from './modules/annotate.nf'
 include { PARSE    } from './modules/parse.nf'
 include { VALIDATE } from './modules/validate.nf'

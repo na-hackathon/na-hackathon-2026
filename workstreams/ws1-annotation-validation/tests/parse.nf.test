@@ -1,0 +1,84 @@
+// nf-test for the PARSE module, runs the FR3D and RNApolis dispatch branches
+// against every sample input under data/tests/ and asserts the produced
+// base-pair mmCIF contains the expected NDB categories. The full row-by-row
+// content check against the reference files lives in tests/test_parse_conversion.py. (which is not using nf-test but only pytest :(
+// it can be ran using nf-test test tests/parse.nf.test 
+nextflow_process {
+
+    name "Test Process PARSE"
+    script "../modules/parse.nf"
+    process "PARSE"
+
+    def PDB_IDS = ['8bwt', '8vjt', '8xzn', '9e5i', '9hrf', '9sfq']
+
+    PDB_IDS.each { pdbId ->
+
+        test("FR3D ${pdbId} raw -> base-pair mmCIF") {
+
+            when {
+                params {
+                    outdir = "${outputDir}"
+                }
+                process {
+                    """
+                    input[0] = [
+                        'fr3d',
+                        file("${projectDir}/../../data/tests/fr3d_outputs/${pdbId}/${pdbId}_basepair.txt"),
+                        file("${projectDir}/../../data/tests/Inputs/${pdbId}.cif")
+                    ]
+                    """
+                }
+            }
+
+            then {
+                assert process.success
+
+                def emitted = process.out[0][0]
+                assert emitted[0] == 'fr3d'
+
+                def out = path(emitted[1].toString())
+                assert out.exists()
+                assert emitted[1].toString().endsWith('fr3d_basepairs.cif')
+
+                def cif = out.text
+                assert cif.contains('_ndb_base_pair_list.base_pair_id')
+                assert cif.contains('_ndb_base_pair_annotation.id')
+                assert cif =~ /[ct][WHS][WHS]/
+            }
+        }
+
+        test("RNApolis ${pdbId} raw -> base-pair mmCIF") {
+
+            when {
+                params {
+                    outdir = "${outputDir}"
+                }
+                process {
+                    """
+                    input[0] = [
+                        'rnapolis',
+                        file("${projectDir}/../../data/tests/rnapolis_outputs/${pdbId}.json"),
+                        file("${projectDir}/../../data/tests/Inputs/${pdbId}.cif")
+                    ]
+                    """
+                }
+            }
+
+            then {
+                assert process.success
+
+                def emitted = process.out[0][0]
+                assert emitted[0] == 'rnapolis'
+
+                def out = path(emitted[1].toString())
+                assert out.exists()
+                assert emitted[1].toString().endsWith('rnapolis_basepairs.cif')
+
+                def cif = out.text
+                assert cif.contains('_ndb_base_pair_list.base_pair_id')
+                assert cif.contains('_ndb_base_pair_annotation.id')
+                assert cif =~ /[ct][WHS][WHS]/
+            }
+        }
+    }
+}
