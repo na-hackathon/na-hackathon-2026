@@ -52,6 +52,10 @@ back to the exact pairs and Leontis-Westhof types.
   mmCIF** (`_ndb_base_pair_list` + `_ndb_base_pair_annotation`), plus an iCn3D
   3D overlay so you can see every pair on the real structure. No external pair
   list needed.
+- `notation_to_cif.py` — the **inverse**: takes a layered-notation file plus
+  any mmCIF of the same structure and writes a new mmCIF whose base-pair
+  annotation is rebuilt straight from the notation, proving the round-trip
+  in both directions.
 
 ## Capabilities, phase by phase
 
@@ -182,6 +186,75 @@ For structures with too many pairs to paste comfortably, use `--script
 **File > Open File > State/Script File**. Symmetry-mate structures get an
 automatic `set assembly on` directive so the operator copy exists before the
 lines are drawn.
+
+## `notation_to_cif.py` — the inverse direction
+
+The forward scripts prove notation is recoverable from a CIF. This script
+proves a CIF is recoverable from notation: together they close the loop and
+make the layered notation a true lossless representation of base-pair
+annotation. Whatever you can write down in dot-bracket layers can be put back
+into an mmCIF and read by any tool that understands mmCIF, with the same pair
+set.
+
+```
+python3 notation_to_cif.py <notation.txt> <any.cif> -o <new.cif>
+```
+
+The script regenerates the three categories that carry the base-pair
+information in DNATCO-extended mmCIF:
+
+- `_ndb_base_pair_list` — who pairs with whom (auth numbering + operator id)
+- `_ndb_base_pair_annotation` — the Leontis-Westhof family per pair
+- `_pdbx_struct_oper_list` — maps each operator id to its `1_555`-style name
+
+The two annotation loops are rebuilt from the notation. The operator list is
+left untouched if the input CIF already lists every operator the notation
+needs (matrix data preserved), or extended when the notation references an
+operator the CIF does not have (e.g. a `2_755` symmetry mate applied to a
+vanilla CIF).
+
+The input CIF does **not** have to be DNATCO-extended. The script falls back
+through three metadata sources -- existing `_ndb_base_pair_list` rows, then
+`_pdbx_poly_seq_scheme`, then `_atom_site` -- so a vanilla PDB-downloaded CIF
+or a minimal atom-site-only CIF works too.
+
+### Round-trip verification
+
+After writing the new CIF the script re-reads it with the standard reader and
+confirms the pair set `(chain, num, chain, num, LW)` matches what the notation
+encoded:
+
+```
+$ python3 standalone_lbn_script.py 9cfn_dnatco.cif A --name 9CFN > 9CFN.lbn
+$ python3 notation_to_cif.py 9CFN.lbn 9cfn_dnatco.cif -o 9CFN_rebuilt.cif
+# recovered 22 pairs from notation
+# wrote 9CFN_rebuilt.cif
+# notation -> CIF -> pairs round-trip: True  (22 pairs)
+# rebuilt CIF == original CIF (semantically; all pairs preserved).
+```
+
+Verified on the example structures (8BWT, 1XPE, 6NJQ, 2Q1R, 9CFN, and
+9CFN-without-`pdbx_poly_seq_scheme`) in default / `--compact` / `--layer` /
+`--metadata` / `--noncanonical` modes — all True. Even stronger: re-running
+the forward script on the rebuilt CIF yields a notation that is
+byte-identical to the original.
+
+### Header and label compatibility
+
+The parser accepts both the new NCBI-style header (`>9CFN|A`,
+`>2Q1R|A|A:2_755`) and the older verbose form
+(`>9CFN complex: chains A[1_555](1-59) ...`). It also accepts both the default
+family-only labels (`WC`, `cWW`, `tWW`, ...) and the `--layer` slot-numbered
+ones (`L0 WC`, `L1 cWW`, `L10 tWW`, ...). The `# chains: ...` metadata comment
+line is ignored.
+
+### Limitation
+
+The notation only encodes the pair list `(chain, num, chain, num, LW)`. It
+does not encode 3D coordinates or operator matrices, so the rebuilt CIF
+preserves whatever atoms and matrices were already in the input CIF and
+replaces only the base-pair annotation blocks. Rebuilding atoms from scratch
+would need structural modelling and is out of scope here.
 
 ## Common flags
 
