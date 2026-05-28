@@ -23,8 +23,8 @@ conda activate ws1-dev
 # 2. smoke test — runs end-to-end on the bundled 9CFN data, no tool installs needed
 nextflow run main.nf -profile test
 
-# 3. a real run
-nextflow run main.nf --input ../../data/9CFN_clean.cif --annotators fr3d,rnapolis -profile conda
+# 3. a real run — defaults: fr3d annotator, conda envs
+nextflow run main.nf --input ../../data/9CFN_clean.cif
 ```
 
 Results are written under `--outdir` (default `results/`):
@@ -41,8 +41,8 @@ results/
 
 | Param | Default | Meaning |
 |---|---|---|
-| `--input` | _(required)_ | Structure file, `.pdb` or `.cif` |
-| `--annotators` | `fr3d,rnapolis` | Comma-separated annotator names (one `envs/<name>.yml` each) |
+| `--input` | _(required)_ | Structure file, `.pdb` or `.cif` — may also be passed positionally (`nextflow run main.nf <file>`) |
+| `--annotators` | `fr3d` | Comma-separated annotator names, e.g. `fr3d,rnapolis` (one `envs/<name>.yml` each) |
 | `--outdir` | `results` | Output directory |
 
 ## Environments (profiles)
