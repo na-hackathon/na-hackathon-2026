@@ -1,0 +1,25 @@
+[workspace]
+authors = ["liaodonn <liaodonn@gmail.com>"]
+channels = ["conda-forge"]
+name = "mmcif-to-pyg"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = "3.12.*"
+pytorch = ">=2.10.0,<3"
+pytorch_geometric = ">=2.7.0,<3"
+gemmi = ">=0.7.5,<0.8"
+networkx = ">=3.6.1,<4"
+matplotlib = ">=3.10.9,<4"
+jupyterlab = ">=4.5.7,<5"
+ipykernel = ">=7.2.0,<8"
+pandas = ">=3.0.3,<4"
+scipy = ">=1.17.1,<2"
+seaborn = ">=0.13.2,<0.14"
+
+[pypi-dependencies]
+rnaglib = ">=3.4.11, <4"
+fr3d = { git = "https://github.com/cgoliver/fr3d-python.git" }

@@ -1,0 +1,438 @@
+data_8BWT
+loop_
+_ndb_base_pair_provenance.entry_id
+_ndb_base_pair_provenance.software_id
+_ndb_base_pair_provenance.software_name
+_ndb_base_pair_provenance.software_version
+_ndb_base_pair_provenance.software_url
+_ndb_base_pair_provenance.bp_params_version
+_ndb_base_pair_provenance.details
+8BWT 1 NAPAIR 1.0 ? 1.0 "Base pair assignment using geometric parameters"
+
+loop_
+_ndb_base_pair_list.id
+_ndb_base_pair_list.PDB_model_num
+_ndb_base_pair_list.label_asym_id_1
+_ndb_base_pair_list.label_entity_id_1
+_ndb_base_pair_list.label_seq_id_1
+_ndb_base_pair_list.label_comp_id_1
+_ndb_base_pair_list.PDB_ins_code_1
+_ndb_base_pair_list.label_alt_id_1
+_ndb_base_pair_list.struct_oper_id_1
+_ndb_base_pair_list.label_asym_id_2
+_ndb_base_pair_list.label_entity_id_2
+_ndb_base_pair_list.label_seq_id_2
+_ndb_base_pair_list.label_comp_id_2
+_ndb_base_pair_list.PDB_ins_code_2
+_ndb_base_pair_list.label_alt_id_2
+_ndb_base_pair_list.struct_oper_id_2
+_ndb_base_pair_list.auth_asym_id_1
+_ndb_base_pair_list.auth_seq_id_1
+_ndb_base_pair_list.auth_asym_id_2
+_ndb_base_pair_list.auth_seq_id_2
+1   1  A 1 1  G ? . 1 A 1 26 C ? . 1 A 1  A 26
+2   1  A 1 2  G ? . 1 A 1 25 C ? . 1 A 2  A 25
+3   1  A 1 4  G ? . 1 A 1 23 C ? . 1 A 4  A 23
+4   1  A 1 7  U ? . 1 A 1 20 U ? . 1 A 7  A 20
+5   1  A 1 8  U ? . 1 A 1 19 U ? . 1 A 8  A 19
+6   1  A 1 10 G ? . 1 A 1 17 C ? . 1 A 10 A 17
+7   1  A 1 16 G ? . 1 A 1 11 C ? . 1 A 16 A 11
+8   1  A 1 18 G ? . 1 A 1 9  C ? . 1 A 18 A 9
+9   1  A 1 21 U ? . 1 A 1 6  U ? . 1 A 21 A 6
+10  1  A 1 22 A ? . 1 A 1 5  U ? . 1 A 22 A 5
+11  1  A 1 24 G ? . 1 A 1 3  C ? . 1 A 24 A 3
+12  2  A 1 1  G ? . 1 A 1 26 C ? . 1 A 1  A 26
+13  2  A 1 2  G ? . 1 A 1 25 C ? . 1 A 2  A 25
+14  2  A 1 4  G ? . 1 A 1 23 C ? . 1 A 4  A 23
+15  2  A 1 7  U ? . 1 A 1 20 U ? . 1 A 7  A 20
+16  2  A 1 8  U ? . 1 A 1 19 U ? . 1 A 8  A 19
+17  2  A 1 10 G ? . 1 A 1 17 C ? . 1 A 10 A 17
+18  2  A 1 16 G ? . 1 A 1 11 C ? . 1 A 16 A 11
+19  2  A 1 18 G ? . 1 A 1 9  C ? . 1 A 18 A 9
+20  2  A 1 21 U ? . 1 A 1 6  U ? . 1 A 21 A 6
+21  2  A 1 22 A ? . 1 A 1 5  U ? . 1 A 22 A 5
+22  2  A 1 24 G ? . 1 A 1 3  C ? . 1 A 24 A 3
+23  3  A 1 1  G ? . 1 A 1 26 C ? . 1 A 1  A 26
+24  3  A 1 2  G ? . 1 A 1 25 C ? . 1 A 2  A 25
+25  3  A 1 4  G ? . 1 A 1 23 C ? . 1 A 4  A 23
+26  3  A 1 7  U ? . 1 A 1 20 U ? . 1 A 7  A 20
+27  3  A 1 8  U ? . 1 A 1 19 U ? . 1 A 8  A 19
+28  3  A 1 10 G ? . 1 A 1 17 C ? . 1 A 10 A 17
+29  3  A 1 15 G ? . 1 A 1 12 U ? . 1 A 15 A 12
+30  3  A 1 16 G ? . 1 A 1 11 C ? . 1 A 16 A 11
+31  3  A 1 18 G ? . 1 A 1 9  C ? . 1 A 18 A 9
+32  3  A 1 21 U ? . 1 A 1 6  U ? . 1 A 21 A 6
+33  3  A 1 22 A ? . 1 A 1 5  U ? . 1 A 22 A 5
+34  3  A 1 24 G ? . 1 A 1 3  C ? . 1 A 24 A 3
+35  4  A 1 1  G ? . 1 A 1 26 C ? . 1 A 1  A 26
+36  4  A 1 2  G ? . 1 A 1 25 C ? . 1 A 2  A 25
+37  4  A 1 4  G ? . 1 A 1 23 C ? . 1 A 4  A 23
+38  4  A 1 7  U ? . 1 A 1 20 U ? . 1 A 7  A 20
+39  4  A 1 8  U ? . 1 A 1 19 U ? . 1 A 8  A 19
+40  4  A 1 10 G ? . 1 A 1 17 C ? . 1 A 10 A 17
+41  4  A 1 16 G ? . 1 A 1 11 C ? . 1 A 16 A 11
+42  4  A 1 18 G ? . 1 A 1 9  C ? . 1 A 18 A 9
+43  4  A 1 21 U ? . 1 A 1 6  U ? . 1 A 21 A 6
+44  4  A 1 22 A ? . 1 A 1 5  U ? . 1 A 22 A 5
+45  4  A 1 24 G ? . 1 A 1 3  C ? . 1 A 24 A 3
+46  5  A 1 1  G ? . 1 A 1 26 C ? . 1 A 1  A 26
+47  5  A 1 2  G ? . 1 A 1 25 C ? . 1 A 2  A 25
+48  5  A 1 4  G ? . 1 A 1 23 C ? . 1 A 4  A 23
+49  5  A 1 7  U ? . 1 A 1 20 U ? . 1 A 7  A 20
+50  5  A 1 8  U ? . 1 A 1 19 U ? . 1 A 8  A 19
+51  5  A 1 10 G ? . 1 A 1 17 C ? . 1 A 10 A 17
+52  5  A 1 16 G ? . 1 A 1 11 C ? . 1 A 16 A 11
+53  5  A 1 18 G ? . 1 A 1 9  C ? . 1 A 18 A 9
+54  5  A 1 21 U ? . 1 A 1 6  U ? . 1 A 21 A 6
+55  5  A 1 22 A ? . 1 A 1 5  U ? . 1 A 22 A 5
+56  5  A 1 24 G ? . 1 A 1 3  C ? . 1 A 24 A 3
+57  6  A 1 1  G ? . 1 A 1 26 C ? . 1 A 1  A 26
+58  6  A 1 2  G ? . 1 A 1 25 C ? . 1 A 2  A 25
+59  6  A 1 4  G ? . 1 A 1 23 C ? . 1 A 4  A 23
+60  6  A 1 7  U ? . 1 A 1 20 U ? . 1 A 7  A 20
+61  6  A 1 8  U ? . 1 A 1 19 U ? . 1 A 8  A 19
+62  6  A 1 10 G ? . 1 A 1 17 C ? . 1 A 10 A 17
+63  6  A 1 16 G ? . 1 A 1 11 C ? . 1 A 16 A 11
+64  6  A 1 18 G ? . 1 A 1 9  C ? . 1 A 18 A 9
+65  6  A 1 21 U ? . 1 A 1 6  U ? . 1 A 21 A 6
+66  6  A 1 22 A ? . 1 A 1 5  U ? . 1 A 22 A 5
+67  6  A 1 24 G ? . 1 A 1 3  C ? . 1 A 24 A 3
+68  7  A 1 1  G ? . 1 A 1 26 C ? . 1 A 1  A 26
+69  7  A 1 2  G ? . 1 A 1 25 C ? . 1 A 2  A 25
+70  7  A 1 4  G ? . 1 A 1 23 C ? . 1 A 4  A 23
+71  7  A 1 7  U ? . 1 A 1 20 U ? . 1 A 7  A 20
+72  7  A 1 8  U ? . 1 A 1 19 U ? . 1 A 8  A 19
+73  7  A 1 10 G ? . 1 A 1 17 C ? . 1 A 10 A 17
+74  7  A 1 16 G ? . 1 A 1 11 C ? . 1 A 16 A 11
+75  7  A 1 18 G ? . 1 A 1 9  C ? . 1 A 18 A 9
+76  7  A 1 21 U ? . 1 A 1 6  U ? . 1 A 21 A 6
+77  7  A 1 22 A ? . 1 A 1 5  U ? . 1 A 22 A 5
+78  7  A 1 24 G ? . 1 A 1 3  C ? . 1 A 24 A 3
+79  8  A 1 1  G ? . 1 A 1 26 C ? . 1 A 1  A 26
+80  8  A 1 2  G ? . 1 A 1 25 C ? . 1 A 2  A 25
+81  8  A 1 4  G ? . 1 A 1 23 C ? . 1 A 4  A 23
+82  8  A 1 7  U ? . 1 A 1 20 U ? . 1 A 7  A 20
+83  8  A 1 8  U ? . 1 A 1 19 U ? . 1 A 8  A 19
+84  8  A 1 10 G ? . 1 A 1 17 C ? . 1 A 10 A 17
+85  8  A 1 15 G ? . 1 A 1 12 U ? . 1 A 15 A 12
+86  8  A 1 16 G ? . 1 A 1 11 C ? . 1 A 16 A 11
+87  8  A 1 18 G ? . 1 A 1 9  C ? . 1 A 18 A 9
+88  8  A 1 21 U ? . 1 A 1 6  U ? . 1 A 21 A 6
+89  8  A 1 22 A ? . 1 A 1 5  U ? . 1 A 22 A 5
+90  8  A 1 24 G ? . 1 A 1 3  C ? . 1 A 24 A 3
+91  9  A 1 1  G ? . 1 A 1 26 C ? . 1 A 1  A 26
+92  9  A 1 2  G ? . 1 A 1 25 C ? . 1 A 2  A 25
+93  9  A 1 4  G ? . 1 A 1 23 C ? . 1 A 4  A 23
+94  9  A 1 7  U ? . 1 A 1 20 U ? . 1 A 7  A 20
+95  9  A 1 8  U ? . 1 A 1 19 U ? . 1 A 8  A 19
+96  9  A 1 10 G ? . 1 A 1 17 C ? . 1 A 10 A 17
+97  9  A 1 15 G ? . 1 A 1 12 U ? . 1 A 15 A 12
+98  9  A 1 16 G ? . 1 A 1 11 C ? . 1 A 16 A 11
+99  9  A 1 18 G ? . 1 A 1 9  C ? . 1 A 18 A 9
+100 9  A 1 21 U ? . 1 A 1 6  U ? . 1 A 21 A 6
+101 9  A 1 22 A ? . 1 A 1 5  U ? . 1 A 22 A 5
+102 9  A 1 24 G ? . 1 A 1 3  C ? . 1 A 24 A 3
+103 10 A 1 1  G ? . 1 A 1 26 C ? . 1 A 1  A 26
+104 10 A 1 2  G ? . 1 A 1 25 C ? . 1 A 2  A 25
+105 10 A 1 4  G ? . 1 A 1 23 C ? . 1 A 4  A 23
+106 10 A 1 7  U ? . 1 A 1 20 U ? . 1 A 7  A 20
+107 10 A 1 8  U ? . 1 A 1 19 U ? . 1 A 8  A 19
+108 10 A 1 10 G ? . 1 A 1 17 C ? . 1 A 10 A 17
+109 10 A 1 16 G ? . 1 A 1 11 C ? . 1 A 16 A 11
+110 10 A 1 18 G ? . 1 A 1 9  C ? . 1 A 18 A 9
+111 10 A 1 21 U ? . 1 A 1 6  U ? . 1 A 21 A 6
+112 10 A 1 22 A ? . 1 A 1 5  U ? . 1 A 22 A 5
+113 10 A 1 24 G ? . 1 A 1 3  C ? . 1 A 24 A 3
+
+loop_
+_ndb_base_pair_annotation.id
+_ndb_base_pair_annotation.base_pair_id
+_ndb_base_pair_annotation.orientation
+_ndb_base_pair_annotation.base_1_edge
+_ndb_base_pair_annotation.base_2_edge
+_ndb_base_pair_annotation.l-w_family_num
+_ndb_base_pair_annotation.l-w_family_name
+_ndb_base_pair_annotation.class
+_ndb_base_pair_annotation.sub_class
+_ndb_base_pair_annotation.details
+1   1   cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+2   2   cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+3   3   cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+4   4   cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+5   5   cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+6   6   cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+7   7   cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+8   8   cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+9   9   cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+10  10  cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+11  11  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+12  12  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+13  13  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+14  14  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+15  15  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+16  16  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+17  17  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+18  18  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+19  19  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+20  20  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+21  21  cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+22  22  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+23  23  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+24  24  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+25  25  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+26  26  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+27  27  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+28  28  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+29  29  trans Watson-Crick Sugar        6 tWS tWS_G-U tWS_G-U_1 ?
+30  30  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+31  31  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+32  32  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+33  33  cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+34  34  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+35  35  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+36  36  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+37  37  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+38  38  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+39  39  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+40  40  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+41  41  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+42  42  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+43  43  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+44  44  cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+45  45  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+46  46  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+47  47  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+48  48  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+49  49  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+50  50  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+51  51  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+52  52  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+53  53  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+54  54  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+55  55  cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+56  56  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+57  57  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+58  58  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+59  59  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+60  60  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+61  61  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+62  62  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+63  63  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+64  64  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+65  65  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+66  66  cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+67  67  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+68  68  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+69  69  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+70  70  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+71  71  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+72  72  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+73  73  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+74  74  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+75  75  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+76  76  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+77  77  cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+78  78  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+79  79  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+80  80  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+81  81  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+82  82  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+83  83  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+84  84  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+85  85  trans Watson-Crick Sugar        6 tWS tWS_G-U tWS_G-U_1 ?
+86  86  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+87  87  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+88  88  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+89  89  cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+90  90  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+91  91  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+92  92  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+93  93  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+94  94  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+95  95  cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+96  96  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+97  97  trans Watson-Crick Sugar        6 tWS tWS_G-U tWS_G-U_1 ?
+98  98  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+99  99  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+100 100 cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+101 101 cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+102 102 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+103 103 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+104 104 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+105 105 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+106 106 cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+107 107 cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+108 108 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+109 109 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+110 110 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+111 111 cis   Watson-Crick Watson-Crick 1 cWW cWW_U-U cWW_U-U_1 ?
+112 112 cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+113 113 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+
+loop_
+_ndb_base_pair_validation.id
+_ndb_base_pair_validation.base_pair_id
+_ndb_base_pair_validation.napair_rmsd
+_ndb_base_pair_validation.napasco_metric
+_ndb_base_pair_validation.napasco_annotation
+_ndb_base_pair_validation.nearest_curated_BP
+_ndb_base_pair_validation.details
+1   1   0.268 27.72 preferred  5jaj_X_G_6_1_555_Y_C_5_1_555   ?
+2   2   0.398 16.93 preferred  4ill_R_G_15_1_555_R_C_7_1_555  ?
+3   3   0.242 32.73 preferred  1vc0_B_G_168_1_555_B_C_115_1_555 ?
+4   4   0.462 23.35 preferred  3r2d_R_U_8_1_555_S_U_7_1_555   ?
+5   5   0.354 37.29 preferred  4v9f_0_U_1304_1_555_0_U_1350_1_555 ?
+6   6   0.473 11.29 preferred  1wbd_F_DG_17_1_555_E_DC_14_1_555 ?
+7   7   0.755 3.29  of_concern 3m9o_T_DG_4_1_555_P_DC_13_1_555 ?
+8   8   0.608 5.56  preferred  7eu9_B_G_16_1_555_B_C_12_1_555 ?
+9   9   0.843 6.40  preferred  7qqx_A_U_9_1_555_C_DT_12_1_555 ?
+10  10  0.473 4.52  of_concern 7el1_B_A_3_1_555_C_DT_26_1_555 ?
+11  11  0.337 21.62 preferred  3laj_K_DG_13_1_555_L_DC_4_1_555 ?
+12  12  0.273 28.01 preferred  5jaj_X_G_6_1_555_Y_C_5_1_555   ?
+13  13  0.400 16.55 preferred  5szx_C_DG_14_1_555_D_DC_107_1_555 ?
+14  14  0.245 27.56 preferred  1vc0_B_G_168_1_555_B_C_115_1_555 ?
+15  15  0.425 25.58 preferred  3r2d_R_U_8_1_555_S_U_7_1_555   ?
+16  16  0.324 35.11 preferred  4v9f_0_U_1304_1_555_0_U_1350_1_555 ?
+17  17  0.439 11.10 preferred  3k1v_A_G_5_1_555_A_C_18_1_555  ?
+18  18  0.744 3.52  of_concern 6l9z_J_DG_190_1_555_I_DC_149_1_555 ?
+19  19  0.618 5.29  preferred  4v9f_0_G_2254_1_555_0_C_2247_1_555 ?
+20  20  0.418 29.92 preferred  8vm8_R_U_77_1_555_R_U_55_1_555 ?
+21  21  0.541 3.05  of_concern 7el1_B_A_3_1_555_C_DT_26_1_555 ?
+22  22  0.344 21.20 preferred  3laj_K_DG_13_1_555_L_DC_4_1_555 ?
+23  23  0.268 27.80 preferred  5jaj_X_G_6_1_555_Y_C_5_1_555   ?
+24  24  0.390 17.17 preferred  5szx_C_DG_14_1_555_D_DC_107_1_555 ?
+25  25  0.240 30.63 preferred  1vc0_B_G_168_1_555_B_C_115_1_555 ?
+26  26  0.426 24.74 preferred  3r2d_R_U_8_1_555_S_U_7_1_555   ?
+27  27  0.334 34.56 preferred  4v9f_0_U_1304_1_555_0_U_1350_1_555 ?
+28  28  0.455 12.24 preferred  3k1v_A_G_5_1_555_A_C_18_1_555  ?
+29  29  1.029 13.49 preferred  4ybb_AA_G_346_1_555_AA_U_343_1_555 ?
+30  30  0.727 3.72  of_concern 3m9o_T_DG_4_1_555_P_DC_13_1_555 ?
+31  31  0.584 5.98  preferred  3dil_A_G_160_1_555_A_C_143_1_555 ?
+32  32  0.890 5.12  preferred  4dav_X_DT_4_1_555_D_DT_12_1_555 ?
+33  33  0.479 4.27  of_concern 7el1_B_A_3_1_555_C_DT_26_1_555 ?
+34  34  0.337 21.51 preferred  3laj_K_DG_13_1_555_L_DC_4_1_555 ?
+35  35  0.264 27.64 preferred  5jaj_X_G_6_1_555_Y_C_5_1_555   ?
+36  36  0.391 17.57 preferred  5szx_C_DG_14_1_555_D_DC_107_1_555 ?
+37  37  0.245 29.14 preferred  1vc0_B_G_168_1_555_B_C_115_1_555 ?
+38  38  0.453 23.76 preferred  3r2d_R_U_8_1_555_S_U_7_1_555   ?
+39  39  0.334 37.62 preferred  4v9f_0_U_1304_1_555_0_U_1350_1_555 ?
+40  40  0.475 11.44 preferred  1wbd_F_DG_17_1_555_E_DC_14_1_555 ?
+41  41  0.749 3.36  of_concern 3m9o_T_DG_4_1_555_P_DC_13_1_555 ?
+42  42  0.601 5.64  preferred  3dil_A_G_160_1_555_A_C_143_1_555 ?
+43  43  0.931 4.68  of_concern 4dav_X_DT_4_1_555_D_DT_12_1_555 ?
+44  44  0.471 4.40  of_concern 7el1_B_A_3_1_555_C_DT_26_1_555 ?
+45  45  0.337 21.52 preferred  3laj_K_DG_13_1_555_L_DC_4_1_555 ?
+46  46  0.267 27.00 preferred  5jaj_X_G_6_1_555_Y_C_5_1_555   ?
+47  47  0.379 18.87 preferred  5szx_C_DG_14_1_555_D_DC_107_1_555 ?
+48  48  0.253 28.24 preferred  1vc0_B_G_168_1_555_B_C_115_1_555 ?
+49  49  0.448 24.00 preferred  3r2d_R_U_8_1_555_S_U_7_1_555   ?
+50  50  0.339 37.77 preferred  4v9f_0_U_1304_1_555_0_U_1350_1_555 ?
+51  51  0.473 11.46 preferred  1wbd_F_DG_17_1_555_E_DC_14_1_555 ?
+52  52  0.743 3.39  of_concern 3m9o_T_DG_4_1_555_P_DC_13_1_555 ?
+53  53  0.599 5.67  preferred  3dil_A_G_160_1_555_A_C_143_1_555 ?
+54  54  0.920 4.33  of_concern 4dav_X_DT_4_1_555_D_DT_12_1_555 ?
+55  55  0.493 3.91  of_concern 7el1_B_A_3_1_555_C_DT_26_1_555 ?
+56  56  0.329 21.61 preferred  3laj_K_DG_13_1_555_L_DC_4_1_555 ?
+57  57  0.265 27.61 preferred  5jaj_X_G_6_1_555_Y_C_5_1_555   ?
+58  58  0.390 18.16 preferred  5szx_C_DG_14_1_555_D_DC_107_1_555 ?
+59  59  0.247 29.35 preferred  1vc0_B_G_168_1_555_B_C_115_1_555 ?
+60  60  0.452 23.81 preferred  3r2d_R_U_8_1_555_S_U_7_1_555   ?
+61  61  0.337 37.98 preferred  4v9f_0_U_1304_1_555_0_U_1350_1_555 ?
+62  62  0.471 11.48 preferred  1wbd_F_DG_17_1_555_E_DC_14_1_555 ?
+63  63  0.746 3.36  of_concern 3m9o_T_DG_4_1_555_P_DC_13_1_555 ?
+64  64  0.600 5.67  preferred  3dil_A_G_160_1_555_A_C_143_1_555 ?
+65  65  0.936 4.68  of_concern 4dav_X_DT_4_1_555_D_DT_12_1_555 ?
+66  66  0.472 4.39  of_concern 7el1_B_A_3_1_555_C_DT_26_1_555 ?
+67  67  0.329 22.06 preferred  3laj_K_DG_13_1_555_L_DC_4_1_555 ?
+68  68  0.269 27.72 preferred  5ed4_D_DG_4_1_555_C_DC_24_1_555 ?
+69  69  0.388 17.06 preferred  5szx_C_DG_14_1_555_D_DC_107_1_555 ?
+70  70  0.251 28.61 preferred  1vc0_B_G_168_1_555_B_C_115_1_555 ?
+71  71  0.450 24.03 preferred  3r2d_R_U_8_1_555_S_U_7_1_555   ?
+72  72  0.339 38.56 preferred  4v9f_0_U_1304_1_555_0_U_1350_1_555 ?
+73  73  0.478 11.44 preferred  1wbd_F_DG_17_1_555_E_DC_14_1_555 ?
+74  74  0.748 3.36  of_concern 3m9o_T_DG_4_1_555_P_DC_13_1_555 ?
+75  75  0.599 5.68  preferred  3dil_A_G_160_1_555_A_C_143_1_555 ?
+76  76  0.921 4.65  of_concern 4dav_X_DT_4_1_555_D_DT_12_1_555 ?
+77  77  0.485 4.09  of_concern 7el1_B_A_3_1_555_C_DT_26_1_555 ?
+78  78  0.337 21.40 preferred  3laj_K_DG_13_1_555_L_DC_4_1_555 ?
+79  79  0.273 28.05 preferred  5jaj_X_G_6_1_555_Y_C_5_1_555   ?
+80  80  0.399 16.36 preferred  5szx_C_DG_14_1_555_D_DC_107_1_555 ?
+81  81  0.241 30.13 preferred  1vc0_B_G_168_1_555_B_C_115_1_555 ?
+82  82  0.423 25.09 preferred  3r2d_R_U_8_1_555_S_U_7_1_555   ?
+83  83  0.352 31.50 preferred  4v9f_0_U_1304_1_555_0_U_1350_1_555 ?
+84  84  0.429 12.14 preferred  3k1v_A_G_5_1_555_A_C_18_1_555  ?
+85  85  1.065 12.89 preferred  4ybb_AA_G_346_1_555_AA_U_343_1_555 ?
+86  86  0.743 3.68  of_concern 3m9o_T_DG_4_1_555_P_DC_13_1_555 ?
+87  87  0.595 6.49  preferred  3dil_A_G_160_1_555_A_C_143_1_555 ?
+88  88  0.532 19.08 preferred  8vm8_R_U_77_1_555_R_U_55_1_555 ?
+89  89  0.473 4.27  of_concern 7el1_B_A_3_1_555_C_DT_26_1_555 ?
+90  90  0.347 21.11 preferred  3laj_K_DG_13_1_555_L_DC_4_1_555 ?
+91  91  0.268 28.61 preferred  5jaj_X_G_6_1_555_Y_C_5_1_555   ?
+92  92  0.397 16.61 preferred  5szx_C_DG_14_1_555_D_DC_107_1_555 ?
+93  93  0.242 30.17 preferred  1vc0_B_G_168_1_555_B_C_115_1_555 ?
+94  94  0.419 25.15 preferred  3r2d_R_U_8_1_555_S_U_7_1_555   ?
+95  95  0.350 31.59 preferred  4v9f_0_U_1304_1_555_0_U_1350_1_555 ?
+96  96  0.434 11.97 preferred  3k1v_A_G_5_1_555_A_C_18_1_555  ?
+97  97  1.058 13.00 preferred  4ybb_AA_G_346_1_555_AA_U_343_1_555 ?
+98  98  0.743 3.70  of_concern 1s72_0_G_2712_1_555_0_C_2682_1_555 ?
+99  99  0.591 6.71  preferred  3dil_A_G_160_1_555_A_C_143_1_555 ?
+100 100 0.523 18.57 preferred  3dsd_C_DT_15_1_555_C_DT_12_1_555 ?
+101 101 0.480 4.23  of_concern 7el1_B_A_3_1_555_C_DT_26_1_555 ?
+102 102 0.339 21.79 preferred  3laj_K_DG_13_1_555_L_DC_4_1_555 ?
+103 103 0.264 27.92 preferred  5jaj_X_G_6_1_555_Y_C_5_1_555   ?
+104 104 0.393 16.96 preferred  5szx_C_DG_14_1_555_D_DC_107_1_555 ?
+105 105 0.254 27.50 preferred  1vc0_B_G_168_1_555_B_C_115_1_555 ?
+106 106 0.450 24.42 preferred  3r2d_R_U_8_1_555_S_U_7_1_555   ?
+107 107 0.308 37.36 preferred  4v9f_0_U_1304_1_555_0_U_1350_1_555 ?
+108 108 0.470 11.12 preferred  3k1v_A_G_5_1_555_A_C_18_1_555  ?
+109 109 0.761 3.35  of_concern 6l9z_J_DG_190_1_555_I_DC_149_1_555 ?
+110 110 0.648 5.28  preferred  3dil_A_G_160_1_555_A_C_143_1_555 ?
+111 111 0.502 21.72 preferred  3r2d_R_U_8_1_555_S_U_7_1_555   ?
+112 112 0.479 3.93  of_concern 7el1_B_A_3_1_555_C_DT_26_1_555 ?
+113 113 0.348 21.02 preferred  3laj_K_DG_13_1_555_L_DC_4_1_555 ?
+
+loop_
+_ndb_base_unpaired_list.id
+_ndb_base_unpaired_list.PDB_model_num
+_ndb_base_unpaired_list.label_entity_id
+_ndb_base_unpaired_list.label_asym_id
+_ndb_base_unpaired_list.label_seq_id
+_ndb_base_unpaired_list.label_comp_id
+_ndb_base_unpaired_list.label_alt_id
+_ndb_base_unpaired_list.PDB_ins_code
+_ndb_base_unpaired_list.auth_asym_id
+_ndb_base_unpaired_list.auth_seq_id
+1  1  1 A 12 U . ? A 12
+2  1  1 A 13 U . ? A 13
+3  1  1 A 14 C . ? A 14
+4  1  1 A 15 G . ? A 15
+5  2  1 A 12 U . ? A 12
+6  2  1 A 13 U . ? A 13
+7  2  1 A 14 C . ? A 14
+8  2  1 A 15 G . ? A 15
+9  3  1 A 13 U . ? A 13
+10 3  1 A 14 C . ? A 14
+11 4  1 A 12 U . ? A 12
+12 4  1 A 13 U . ? A 13
+13 4  1 A 14 C . ? A 14
+14 4  1 A 15 G . ? A 15
+15 5  1 A 12 U . ? A 12
+16 5  1 A 13 U . ? A 13
+17 5  1 A 14 C . ? A 14
+18 5  1 A 15 G . ? A 15
+19 6  1 A 12 U . ? A 12
+20 6  1 A 13 U . ? A 13
+21 6  1 A 14 C . ? A 14
+22 6  1 A 15 G . ? A 15
+23 7  1 A 12 U . ? A 12
+24 7  1 A 13 U . ? A 13
+25 7  1 A 14 C . ? A 14
+26 7  1 A 15 G . ? A 15
+27 8  1 A 13 U . ? A 13
+28 8  1 A 14 C . ? A 14
+29 9  1 A 13 U . ? A 13
+30 9  1 A 14 C . ? A 14
+31 10 1 A 12 U . ? A 12
+32 10 1 A 13 U . ? A 13
+33 10 1 A 14 C . ? A 14
+34 10 1 A 15 G . ? A 15
