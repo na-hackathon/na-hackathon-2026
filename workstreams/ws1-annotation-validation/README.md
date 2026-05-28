@@ -86,6 +86,26 @@ can be adapted into `ws1-parse` / `ws1-validate`.
 3. Teach `bin/ws1-parse` to read its native output.
 4. Add the name to `--annotators` — the `ANNOTATE` process is generic over the tool.
 
+## Driving runs from a UI (control-plane API)
+
+Nextflow has no native control API, so `api/` ships a thin **FastAPI** backend a UI drives to
+launch, monitor (live), and fetch results — full details in [`api/README.md`](api/README.md).
+
+```bash
+conda activate ws1-dev            # includes fastapi + uvicorn
+uvicorn api.app:app --port 8000   # interactive docs at http://127.0.0.1:8000/docs
+```
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/tools`, `/profiles` | options for the UI form |
+| POST | `/uploads` | upload a structure |
+| POST | `/runs` | launch a run `{input?, annotators?, profile}` |
+| GET | `/runs[/{id}]` | list / status + task progress |
+| GET | `/runs/{id}/events` | SSE live progress (fed by Nextflow `-with-weblog`) |
+| GET | `/runs/{id}/results[/{path}]` | list / download published outputs |
+| DELETE | `/runs/{id}` | cancel a run |
+
 ## Layout
 
 ```
@@ -94,6 +114,7 @@ nextflow.config    params + profiles (conda/mamba/docker/singularity/test)
 modules/           one .nf process per stage
 bin/               stage CLIs — the team contract (stubs for now)
 envs/              per-process conda envs (one per tool/stage)
+api/               control-plane API (FastAPI) the UI drives — see api/README.md
 environment.yml    ws1-dev developer toolchain (this is NOT a pipeline env)
 read_write_mmcif/  reference parser/converter snippets (PR #46)
 ```
