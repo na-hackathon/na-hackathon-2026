@@ -15,9 +15,14 @@ process CONVERT {
     path "${structure.baseName}.std.cif"
 
     script:
-    """
-    maxit -input ${structure} -output ${structure.baseName}.std.cif -o 1
-    """
+    if (structure.extension == 'pdb')
+        """
+        maxit -input ${structure} -output ${structure.baseName}.std.cif -o 1
+        """
+    else
+        """
+        maxit -input ${structure} -output ${structure.baseName}.std.cif -o 8
+        """
 }
 
 
