@@ -1,0 +1,3 @@
+# Enforce LF (Unix) line endings for all WS1 files on every platform.
+# Nextflow (.nf), shell, and the bin/ stage CLIs must stay LF to run on Linux.
+* text=auto eol=lf

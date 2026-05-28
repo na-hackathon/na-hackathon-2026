@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+"""WS1 skeleton STUB — Converter (T1).
+
+Contract (do not change; the Nextflow CONVERT process depends on it):
+    ws1-convert --input <structure.pdb|.cif> --out <structure.cif>
+
+Conversion team: replace the body with the real conversion (e.g. MAxIT / gemmi).
+This stub passes mmCIF through unchanged and writes a placeholder for PDB inputs.
+"""
+import argparse
+import shutil
+import sys
+from pathlib import Path
+
+
+def main():
+    ap = argparse.ArgumentParser(description="WS1 converter (stub)")
+    ap.add_argument("--input", required=True)
+    ap.add_argument("--out", required=True)
+    args = ap.parse_args()
+
+    src = Path(args.input)
+    if src.suffix.lower() in (".cif", ".mmcif"):
+        shutil.copyfile(src, args.out)
+    else:
+        Path(args.out).write_text(
+            f"# WS1 stub conversion of {src.name}\n"
+            "data_stub\n"
+            "_struct.title 'WS1 skeleton stub conversion — replace ws1-convert'\n"
+        )
+    print(f"[ws1-convert] {src.name} -> {args.out}", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()

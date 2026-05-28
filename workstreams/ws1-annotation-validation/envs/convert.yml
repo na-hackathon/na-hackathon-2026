@@ -1,0 +1,9 @@
+# T1 Conversion environment (built per-process by Nextflow under -profile conda/mamba).
+# Conversion team owns the tool choice; gemmi covers PDB/mmCIF IO, MAxIT can be added.
+name: ws1-convert
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.10
+  - gemmi
