@@ -29,8 +29,8 @@ callback points back correctly.
 |---|---|---|
 | GET | `/tools` | annotator names available (from `envs/*.yml`) |
 | GET | `/profiles` | Nextflow profiles (`conda`, `mamba`, `docker`, `singularity`, `test`) |
-| POST | `/uploads` | upload a `.pdb`/`.cif`; returns a server `input` path |
-| POST | `/runs` | launch a run — body `{input?, annotators?, profile}` |
+| POST | `/uploads` | upload a `.pdb`/`.cif`/`.mmcif`; returns an opaque `upload_id` |
+| POST | `/runs` | launch a run — body `{input?: upload_id, annotators?, profile}` |
 | GET | `/runs` | list runs |
 | GET | `/runs/{id}` | run status + task progress |
 | DELETE | `/runs/{id}` | cancel a run |
@@ -43,10 +43,15 @@ callback points back correctly.
 ## Example
 
 ```bash
-# fast end-to-end run on the bundled 9CFN (no tool installs)
+# fast end-to-end run on the bundled 9CFN (no upload, no tool installs)
 curl -s -X POST localhost:8000/runs -H 'content-type: application/json' \
      -d '{"profile":"test"}'
 # -> {"id":"<run_id>", "status":"running", ...}
+
+# run on your own structure: upload first, then pass the returned id
+UID=$(curl -s -X POST localhost:8000/uploads -F 'file=@my.cif' | jq -r .upload_id)
+curl -s -X POST localhost:8000/runs -H 'content-type: application/json' \
+     -d "{\"profile\":\"conda\",\"input\":\"$UID\"}"
 
 curl -s localhost:8000/runs/<run_id>                       # status
 curl -sN localhost:8000/runs/<run_id>/events               # live SSE stream
@@ -54,9 +59,20 @@ curl -s localhost:8000/runs/<run_id>/results               # {"files":[...]}
 curl -s localhost:8000/runs/<run_id>/results/validation/validation_report.json
 ```
 
+## Security model
+
+No user-controlled value ever forms a filesystem path:
+
+- **Inputs** are referenced by an opaque `upload_id` (a dict key), and the server
+  resolves it to a path it generated; arbitrary server paths can't be requested.
+- **Uploads** are stored as `<generated-id><allowlisted-suffix>` — the original
+  filename never forms the path.
+- **Results** are served only if the requested relative path is in that run's own
+  result listing (built from a trusted directory walk).
+
 ## Limitations (first prototype)
 
-- Run state is in-memory (lost on restart); no persistence/DB yet.
+- Run state + the upload registry are in-memory (lost on restart); no persistence/DB yet.
 - CORS is wide open for dev — tighten `allow_origins` before any deployment.
 - No auth; intended for local/hackathon use.
-- Per-run dirs live under `.api_runs/` (git-ignored).
+- Per-run dirs and uploads live under `.api_runs/` (git-ignored).

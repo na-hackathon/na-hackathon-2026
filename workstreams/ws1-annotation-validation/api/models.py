@@ -13,12 +13,18 @@ class RunStatus(str, Enum):
     cancelled = "cancelled"
 
 
+class UploadInfo(BaseModel):
+    """Result of POST /uploads — an opaque id to pass back as a run's input."""
+    upload_id: str
+    filename: str
+
+
 class RunRequest(BaseModel):
     """A request to launch a pipeline run."""
     input: str | None = Field(
         default=None,
-        description="Server-side path to a .pdb/.cif (e.g. from POST /uploads). "
-                    "Optional with profile=test, which uses the bundled 9CFN.",
+        description="An upload_id from POST /uploads. Omit with profile=test, "
+                    "which uses the bundled 9CFN.",
     )
     annotators: list[str] | None = Field(
         default=None, description="Annotator names; defaults to the pipeline's config."

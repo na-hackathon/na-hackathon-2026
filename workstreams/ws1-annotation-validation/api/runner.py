@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 from .models import RunInfo, RunStatus, TaskProgress
 
@@ -18,9 +18,6 @@ RUNS_DIR = PROJECT_DIR / ".api_runs"
 UPLOAD_DIR = RUNS_DIR / "_uploads"
 RESERVED_ENVS = {"convert", "parse"}                   # stage envs, not annotators
 PROFILES = ["conda", "mamba", "docker", "singularity", "test"]
-# A run's --input must resolve under one of these roots (uploaded files or the
-# bundled data dir) — never an arbitrary server path.
-ALLOWED_INPUT_ROOTS = [UPLOAD_DIR, PROJECT_DIR.parent.parent / "data"]
 
 
 class Run:
@@ -40,6 +37,7 @@ class RunManager:
     def __init__(self, base_url: str):
         self.base_url = base_url.rstrip("/")
         self.runs: dict[str, Run] = {}
+        self.uploads: dict[str, Path] = {}      # upload_id -> trusted stored path
         UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
     # ---- discovery (so the UI can build its form) ----
@@ -50,15 +48,14 @@ class RunManager:
     def list_profiles(self) -> list[str]:
         return list(PROFILES)
 
-    def _validate_input(self, raw: str) -> str:
-        """Confine --input to an uploaded file or the bundled data dir."""
-        path = Path(raw).resolve()
-        roots = [r.resolve() for r in ALLOWED_INPUT_ROOTS]
-        if not any(path.is_relative_to(root) for root in roots):
-            raise ValueError("input must be an uploaded file or bundled data")
-        if not path.is_file():
-            raise ValueError("input file not found")
-        return str(path)
+    def register_upload(self, suffix: str, data: bytes) -> str:
+        """Store an uploaded structure under a server-generated id; return the id.
+        `suffix` is an allowlisted literal, so the path has no user-controlled part."""
+        upload_id = uuid.uuid4().hex[:12]
+        dest = UPLOAD_DIR / f"{upload_id}{suffix}"
+        dest.write_bytes(data)
+        self.uploads[upload_id] = dest
+        return upload_id
 
     # ---- run lifecycle ----
     async def launch(self, req) -> RunInfo:
@@ -71,7 +68,12 @@ class RunManager:
             unknown = [a for a in annotators if a not in allowed]
             if unknown:
                 raise ValueError(f"unknown annotator(s): {unknown}")
-        input_path = self._validate_input(req.input) if req.input else None
+        input_path = None
+        if req.input:                           # req.input is an upload id (used only as a key)
+            stored = self.uploads.get(req.input)
+            if stored is None:
+                raise ValueError("unknown upload id")
+            input_path = str(stored)            # trusted path from the upload registry
 
         run_id = uuid.uuid4().hex[:12]
         run_dir = RUNS_DIR / run_id
@@ -161,11 +163,8 @@ class RunManager:
         run = self.runs.get(run_id)
         if run is None:
             return None
-        base = (run.dir / "results").resolve()     # trusted base (not user input)
-        rel_path = PurePosixPath(rel)
-        if rel_path.is_absolute() or ".." in rel_path.parts:
-            raise ValueError("invalid path")        # reject traversal up-front
-        target = (base / rel).resolve()
-        if not target.is_relative_to(base):         # belt-and-braces containment
-            raise ValueError("path escapes results dir")
-        return target if target.is_file() else None
+        listing = self.results(run_id)              # trusted relative paths (from rglob)
+        if rel not in listing:
+            return None                             # only files in the run's own listing
+        # Build from the trusted listing entry, not the raw request string.
+        return run.dir / "results" / listing[listing.index(rel)]

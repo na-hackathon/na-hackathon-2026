@@ -14,21 +14,20 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-import re
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 
-from .models import RunInfo, RunRequest
-from .runner import RunManager, UPLOAD_DIR
+from .models import RunInfo, RunRequest, UploadInfo
+from .runner import RunManager
 
 BASE_URL = os.environ.get("WS1_API_BASE_URL", "http://127.0.0.1:8000")
 
-# Upload hardening: strict filename charset, structure-only extensions, size cap.
-SAFE_FILENAME = re.compile(r"\A[A-Za-z0-9._-]{1,128}\Z")
-ALLOWED_SUFFIXES = {".pdb", ".cif", ".mmcif"}
+# Uploads are stored under a server-generated id; only the allowlisted suffix from
+# the original name is reused, so no user-controlled string ever forms a path.
+SUFFIX_BY_EXT = {".pdb": ".pdb", ".cif": ".cif", ".mmcif": ".mmcif"}
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 
 app = FastAPI(title="WS1 control plane", version="0.1.0")
@@ -50,20 +49,18 @@ def profiles() -> dict:
     return {"profiles": mgr.list_profiles()}
 
 
-@app.post("/uploads")
-async def upload(file: UploadFile = File(...)) -> dict:
+@app.post("/uploads", response_model=UploadInfo)
+async def upload(file: UploadFile = File(...)) -> UploadInfo:
     name = os.path.basename(file.filename or "")
-    if (name in {"", ".", ".."} or not SAFE_FILENAME.match(name)
-            or Path(name).suffix.lower() not in ALLOWED_SUFFIXES):
-        raise HTTPException(400, "filename must be [A-Za-z0-9._-] ending in .pdb/.cif/.mmcif")
+    # Reuse only the extension, mapped to a literal — never the user string.
+    ext = SUFFIX_BY_EXT.get(Path(name).suffix.lower())
+    if ext is None:
+        raise HTTPException(400, "structure file must be .pdb/.cif/.mmcif")
     data = await file.read()
     if len(data) > MAX_UPLOAD_BYTES:
         raise HTTPException(413, "uploaded file too large")
-    dest = (UPLOAD_DIR / name).resolve()
-    if dest.parent != UPLOAD_DIR.resolve():        # must land directly in uploads
-        raise HTTPException(400, "invalid filename")
-    dest.write_bytes(data)
-    return {"input": str(dest)}
+    upload_id = mgr.register_upload(ext, data)
+    return UploadInfo(upload_id=upload_id, filename=name)
 
 
 @app.post("/runs", response_model=RunInfo)
@@ -140,10 +137,8 @@ def results(run_id: str) -> dict:
 def result_file(run_id: str, rel: str) -> FileResponse:
     if mgr.get(run_id) is None:
         raise HTTPException(404, "run not found")
-    try:
-        path = mgr.result_path(run_id, rel)
-    except ValueError:
-        raise HTTPException(400, "invalid path")
+    # Only paths present in the run's own result listing are servable.
+    path = mgr.result_path(run_id, rel)
     if path is None:
         raise HTTPException(404, "file not found")
     return FileResponse(path)
