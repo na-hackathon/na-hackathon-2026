@@ -16,5 +16,13 @@ dependencies:
   - gemmi                # mmCIF/PDB IO for parser + validator development
   - nf-test              # pipeline tests
   - pytest               # unit tests for the stub stage CLIs
+  - fastapi              # control-plane API (the UI backend)
+  - uvicorn              # ASGI server for the API
+  - python-multipart     # structure-file uploads in the API
 # Per-tool dependencies (rnapolis, fr3d, ...) are NOT here — they live in the
 # per-process pipeline envs under envs/*.yml and are built by Nextflow.
+variables:
+  # Tuck Nextflow's run log into .nextflow/ (already git-ignored) instead of
+  # littering the repo root with .nextflow.log* — there is no nextflow.config
+  # setting for the log path, so it must be an env var, set here on activate.
+  NXF_LOG_FILE: .nextflow/nextflow.log

@@ -269,69 +269,6 @@ Both scripts share these flags:
 | `--block N` | Wrap lines into fixed-width blocks of N columns (handy for long sequences). |
 | `--name NAME` | Header name (default `RNA`). |
 
-## `standalone_lbn_script.py` — also draws the pairs in 3D
-
-If your CIF already carries the DNATCO base-pair annotation
-(`_ndb_base_pair_list` + `_ndb_base_pair_annotation`), this script reads the
-pairs straight from it (no external TSV needed) and, in the same run, prints
-iCn3D `add line` commands that draw every pair on the real 3D structure.
-Canonical WC pairs are drawn thin grey; each non-canonical pair gets its own
-bold colour (listed in the legend below the notation).
-
-```
-python3 standalone_lbn_script.py 9cfn_dnatco.cif A --name 9CFN
-```
-
-Sample output (truncated):
-
-```
->9CFN|A
-seq         : AAGUACCCUCCAAGCCCUACAGGUUGGAAGAGGGGGCUAUCAGUCCUGUAGGCAGACUC
-WC          : .((..([[.[[..{.{{{{.{{{...)..].].]].))......}}}.}}}}}......
-cWW         : ...(....(.......................)..).......................
-tWW         : .......................(......)............................
-tWH         : ........................(...)..............................
-tWS         : ....(....................)..(.............)................
-tHW         : ....(....................................).................
-
-# iCn3D 3D view: 22 pairs.
-# non-canonical pairs (each drawn in its own colour):
-#   cWW U-G A4-A36  #FF00FF
-#   tWS A-G A5-A26  #FF8000
-#   tHW A-A A5-A42  #00C800
-#   cWW U-G A9-A33  #00E5E5
-#   tWW U-A A24-A31  #FFD000
-#   tWH U-A A25-A29  #FF0000
-#   tWS A-G A29-A43  #0000FF
-#
-# STEP 1 - open the structure in iCn3D (any browser):
-#   https://www.ncbi.nlm.nih.gov/Structure/icn3d/full.html?pdbid=9cfn
-# STEP 2 - paste the lines below into iCn3D's command box (the '>' log at the
-#   bottom), click right after the '>', and press Enter:
-add line | x ... | x ... | color FF00FF | dashed false | type cWW | radius 0.8
-add line | x ... | x ... | color 888888 | dashed false | type cWW | radius 0.3
-...
-```
-
-For structures with too many pairs to paste comfortably, use `--script
-9cfn.icn3d` to write a script file and load it via iCn3D's
-**File > Open File > State/Script File**. Symmetry-mate structures get an
-automatic `set assembly on` directive so the operator copy exists before the
-lines are drawn.
-
-## Common flags
-
-Both scripts share these flags:
-
-| Flag | Effect |
-| --- | --- |
-| `--compact` | Keep only the canonical `WC` row as full dot-bracket; print every non-canonical row as an explicit pair list (e.g. `A24,A31`). Saves space on large RNA. |
-| `--noncanonical` | Drop true Watson-Crick pairs entirely (the `WC` row becomes absent). cWW U-U / U-G wobbles still appear on the `cWW` row. |
-| `--layer` | Prepend slot numbers to each row label (`L0 WC`, `L1 cWW`, `L10 tWW`, ...). Off by default. |
-| `--metadata` | Add a `# chains: A[1_555](1-59); '&' separates chains` comment line below the header. The line starts with `#` so any parser ignores it. |
-| `--block N` | Wrap lines into fixed-width blocks of N columns (handy for long sequences). |
-| `--name NAME` | Header name (default `RNA`). |
-
 ## Requirements
 
 Python **3.10 or newer** (the script uses the `X | None` type-hint syntax,
