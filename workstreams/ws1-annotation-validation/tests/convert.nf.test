@@ -1,0 +1,50 @@
+// nf-test for the CONVERT module — runs MaxIT (tzok/maxit docker image) on
+// every sample structure under data/tests/Inputs/ and asserts the process
+// emits a normalized <id>.std.cif file with the expected mmCIF preamble.
+//
+// Requires:
+//   - the docker daemon reachable as the current user (e.g. `usermod -aG docker $USER`)
+//   - the `tzok/maxit` image (pulled lazily on first run)
+//
+// Run with: nf-test test tests/convert.nf.test
+
+nextflow_process {
+
+    name "Test Process CONVERT"
+    script "../modules/convert.nf"
+    process "CONVERT"
+
+    def PDB_IDS = ['8bwt', '8vjt', '8xzn', '9e5i', '9hrf', '9sfq']
+
+    PDB_IDS.each { pdbId ->
+
+        test("MaxIT converts ${pdbId}.cif -> standardized mmCIF") {
+
+            when {
+                params {
+                    outdir = "${outputDir}"
+                }
+                process {
+                    """
+                    input[0] = file("${projectDir}/../../data/tests/Inputs/${pdbId}.cif")
+                    """
+                }
+            }
+
+            then {
+                assert process.success
+
+                def emitted = process.out[0][0]
+                assert emitted.toString().endsWith("${pdbId}.std.cif")
+
+                def cif = path(emitted.toString())
+                assert cif.exists()
+                // MaxIT output is a real mmCIF document
+                def text = cif.text
+                assert text.startsWith('data_') || text.contains('data_')
+                assert text.contains('_atom_site.')
+            }
+        }
+    }
+}
+

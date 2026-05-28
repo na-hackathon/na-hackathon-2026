@@ -94,6 +94,7 @@ nextflow.config    params + profiles (conda/mamba/docker/singularity/test)
 modules/           one .nf process per stage
 bin/               stage CLIs — the team contract (stubs for now)
 envs/              per-process conda envs (one per tool/stage)
+api/               control-plane API (FastAPI) the UI drives — see api/README.md
 environment.yml    ws1-dev developer toolchain (this is NOT a pipeline env)
 read_write_mmcif/  reference parser/converter snippets (PR #46)
 ```

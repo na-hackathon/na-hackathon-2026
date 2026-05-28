@@ -1,6 +1,5 @@
 # T2 annotator: FR3D (BGSU). Selected when 'fr3d' is in --annotators.
-# TODO(annotation team): pin the real FR3D package/source. The bundled 9CFN FR3D
-# output already lives in data/9CFN_bgsu_fr3d.tsv for development.
+# Installed from the BGSU source; provides `python -m fr3d.classifiers.NA_pairwise_interactions`.
 name: ws1-fr3d
 channels:
   - conda-forge
@@ -8,5 +7,5 @@ channels:
 dependencies:
   - python>=3.10
   - pip
-  # - pip:
-  #     - fr3d        # adjust once the FR3D dependency/source is confirmed
+  - pip:
+      - git+https://github.com/BGSU-RNA/fr3d-python.git
