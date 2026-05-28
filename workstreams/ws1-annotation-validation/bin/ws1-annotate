@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+"""WS1 skeleton STUB — Annotator (T2 tool).
+
+Contract (do not change; the Nextflow ANNOTATE process depends on it):
+    ws1-annotate --tool <name> --structure <structure.cif> --out <prefix>
+    => writes <prefix>.<ext>   (this stub writes <prefix>.json)
+
+Annotation team: replace the body with the real tool (FR3D, RNApolis, RNAview,
+NApair, ...). The tool's native output is fine; the matching ws1-parse handles it.
+This stub emits an empty annotation payload so the skeleton runs end-to-end.
+"""
+import argparse
+import json
+import sys
+from pathlib import Path
+
+
+def main():
+    ap = argparse.ArgumentParser(description="WS1 annotator (stub)")
+    ap.add_argument("--tool", required=True)
+    ap.add_argument("--structure", required=True)
+    ap.add_argument("--out", required=True)
+    args = ap.parse_args()
+
+    payload = {
+        "tool": args.tool,
+        "structure": Path(args.structure).name,
+        "base_pairs": [],  # stub: real annotators fill this in
+    }
+    out = f"{args.out}.json"
+    Path(out).write_text(json.dumps(payload, indent=2) + "\n")
+    print(f"[ws1-annotate:{args.tool}] {args.structure} -> {out}", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()

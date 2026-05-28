@@ -1,0 +1,20 @@
+# Development environment for the WS1 annotation & validation skeleton.
+# This is the developer's toolchain shell env. It is NOT the per-process
+# pipeline environment(s); those live in envs/*.yml and are built by Nextflow
+# when you run with -profile conda / -profile mamba.
+#
+#   mamba env create -f environment.yml      # (or: conda env create -f ...)
+#   conda activate ws1-dev
+name: ws1-dev
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.10
+  - openjdk>=17          # Nextflow runtime (JVM)
+  - nextflow>=24.04      # workflow engine
+  - gemmi                # mmCIF/PDB IO for parser + validator development
+  - nf-test              # pipeline tests
+  - pytest               # unit tests for the stub stage CLIs
+# Per-tool dependencies (rnapolis, fr3d, ...) are NOT here — they live in the
+# per-process pipeline envs under envs/*.yml and are built by Nextflow.

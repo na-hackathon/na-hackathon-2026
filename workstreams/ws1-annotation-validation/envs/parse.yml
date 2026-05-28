@@ -1,0 +1,8 @@
+# T2 Parser + T3 Validator environment (built per-process by Nextflow).
+name: ws1-parse
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.10
+  - gemmi
