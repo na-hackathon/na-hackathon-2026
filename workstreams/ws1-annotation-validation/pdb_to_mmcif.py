@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """
-pdb_to_mmcif.py - given a path to a structure file, convert it to mmCIF using a
-pre-built maxit Docker image. Format is determined by file extension:
+pdb_to_mmcif.py
 
-    .pdb / .ent            -> PDB,   converted to mmCIF
-    .cif / .mmcif          -> mmCIF, left as-is (no-op)
+Convert a structure file to mmCIF using a pre-built MAXIT Docker image.
+The input format is determined from the file extension.
+
+Supported input formats:
+    .pdb            -> converted to mmCIF
+    .cif / .mmcif   -> already mmCIF; no conversion needed
 
 Usage:
-    ./pdb_to_mmcif.py <input_file> --image <image> [-o OUTPUT] [--force]
+    python pdb_to_mmcif.py <input_file> --image <image> [-o OUTPUT] [--force]
 
-If --output is omitted, the result is written next to the input with a .cif
-extension. If the input is already mmCIF, the script reports that and exits 0.
+If --output is omitted, the output file is written in the same directory as
+the input file with a .cif extension.
+
+If the input is already mmCIF, the script reports this and exits successfully.
 """
 from __future__ import annotations
 
