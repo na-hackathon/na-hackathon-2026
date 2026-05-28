@@ -1,11 +1,11 @@
-# T2 annotator: FR3D (BGSU). Selected when 'fr3d' is in --annotators.
-# Installed from the BGSU source; provides `python -m fr3d.classifiers.NA_pairwise_interactions`.
+# T2 annotator FR3D — deps for the pinned fr3d-python submodule (run via PYTHONPATH; see modules/annotate.nf).
 name: ws1-fr3d
 channels:
   - conda-forge
-  - bioconda
 dependencies:
   - python>=3.10
   - pip
   - pip:
-      - git+https://github.com/BGSU-RNA/fr3d-python.git
+      - numpy
+      - scipy
+      - mmcif-pdbx

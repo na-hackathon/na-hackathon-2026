@@ -1,10 +1,24 @@
-# T2 annotator: RNApolis (annotator emits JSON). Selected when 'rnapolis' is in --annotators.
+# T2 annotator RNApolis — deps for the pinned rnapolis-py submodule (run via PYTHONPATH; see modules/annotate.nf).
 name: ws1-rnapolis
 channels:
   - conda-forge
-  - bioconda
 dependencies:
-  - python>=3.10
+  - python>=3.12
   - pip
   - pip:
-      - rnapolis
+      - appdirs
+      - apricot-select
+      - graphviz
+      - mmcif
+      - numpy
+      - ordered-set
+      - orjson
+      - pandas
+      - pulp
+      - pycircstat2
+      - requests
+      - scikit-learn
+      - scipy
+      - shapely
+      - tqdm
+      - viennarna
