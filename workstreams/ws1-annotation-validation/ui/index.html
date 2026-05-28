@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WS1 — Annotation Pipeline</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 3rem 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08);
+      padding: 2rem;
+      width: 100%;
+      max-width: 620px;
+    }
+
+    h1 { font-size: 1.35rem; margin-bottom: 0.25rem; }
+    .subtitle { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
+
+    label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.4rem; }
+
+    .field { margin-bottom: 1.25rem; }
+
+    .drop-zone {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .drop-zone:hover, .drop-zone.over { border-color: #3b82f6; background: #eff6ff; }
+    .drop-zone.has-file { border-color: #22c55e; background: #f0fdf4; color: #15803d; }
+    .drop-zone input[type=file] { display: none; }
+
+    select {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      background: #fff;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.65rem;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    button:hover:not(:disabled) { background: #2563eb; }
+    button:disabled { background: #93c5fd; cursor: not-allowed; }
+
+    /* progress */
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #888;
+      margin-bottom: 0.6rem;
+      margin-top: 1.5rem;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .badge-running  { background: #dbeafe; color: #1d4ed8; }
+    .badge-completed { background: #dcfce7; color: #166534; }
+    .badge-failed   { background: #fee2e2; color: #991b1b; }
+    .badge-cancelled { background: #f3f4f6; color: #374151; }
+
+    .progress-bar-wrap {
+      height: 6px;
+      background: #e5e7eb;
+      border-radius: 3px;
+      margin: 0.6rem 0;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #3b82f6;
+      border-radius: 3px;
+      transition: width .3s;
+    }
+    .progress-counts { font-size: 0.82rem; color: #555; }
+
+    /* log */
+    .log {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      font-family: monospace;
+      font-size: 0.8rem;
+      max-height: 220px;
+      overflow-y: auto;
+      margin-top: 0.5rem;
+    }
+    .log-line { white-space: pre-wrap; word-break: break-all; line-height: 1.5; }
+    .log-line.err { color: #f38ba8; }
+
+    /* results */
+    .results-list { list-style: none; margin-top: 0.5rem; }
+    .results-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 0.875rem;
+    }
+    .results-list li:last-child { border-bottom: none; }
+    .results-list a {
+      color: #3b82f6;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .results-list a:hover { text-decoration: underline; }
+
+    .hidden { display: none; }
+    .error-msg { color: #dc2626; font-size: 0.875rem; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>WS1 Annotation Pipeline</h1>
+  <p class="subtitle">Upload a structure file to run the annotation workflow.</p>
+
+  <!-- Upload form -->
+  <div id="form-section">
+    <div class="field">
+      <label>Structure file (.pdb / .cif / .mmcif)</label>
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="file-input" accept=".pdb,.cif,.mmcif" />
+        <span id="drop-label">Drop file here or <u>click to browse</u></span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="profile-select">Nextflow profile</label>
+      <select id="profile-select">
+        <option value="conda">conda</option>
+      </select>
+    </div>
+
+    <button id="run-btn" disabled>Run pipeline</button>
+    <p class="error-msg hidden" id="form-error"></p>
+  </div>
+
+  <!-- Run progress -->
+  <div id="progress-section" class="hidden">
+    <div class="section-title">Run status</div>
+    <div>
+      <span id="status-badge" class="status-badge badge-running">running</span>
+      <span id="run-id-label" style="font-size:.8rem;color:#888;margin-left:.5rem;"></span>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+    </div>
+    <div class="progress-counts" id="progress-counts">Waiting for tasks…</div>
+
+    <div class="section-title">Live log</div>
+    <div class="log" id="log"></div>
+
+    <div id="results-section" class="hidden">
+      <div class="section-title">Results</div>
+      <ul class="results-list" id="results-list"></ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = 'http://127.0.0.1:8000';
+
+  // ── DOM refs ──
+  const dropZone      = document.getElementById('drop-zone');
+  const fileInput     = document.getElementById('file-input');
+  const dropLabel     = document.getElementById('drop-label');
+  const profileSelect = document.getElementById('profile-select');
+  const runBtn        = document.getElementById('run-btn');
+  const formError     = document.getElementById('form-error');
+  const formSection   = document.getElementById('form-section');
+  const progressSec   = document.getElementById('progress-section');
+  const statusBadge   = document.getElementById('status-badge');
+  const runIdLabel    = document.getElementById('run-id-label');
+  const progressBar   = document.getElementById('progress-bar');
+  const progressCounts= document.getElementById('progress-counts');
+  const logEl         = document.getElementById('log');
+  const resultsSec    = document.getElementById('results-section');
+  const resultsList   = document.getElementById('results-list');
+
+  let selectedFile = null;
+
+  // ── Load profiles ──
+  async function loadProfiles() {
+    try {
+      const res = await fetch(`${API}/profiles`);
+      if (!res.ok) return;
+      const { profiles } = await res.json();
+      profileSelect.innerHTML = '';
+      profiles.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = p;
+        if (p === 'conda') opt.selected = true;
+        profileSelect.appendChild(opt);
+      });
+    } catch { /* server not up yet — keep defaults */ }
+  }
+  loadProfiles();
+
+  // ── File selection ──
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => setFile(fileInput.files[0]));
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('over');
+    setFile(e.dataTransfer.files[0]);
+  });
+
+  function setFile(file) {
+    if (!file) return;
+    selectedFile = file;
+    dropZone.classList.add('has-file');
+    dropLabel.textContent = `✓ ${file.name}`;
+    runBtn.disabled = false;
+    hideError();
+  }
+
+  // ── Run ──
+  runBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    runBtn.disabled = true;
+    hideError();
+
+    try {
+      // 1. Upload
+      addLog('Uploading file…');
+      const fd = new FormData();
+      fd.append('file', selectedFile);
+      const upRes = await fetch(`${API}/uploads`, { method: 'POST', body: fd });
+      if (!upRes.ok) throw new Error(`Upload failed: ${(await upRes.json()).detail}`);
+      const { upload_id } = await upRes.json();
+      addLog(`Upload OK — id ${upload_id}`);
+
+      // 2. Launch run
+      addLog('Launching pipeline run…');
+      const runRes = await fetch(`${API}/runs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input: upload_id, profile: profileSelect.value }),
+      });
+      if (!runRes.ok) throw new Error(`Launch failed: ${(await runRes.json()).detail}`);
+      const run = await runRes.json();
+      addLog(`Run started — id ${run.id}`);
+
+      // 3. Show progress panel
+      formSection.classList.add('hidden');
+      progressSec.classList.remove('hidden');
+      runIdLabel.textContent = run.id;
+      setStatus(run.status);
+
+      // 4. Stream events
+      streamEvents(run.id);
+
+    } catch (err) {
+      showError(err.message);
+      runBtn.disabled = false;
+    }
+  });
+
+  // ── SSE stream ──
+  function streamEvents(runId) {
+    const es = new EventSource(`${API}/runs/${runId}/events`);
+
+    es.onmessage = e => {
+      let ev;
+      try { ev = JSON.parse(e.data); } catch { return; }
+
+      if (ev.event === 'task') {
+        const t = ev.task || {};
+        addLog(`[task] ${t.name || ''} — ${t.status || ''}`);
+      } else if (ev.event === 'run') {
+        addLog(`[run] ${ev.status || ''}`);
+      } else if (ev.event === 'terminated') {
+        setStatus(ev.status);
+        addLog(`Pipeline ${ev.status}.`);
+        es.close();
+        if (ev.status === 'completed') loadResults(runId);
+      }
+
+      // update progress bar from polling (SSE events don't carry totals)
+      pollProgress(runId);
+    };
+
+    es.onerror = () => {
+      addLog('[connection lost — polling for final status]', true);
+      es.close();
+      pollFallback(runId);
+    };
+  }
+
+  // Update progress bar from GET /runs/{id}
+  async function pollProgress(runId) {
+    try {
+      const res = await fetch(`${API}/runs/${runId}`);
+      if (!res.ok) return;
+      const info = await res.json();
+      const p = info.progress;
+      const total = p.submitted || 0;
+      const done  = p.completed + p.failed;
+      if (total > 0) {
+        progressBar.style.width = `${Math.round((done / total) * 100)}%`;
+        progressCounts.textContent =
+          `${p.completed} completed, ${p.failed} failed, ${total} total tasks`;
+      }
+      setStatus(info.status);
+    } catch { /* ignore */ }
+  }
+
+  async function pollFallback(runId) {
+    let attempts = 0;
+    const iv = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await fetch(`${API}/runs/${runId}`);
+        if (!res.ok) return;
+        const info = await res.json();
+        setStatus(info.status);
+        if (info.finished_at !== null || attempts > 60) {
+          clearInterval(iv);
+          if (info.status === 'completed') loadResults(runId);
+        }
+      } catch { if (attempts > 60) clearInterval(iv); }
+    }, 3000);
+  }
+
+  // ── Results ──
+  async function loadResults(runId) {
+    try {
+      const res = await fetch(`${API}/runs/${runId}/results`);
+      if (!res.ok) return;
+      const { files } = await res.json();
+      if (!files || files.length === 0) return;
+      resultsList.innerHTML = '';
+      files.forEach(f => {
+        const li = document.createElement('li');
+        const a  = document.createElement('a');
+        a.href = `${API}/runs/${runId}/results/${f}`;
+        a.textContent = f;
+        a.download = f.split('/').pop();
+        li.appendChild(a);
+        resultsList.appendChild(li);
+      });
+      resultsSec.classList.remove('hidden');
+    } catch { /* ignore */ }
+  }
+
+  // ── Helpers ──
+  function setStatus(status) {
+    statusBadge.textContent = status;
+    statusBadge.className = `status-badge badge-${status}`;
+  }
+
+  function addLog(msg, isErr = false) {
+    const line = document.createElement('div');
+    line.className = 'log-line' + (isErr ? ' err' : '');
+    line.textContent = msg;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function showError(msg) { formError.textContent = msg; formError.classList.remove('hidden'); }
+  function hideError()    { formError.classList.add('hidden'); }
+</script>
+</body>
+</html>

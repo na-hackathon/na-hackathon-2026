@@ -23,8 +23,8 @@ conda activate ws1-dev
 # 2. smoke test — runs end-to-end on the bundled 9CFN data, no tool installs needed
 nextflow run main.nf -profile test
 
-# 3. a real run — defaults: fr3d annotator, conda envs
-nextflow run main.nf --input ../../data/9CFN_clean.cif
+# 3. a real run
+nextflow run main.nf --input ../../data/9CFN_clean.cif --annotators fr3d,rnapolis -profile conda
 ```
 
 Results are written under `--outdir` (default `results/`):
@@ -41,8 +41,8 @@ results/
 
 | Param | Default | Meaning |
 |---|---|---|
-| `--input` | _(required)_ | Structure file, `.pdb` or `.cif` — may also be passed positionally (`nextflow run main.nf <file>`) |
-| `--annotators` | `fr3d` | Comma-separated annotator names, e.g. `fr3d,rnapolis` (one `envs/<name>.yml` each) |
+| `--input` | _(required)_ | Structure file, `.pdb` or `.cif` |
+| `--annotators` | `fr3d,rnapolis` | Comma-separated annotator names (one `envs/<name>.yml` each) |
 | `--outdir` | `results` | Output directory |
 
 ## Environments (profiles)
@@ -97,26 +97,6 @@ normal runs, which only consume the published image.
 2. Add `envs/<tool>.yml` with its dependencies.
 3. Teach `bin/ws1-parse` to read its native output.
 4. Add the name to `--annotators` — the `ANNOTATE` process is generic over the tool.
-
-## Driving runs from a UI (control-plane API)
-
-Nextflow has no native control API, so `api/` ships a thin **FastAPI** backend a UI drives to
-launch, monitor (live), and fetch results — full details in [`api/README.md`](api/README.md).
-
-```bash
-conda activate ws1-dev            # includes fastapi + uvicorn
-uvicorn api.app:app --port 8000   # interactive docs at http://127.0.0.1:8000/docs
-```
-
-| Method | Path | Purpose |
-|---|---|---|
-| GET | `/tools`, `/profiles` | options for the UI form |
-| POST | `/uploads` | upload a structure |
-| POST | `/runs` | launch a run `{input?, annotators?, profile}` |
-| GET | `/runs[/{id}]` | list / status + task progress |
-| GET | `/runs/{id}/events` | SSE live progress (fed by Nextflow `-with-weblog`) |
-| GET | `/runs/{id}/results[/{path}]` | list / download published outputs |
-| DELETE | `/runs/{id}` | cancel a run |
 
 ## Layout
 
