@@ -1,0 +1,22 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+# python caches
+__pycache__/
+*.pyc
+
+# generated graph artifacts
+*.pt
+
+# fr3d build logs written by the rnaglib notebook
+*.log
+
+# rnaglib graph json written by the adapter / notebook
+*.rnaglib.json
+
+# demo / dataset pipeline outputs (fetched cifs + generated graphs)
+demo/
+rs25/
+cifs/
+graphs/
