@@ -11,8 +11,13 @@ process GEMMI_CONVERTPDB2MMCIF {
     path "${structure.baseName}.std.cif"
 
     script:
-    """
-    gemmi convert --from=pdb --to=mmcif ${structure} "${structure.baseName}.std.cif"
-    """
+    if (structure.extension == 'pdb')
+        """
+        gemmi convert --from=pdb --to=mmcif ${structure} "${structure.baseName}.std.cif"
+        """
+    else
+        """
+        cat ${structure} > ${structure.baseName}.std.cif
+        """
 
 }

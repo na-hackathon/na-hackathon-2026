@@ -389,9 +389,38 @@ _ndb_base_pair_annotation.subclass
 """
 
 
+EDGE_PRIORITY = {"W": 0, "H": 1, "S": 2}        # canonical write order: W > H > S
+                                                # (lower number = higher priority)
+
+
+def _emit_sort_key(pair):
+    """Order pairs to match DNATCO's row layout: smaller chain ASC, smaller
+    residue ASC, then larger residue DESC. The descending tie-break puts the
+    farthest-reach pair first when two pairs share the same lower residue,
+    e.g. (5, 42, tWH) before (5, 26, tWS) in 9CFN."""
+    Ra, Rb, _ = pair
+    chain_a, _, num_a = Ra
+    chain_b, _, num_b = Rb
+    if (chain_a, num_a) > (chain_b, num_b):
+        chain_a, num_a, chain_b, num_b = chain_b, num_b, chain_a, num_a
+    return (chain_a, num_a, chain_b, -num_b)
+
+
 def emit_blocks(pairs, meta, oper_name_to_id) -> tuple[str, str]:
+    pairs = sorted(pairs, key=_emit_sort_key)
     list_rows, ann_rows = [], []
     for i, (Ra, Rb, lw) in enumerate(pairs, 1):
+        # DNATCO convention: in the row, the first residue carries the
+        # higher-priority edge (W > H > S). If our canonicalised pair has the
+        # priorities reversed (e.g. tHW, cSW, tSH), swap the residues and flip
+        # the LW string so it lands as tWH, cWS, tHS, ...  This is purely the
+        # output-order convention; the underlying pair is unchanged.
+        if (lw and len(lw) == 3 and lw[1] in EDGE_PRIORITY
+                and lw[2] in EDGE_PRIORITY
+                and EDGE_PRIORITY[lw[1]] > EDGE_PRIORITY[lw[2]]):
+            Ra, Rb = Rb, Ra
+            lw = _flip_lw(lw)
+
         ch1, s1, n1 = Ra
         ch2, s2, n2 = Rb
         m1 = meta.get((ch1, n1), {})
