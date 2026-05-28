@@ -6,6 +6,7 @@ process CONVERT {
     label 'conversion'
     publishDir "${params.outdir}/mmcif", mode: 'copy'
     conda "${projectDir}/envs/convert.yml"
+    docker tzok/maxit:latest
 
     input:
     path structure
@@ -15,6 +16,6 @@ process CONVERT {
 
     script:
     """
-    ws1-convert --input ${structure} --out ${structure.baseName}.std.cif
+    pdb_to_mmcif.py -o ${structure.baseName}.std.cif ${structure}
     """
 }
