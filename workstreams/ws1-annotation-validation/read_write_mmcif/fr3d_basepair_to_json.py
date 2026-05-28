@@ -9,9 +9,9 @@ basepairs["summary"] = {}
 basepairs["details"] = []
 
 try:
-  pdbid=""
-  print(pdbid)
-  with open(sys.argv[1]) as csvfile:
+  in_file = sys.argv[1]
+  out_file = sys.argv[2] if len(sys.argv) > 2 else 'basepairs.json'
+  with open(in_file) as csvfile:
     reader = csv.reader(csvfile, delimiter='\t')
     for row in reader:
       #a=row[0].split('|')
@@ -23,8 +23,8 @@ try:
         basepairs["summary"][LW] += 1
       basepairs["details"].append(row)
 
-    with open('basepairs.json', 'w') as f:
+    with open(out_file, 'w') as f:
       json.dump(basepairs, f)
 except:
-  print("Error processing basepair file", file=sys.stderr)
+  print("usage:", sys.argv[0], "fr3d_basepairs.tsv [out.json]", file=sys.stderr)
   raise

@@ -35,6 +35,7 @@ try:
     pairs = json.load(file)
 
   mmcif_file = sys.argv[2]
+  out_file = sys.argv[3] if len(sys.argv) > 3 else Path(mmcif_file).stem + '_basepairs.cif'
 
   # TODO replace structure with something else so we can drop the double reading
   structure = gemmi.read_structure(mmcif_file)
@@ -66,7 +67,7 @@ try:
   ndb_base_pair_annotation_loop = block.init_mmcif_loop('_ndb_base_pair_annotation.', ['id', 'base_pair_id', 'orientation', 'base_1_edge', 'base_2_edge', 'l-w_family_num', 'l-w_family', 'class', 'subclass'])
 
 except:
-  print("usage:",sys.argv[0],"basepairs.json","structure.cif", file=sys.stderr)
+  print("usage:",sys.argv[0],"basepairs.json","structure.cif","[out.cif]", file=sys.stderr)
   raise
 
 def get_atom_identifiers(structure, model_number, author_chain, author_resnum, author_resname, author_ins_code, author_alt_id):
@@ -226,7 +227,7 @@ options.align_pairs = 33
 options.align_loops = 30
 
 # write to mmCIF file
-doc.write_file(Path(mmcif_file).stem+'_basepairs.cif', options)
+doc.write_file(out_file, options)
 
 # get also as string
 cif_in_string = doc.as_string(options)
