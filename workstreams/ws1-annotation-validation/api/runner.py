@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from .models import RunInfo, RunStatus, TaskProgress
 
@@ -18,6 +18,9 @@ RUNS_DIR = PROJECT_DIR / ".api_runs"
 UPLOAD_DIR = RUNS_DIR / "_uploads"
 RESERVED_ENVS = {"convert", "parse"}                   # stage envs, not annotators
 PROFILES = ["conda", "mamba", "docker", "singularity", "test"]
+# A run's --input must resolve under one of these roots (uploaded files or the
+# bundled data dir) — never an arbitrary server path.
+ALLOWED_INPUT_ROOTS = [UPLOAD_DIR, PROJECT_DIR.parent.parent / "data"]
 
 
 class Run:
@@ -25,6 +28,8 @@ class Run:
         self.info = info
         self.proc: asyncio.subprocess.Process | None = None
         self.subscribers: set[asyncio.Queue[dict]] = set()   # one queue per SSE client
+        # Trusted run dir, built from the server-generated id (never user input).
+        self.dir: Path = RUNS_DIR / info.id
 
     def publish(self, event: dict) -> None:
         for queue in list(self.subscribers):
@@ -45,8 +50,29 @@ class RunManager:
     def list_profiles(self) -> list[str]:
         return list(PROFILES)
 
+    def _validate_input(self, raw: str) -> str:
+        """Confine --input to an uploaded file or the bundled data dir."""
+        path = Path(raw).resolve()
+        roots = [r.resolve() for r in ALLOWED_INPUT_ROOTS]
+        if not any(path.is_relative_to(root) for root in roots):
+            raise ValueError("input must be an uploaded file or bundled data")
+        if not path.is_file():
+            raise ValueError("input file not found")
+        return str(path)
+
     # ---- run lifecycle ----
     async def launch(self, req) -> RunInfo:
+        # Validate every user-supplied value before it reaches the command line.
+        if req.profile not in PROFILES:
+            raise ValueError(f"unknown profile {req.profile!r}")
+        annotators = req.annotators
+        if annotators:
+            allowed = set(self.list_annotators())
+            unknown = [a for a in annotators if a not in allowed]
+            if unknown:
+                raise ValueError(f"unknown annotator(s): {unknown}")
+        input_path = self._validate_input(req.input) if req.input else None
+
         run_id = uuid.uuid4().hex[:12]
         run_dir = RUNS_DIR / run_id
         run_dir.mkdir(parents=True, exist_ok=True)
@@ -59,14 +85,14 @@ class RunManager:
             "--outdir", str(run_dir / "results"),
             "-with-weblog", f"{self.base_url}/runs/{run_id}/_weblog",
         ]
-        if req.input:
-            cmd += ["--input", req.input]
-        if req.annotators:
-            cmd += ["--annotators", ",".join(req.annotators)]
+        if input_path:
+            cmd += ["--input", input_path]
+        if annotators:
+            cmd += ["--annotators", ",".join(annotators)]
 
         info = RunInfo(
             id=run_id, status=RunStatus.running, profile=req.profile,
-            annotators=req.annotators, input=req.input,
+            annotators=annotators, input=input_path,
             started_at=time.time(), progress=TaskProgress(),
         )
         run = Run(info)
@@ -122,14 +148,24 @@ class RunManager:
         return [r.info for r in self.runs.values()]
 
     def results(self, run_id: str) -> list[str]:
-        base = RUNS_DIR / run_id / "results"
+        # run_id is only a dict key; the path comes from the trusted run.dir.
+        run = self.runs.get(run_id)
+        if run is None:
+            return []
+        base = run.dir / "results"
         if not base.exists():
             return []
         return sorted(str(p.relative_to(base)) for p in base.rglob("*") if p.is_file())
 
     def result_path(self, run_id: str, rel: str) -> Path | None:
-        base = (RUNS_DIR / run_id / "results").resolve()
+        run = self.runs.get(run_id)
+        if run is None:
+            return None
+        base = (run.dir / "results").resolve()     # trusted base (not user input)
+        rel_path = PurePosixPath(rel)
+        if rel_path.is_absolute() or ".." in rel_path.parts:
+            raise ValueError("invalid path")        # reject traversal up-front
         target = (base / rel).resolve()
-        if not target.is_relative_to(base):       # block path traversal
+        if not target.is_relative_to(base):         # belt-and-braces containment
             raise ValueError("path escapes results dir")
         return target if target.is_file() else None

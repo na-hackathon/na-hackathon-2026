@@ -14,6 +14,8 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
+from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,6 +25,11 @@ from .models import RunInfo, RunRequest
 from .runner import RunManager, UPLOAD_DIR
 
 BASE_URL = os.environ.get("WS1_API_BASE_URL", "http://127.0.0.1:8000")
+
+# Upload hardening: strict filename charset, structure-only extensions, size cap.
+SAFE_FILENAME = re.compile(r"\A[A-Za-z0-9._-]{1,128}\Z")
+ALLOWED_SUFFIXES = {".pdb", ".cif", ".mmcif"}
+MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 
 app = FastAPI(title="WS1 control plane", version="0.1.0")
 # Permissive CORS for dev so the React app (different origin) can call the API.
@@ -45,14 +52,26 @@ def profiles() -> dict:
 
 @app.post("/uploads")
 async def upload(file: UploadFile = File(...)) -> dict:
-    dest = UPLOAD_DIR / os.path.basename(file.filename or "structure")
-    dest.write_bytes(await file.read())
+    name = os.path.basename(file.filename or "")
+    if (name in {"", ".", ".."} or not SAFE_FILENAME.match(name)
+            or Path(name).suffix.lower() not in ALLOWED_SUFFIXES):
+        raise HTTPException(400, "filename must be [A-Za-z0-9._-] ending in .pdb/.cif/.mmcif")
+    data = await file.read()
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, "uploaded file too large")
+    dest = (UPLOAD_DIR / name).resolve()
+    if dest.parent != UPLOAD_DIR.resolve():        # must land directly in uploads
+        raise HTTPException(400, "invalid filename")
+    dest.write_bytes(data)
     return {"input": str(dest)}
 
 
 @app.post("/runs", response_model=RunInfo)
 async def create_run(req: RunRequest) -> RunInfo:
-    return await mgr.launch(req)
+    try:
+        return await mgr.launch(req)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
 
 
 @app.get("/runs", response_model=list[RunInfo])
@@ -119,6 +138,8 @@ def results(run_id: str) -> dict:
 
 @app.get("/runs/{run_id}/results/{rel:path}")
 def result_file(run_id: str, rel: str) -> FileResponse:
+    if mgr.get(run_id) is None:
+        raise HTTPException(404, "run not found")
     try:
         path = mgr.result_path(run_id, rel)
     except ValueError:
