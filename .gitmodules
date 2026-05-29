@@ -1,0 +1,6 @@
+[submodule "fr3d-python"]
+	path = workstreams/ws1-annotation-validation/annotations_tools/fr3d-python
+	url = https://github.com/BGSU-RNA/fr3d-python.git
+[submodule "rnapolis-py"]
+	path = workstreams/ws1-annotation-validation/annotations_tools/rnapolis-py
+	url = https://github.com/tzok/rnapolis-py.git
