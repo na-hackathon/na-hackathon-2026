@@ -253,6 +253,35 @@ def _family_of(label: str) -> str:
     return parts[1] if len(parts) >= 2 and parts[0].startswith("L") else parts[0]
 
 
+def _format_unpaired(unpaired: list, strands: list[tuple[str, str]]) -> str:
+    """ 'A8, A11, A29-32, A44, ...' -- compact comma-separated list of unpaired
+    residues, with consecutive numbers within one strand collapsed to ranges.
+    Symmetry mates use the same residue-with-bracketed-operator form as
+    _res_id (e.g. 'A2[2_565]' for a single residue, 'A2-5[2_565]' for a range).
+    Returns '(none)' when there are no unpaired residues."""
+    if not unpaired:
+        return "(none)"
+    by_strand: dict[tuple, list[int]] = {}
+    for ch, sym, num in unpaired:
+        by_strand.setdefault((ch, sym), []).append(num)
+    out: list[str] = []
+    for s in strands:
+        nums = sorted(by_strand.get(s, []))
+        if not nums:
+            continue
+        ch, sym = s
+        op_suffix = "" if sym == IDENTITY else f"[{sym}]"
+        i = 0
+        while i < len(nums):
+            j = i
+            while j + 1 < len(nums) and nums[j + 1] == nums[j] + 1:
+                j += 1
+            out.append(f"{ch}{nums[i]}{op_suffix}" if i == j
+                       else f"{ch}{nums[i]}-{nums[j]}{op_suffix}")
+            i = j + 1
+    return ", ".join(out)
+
+
 def _res_id(R: tuple) -> str:
     """Compact residue label: chain+number, with the operator only when it is a
     symmetry mate (e.g. 'A24', or 'A1012[2_755]')."""
@@ -273,7 +302,8 @@ def build_notation(per_chain: dict[str, list], pairs: list, chains: list[str],
                    name: str = "RNA",
                    block: int | None = None, compact: bool = False,
                    noncanonical: bool = False, show_layer: bool = False,
-                   show_metadata: bool = False) -> tuple[str, bool]:
+                   show_metadata: bool = False,
+                   show_unpaired: bool = False) -> tuple[str, bool]:
     """Build the layered notation and return (text, round-trip ok).
 
     Args:
@@ -290,6 +320,13 @@ def build_notation(per_chain: dict[str, list], pairs: list, chains: list[str],
         noncanonical: drop true Watson-Crick pairs entirely (the WC layer
             becomes absent). cWW U-U / U-G wobbles still appear on the cWW row.
         show_layer: prepend slot numbers ('L0 WC', 'L1 cWW', 'L10 tWW', ...).
+        show_unpaired: add a '# unpaired (N): A8, A11, A29-32, ...' comment
+            line below the header listing residues that have no hydrogen-bond
+            partner in the structure. Consecutive numbers within a strand are
+            collapsed to ranges. The count is a structural property and stays
+            the same regardless of --noncanonical: a stem residue that pairs
+            only via WC is still paired in the structure, its pair is just
+            hidden from the display.
         show_metadata: add a '# chains: ...' comment line below the header
             with per-strand chain/symmetry/range info.
 
@@ -305,6 +342,11 @@ def build_notation(per_chain: dict[str, list], pairs: list, chains: list[str],
     strand is a symmetry mate (not the identity 1_555)."""
     base_of = {(ch, num): letter
                for ch, lst in per_chain.items() for num, letter in lst}
+
+    # Structural pairing snapshot, taken BEFORE the noncanonical display filter.
+    # Used by show_unpaired so that residues paired only via WC are not falsely
+    # reported as unpaired just because --noncanonical hid their pair from view.
+    full_paired_keys = {R for Ra, Rb, _ in pairs for R in (Ra, Rb)}
 
     if noncanonical:
         pairs = [p for p in pairs
@@ -380,6 +422,13 @@ def build_notation(per_chain: dict[str, list], pairs: list, chains: list[str],
     if show_metadata:
         spans = ", ".join(f"{_label(s)}({_span(residues, s)})" for s in strands)
         head += f"\n# chains: {spans}; '{SEP}' separates chains"
+    if show_unpaired:
+        # Residues that have no hydrogen-bond partner in the FULL structure.
+        # We use the pre-filter pair set so the count is a structural property
+        # of the molecule, independent of --noncanonical (residues paired only
+        # via Watson-Crick are still paired -- their pair is just hidden).
+        unpaired = [R for R in residues if R not in full_paired_keys]
+        head += f"\n# unpaired ({len(unpaired)}): {_format_unpaired(unpaired, strands)}"
 
     if compact:        # only the canonical WC layer stays as dot-bracket; every
         rows = [f"{'seq':12}: " + seq_line]   # non-canonical layer becomes a

@@ -17,12 +17,16 @@ This file owns the FR3D-specific reading (unit-id parsing, pair list); the rest
 helpers -- lives in common.py.
 
 Usage:
-    python3 layered_basepairs.py <cif> <tsv> <chains...> [--name NAME]
+    python3 layered_basepairs.py <cif> <tsv> [chains...] [--name NAME]
                                   [--block N] [--compact] [--noncanonical]
                                   [--layer] [--metadata]
 
+With no chains, all chains present in the FR3D TSV are used automatically.
+
 Examples (mmCIF from files.rcsb.org/download/<ID>.cif, basepairs TSV from FR3D):
     python3 layered_basepairs.py 9CFN.cif 9cfn_fr3d_basepairs.tsv A --name 9CFN
+    # no chains given -> all chains in the TSV are used
+    python3 layered_basepairs.py 9CFN.cif 9cfn_fr3d_basepairs.tsv --name 9CFN
     python3 layered_basepairs.py 1XPE.cif 1xpe_fr3d_basepairs.tsv A B --name 1XPE
     python3 layered_basepairs.py 2Q1R.cif 2q1r_fr3d_basepairs.tsv A --name 2Q1R
 
@@ -49,6 +53,21 @@ def _sym(unit: list[str]) -> str:
     reported explicitly as 1_555. FR3D unit id format is
     pdb|model|chain|comp|num|atom|alt|ins|symmetry."""
     return unit[8] if len(unit) > 8 and unit[8] else IDENTITY
+
+
+def list_chains(tsv: Path) -> list[str]:
+    """Chains that appear in the FR3D pair list, sorted. Used as the default
+    when no chains are given on the command line."""
+    chains: set[str] = set()
+    for line in tsv.read_text().splitlines():
+        c = line.strip().split("\t")
+        if len(c) < 3:
+            continue
+        a, b = c[0].split("|"), c[2].split("|")
+        if len(a) > 2 and len(b) > 2:
+            chains.add(a[2])
+            chains.add(b[2])
+    return sorted(chains)
 
 
 def read_pairs(tsv: Path, chains: set[str]) -> list[tuple[tuple, tuple, str]]:
@@ -80,8 +99,9 @@ if __name__ == "__main__":
                     "(symmetry-aware), driven by an FR3D base-pair TSV.")
     ap.add_argument("cif", type=Path, help="mmCIF file (sequence + residue numbers)")
     ap.add_argument("tsv", type=Path, help="FR3D basepairs TSV")
-    ap.add_argument("chains", nargs="+",
-                    help="chain ids, in the order to lay them on the ruler")
+    ap.add_argument("chains", nargs="*",
+                    help="chain ids, in the order to lay them on the ruler; "
+                         "default: all chains present in the TSV")
     ap.add_argument("--name", default="RNA", help="label for the header line")
     ap.add_argument("--block", type=int, nargs="?", const=BLOCK, default=None,
                     help=f"wrap lines into blocks of this many columns "
@@ -100,14 +120,20 @@ if __name__ == "__main__":
     ap.add_argument("--metadata", action="store_true",
                     help="add a '# chains: ...' comment line below the header "
                          "with per-strand chain/symmetry/range info; off by default")
+    ap.add_argument("--unpaired", action="store_true",
+                    help="add a '# unpaired (N): A8, A11, A29-32, ...' comment "
+                         "line below the header listing residues that "
+                         "participate in no displayed pair; off by default")
     a = ap.parse_args()
 
-    per_chain = read_residues(a.cif, a.chains)
-    pairs = read_pairs(a.tsv, set(a.chains))
-    text, ok = build_notation(per_chain, pairs, a.chains, name=a.name,
+    chains = a.chains or list_chains(a.tsv)
+    per_chain = read_residues(a.cif, chains)
+    pairs = read_pairs(a.tsv, set(chains))
+    text, ok = build_notation(per_chain, pairs, chains, name=a.name,
                               block=a.block, compact=a.compact,
                               noncanonical=a.noncanonical,
-                              show_layer=a.layer, show_metadata=a.metadata)
+                              show_layer=a.layer, show_metadata=a.metadata,
+                              show_unpaired=a.unpaired)
     print(text)
     print(f"\n# round-trip recovers all pairs exactly: {ok}", file=sys.stderr)
     sys.exit(0 if ok else 1)

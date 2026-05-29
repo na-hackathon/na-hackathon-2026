@@ -1,0 +1,12 @@
+# T3 visualization env (optional, used by the VISUALIZE process when --visualize).
+# Renders per-tool base-pair graphs: forgi BulgeGraph + matplotlib JPG.
+name: ws1-visualize
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.10
+  - gemmi
+  - pip
+  - pip:
+      - forgi
+      - matplotlib
