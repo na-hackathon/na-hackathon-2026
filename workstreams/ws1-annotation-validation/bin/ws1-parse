@@ -1,57 +1,37 @@
-#!/usr/bin/env python3
-"""WS1 skeleton STUB — Parser (T2).
+#!/usr/bin/env bash
+# WS1 Parser (T2) — tool-native annotation output -> standardized base-pairing mmCIF.
+#
+# Contract (the Nextflow PARSE process depends on it):
+#     ws1-parse --tool <name> --raw <file> --structure <cif> --out <out.cif>
+#       fr3d     : raw TSV -> JSON -> NDB base-pairing mmCIF
+#       rnapolis : raw JSON -> NDB base-pairing mmCIF
+#
+# The conversion logic lives next to this CLI in bin/ (run with the conda python3).
+set -euo pipefail
 
-Contract (do not change; the Nextflow PARSE process depends on it):
-    ws1-parse --tool <name> --raw <tool output> --structure <structure.cif> --out <out.cif>
+tool= ; raw= ; structure= ; out=
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --tool)      tool=$2;      shift 2 ;;
+        --raw)       raw=$2;       shift 2 ;;
+        --structure) structure=$2; shift 2 ;;
+        --out)       out=$2;       shift 2 ;;
+        *) echo "ws1-parse: unknown argument '$1'" >&2; exit 2 ;;
+    esac
+done
+[ -n "$tool" ] && [ -n "$raw" ] && [ -n "$structure" ] && [ -n "$out" ] || {
+    echo "usage: ws1-parse --tool <name> --raw <file> --structure <cif> --out <out.cif>" >&2; exit 2; }
 
-Parser team: replace the body with the real conversion to a standardized
-base-pairing mmCIF (NDB extended _ndb_base_pair_list / _ndb_base_pair_annotation
-categories). A reference implementation already exists in read_write_mmcif/.
-This stub reads the JSON annotation envelope and writes a minimal, valid mmCIF.
-"""
-import argparse
-import json
-import sys
-from pathlib import Path
-
-LOOP_HEADER = """loop_
-_ndb_base_pair_list.base_pair_id
-_ndb_base_pair_list.PDB_model_number
-_ndb_base_pair_list.auth_asym_id_1
-_ndb_base_pair_list.auth_seq_id_1
-_ndb_base_pair_list.comp_id_1
-_ndb_base_pair_list.auth_asym_id_2
-_ndb_base_pair_list.auth_seq_id_2
-_ndb_base_pair_list.comp_id_2
-"""
-
-
-def main():
-    ap = argparse.ArgumentParser(description="WS1 parser (stub)")
-    ap.add_argument("--tool", required=True)
-    ap.add_argument("--raw", required=True)
-    ap.add_argument("--structure", required=True)
-    ap.add_argument("--out", required=True)
-    args = ap.parse_args()
-
-    pairs = []
-    try:
-        pairs = json.loads(Path(args.raw).read_text()).get("base_pairs", [])
-    except Exception as exc:  # stub: tolerate anything
-        print(f"[ws1-parse:{args.tool}] could not read {args.raw}: {exc}", file=sys.stderr)
-
-    out = [f"data_{args.tool}_basepairs\n"]
-    if pairs:
-        out.append(LOOP_HEADER)
-        for i, _pair in enumerate(pairs, 1):
-            out.append(f"{i} 1 . . . . . .\n")  # placeholder row scheme
-    else:
-        out.append("# (stub) no base pairs annotated — parser team fills this in\n")
-    out.append("#\n")
-
-    Path(args.out).write_text("".join(out))
-    print(f"[ws1-parse:{args.tool}] {args.raw} -> {args.out} ({len(pairs)} pairs)", file=sys.stderr)
-
-
-if __name__ == "__main__":
-    main()
+lib="$(dirname "$(command -v ws1-parse)")"
+case "$tool" in
+    fr3d)
+        python3 "$lib/fr3d_basepair_to_json.py" "$raw" basepairs.json
+        python3 "$lib/json_fr3d_mmcif.py" basepairs.json "$structure" "$out" >/dev/null
+        ;;
+    rnapolis)
+        python3 "$lib/json_rnapolis_mmcif.py" "$raw" "$structure" "$out" >/dev/null
+        ;;
+    *)
+        echo "ws1-parse: no parser wired for tool '$tool'" >&2; exit 2 ;;
+esac
+echo "[ws1-parse:$tool] $raw -> $out" >&2

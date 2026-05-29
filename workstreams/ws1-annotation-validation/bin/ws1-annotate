@@ -1,72 +1,42 @@
-#!/usr/bin/env python3
-"""WS1 Annotator — runs FR3D or RNApolis on an mmCIF structure.
+#!/usr/bin/env bash
+# WS1 Annotator (T2) — run a base-pair annotator on the mmCIF.
+#
+# Contract (the Nextflow ANNOTATE process depends on it):
+#     ws1-annotate --tool <name> --structure <cif> --out <prefix> --src <annotations_tools dir>
+#       fr3d     -> writes <prefix>.txt   (FR3D basepair TSV)
+#       rnapolis -> writes <prefix>.json  (RNApolis annotator JSON)
+#
+# Each tool runs from its pinned submodule under --src (via PYTHONPATH), so the
+# exact annotator commit is what executes — the conda envs supply only deps, not
+# the tool itself. --src is passed by the module so this CLI stays location-agnostic.
+set -euo pipefail
 
-Contract (do not change; the Nextflow ANNOTATE process depends on it):
-    ws1-annotate --tool <name> --structure <structure.cif> --out <prefix>
-    Output:
-      rnapolis -> <prefix>.json   (rnapolis JSON with base_pairs list)
-      fr3d     -> <prefix>.tsv    (FR3D tab-separated pairs)
-"""
-import argparse
-import subprocess
-import sys
-from pathlib import Path
+tool= ; structure= ; out= ; src=
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --tool)      tool=$2;      shift 2 ;;
+        --structure) structure=$2; shift 2 ;;
+        --out)       out=$2;       shift 2 ;;
+        --src)       src=$2;       shift 2 ;;
+        *) echo "ws1-annotate: unknown argument '$1'" >&2; exit 2 ;;
+    esac
+done
+[ -n "$tool" ] && [ -n "$structure" ] && [ -n "$out" ] && [ -n "$src" ] || {
+    echo "usage: ws1-annotate --tool <name> --structure <cif> --out <prefix> --src <dir>" >&2; exit 2; }
 
-
-def run_rnapolis(structure: Path, out_prefix: str) -> Path:
-    out = Path(f"{out_prefix}.json")
-    subprocess.run(
-        ["annotator", "--json", str(out), str(structure)],
-        check=True,
-    )
-    return out
-
-
-def run_fr3d(structure: Path, out_prefix: str) -> Path:
-    pdb_id = structure.stem
-    out_dir = Path(out_prefix).parent.resolve()
-
-    subprocess.run(
-        [
-            "python", "-m", "fr3d.classifiers.NA_pairwise_interactions",
-            "-i", str(structure.parent.resolve()),
-            "-o", str(out_dir),
-            structure.name,
-        ],
-        check=True,
-    )
-
-    out = Path(f"{out_prefix}.tsv")
-    (out_dir / f"{pdb_id}_basepair.txt").rename(out)
-    return out
-
-
-HANDLERS = {
-    "rnapolis": run_rnapolis,
-    "fr3d":     run_fr3d,
-}
-
-
-def main() -> None:
-    ap = argparse.ArgumentParser(description="WS1 annotator")
-    ap.add_argument("--tool",      required=True)
-    ap.add_argument("--structure", required=True, type=Path)
-    ap.add_argument("--out",       required=True)
-    args = ap.parse_args()
-
-    structure = Path(args.structure)
-    if not structure.exists():
-        sys.exit(f"[ws1-annotate] structure not found: {structure}")
-
-    if args.tool not in HANDLERS:
-        sys.exit(
-            f"[ws1-annotate] unknown tool '{args.tool}'; "
-            f"supported: {', '.join(HANDLERS)}"
-        )
-
-    out = HANDLERS[args.tool](structure, args.out)
-    print(f"[ws1-annotate:{args.tool}] {structure} -> {out}", file=sys.stderr)
-
-
-if __name__ == "__main__":
-    main()
+case "$tool" in
+    fr3d)
+        fr3d_src="$src/fr3d-python"
+        export PYTHONPATH="$fr3d_src:${PYTHONPATH:-}"
+        python "$fr3d_src/fr3d/classifiers/NA_pairwise_interactions.py" -i . "$structure" -o "$out"
+        mv "$(find . -name '*_basepair.txt' | head -n 1)" "$out.txt"
+        ;;
+    rnapolis)
+        rnapolis_src="$src/rnapolis-py/src"
+        export PYTHONPATH="$rnapolis_src:${PYTHONPATH:-}"
+        python "$rnapolis_src/rnapolis/annotator.py" "$structure" -j "$out.json" -e
+        ;;
+    *)
+        echo "ws1-annotate: no annotator wired for tool '$tool'" >&2; exit 2 ;;
+esac
+echo "[ws1-annotate:$tool] $structure -> $out" >&2
