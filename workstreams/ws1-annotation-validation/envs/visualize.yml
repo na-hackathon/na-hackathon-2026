@@ -1,11 +1,16 @@
 # T3 visualization env (optional, used by the VISUALIZE process when --visualize).
 # Renders per-tool base-pair graphs: forgi BulgeGraph + matplotlib JPG.
+# forgi.visual.mplotlib.plot_rna does `import RNA` internally, so we need the
+# ViennaRNA Python bindings from bioconda::viennarna. Bioconda only ships those
+# bindings up to python 3.12, hence the upper pin.
 name: ws1-visualize
 channels:
   - conda-forge
+  - bioconda
 dependencies:
-  - python>=3.10
+  - python>=3.10,<3.13
   - gemmi
+  - viennarna       # provides the `RNA` python module that forgi.plot_rna imports
   - pip
   - pip:
       - forgi
