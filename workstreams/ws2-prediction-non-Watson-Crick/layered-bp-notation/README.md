@@ -137,6 +137,83 @@ tWS         : ....(....................)..(.............)............
 tHW         : ....(....................................).............
 ```
 
+### 6. Unpaired residues
+
+A `.` in a bracket row means "this residue has no partner **on that layer**"
+— that is a per-row statement. With `--unpaired`, the script adds a single
+`#`-prefixed comment line summarising "this residue has no partner **anywhere
+in the structure**". Both views coexist; one is per-layer, the other is
+structural.
+
+```
+$ python3 standalone_lbn_script.py 9HRF.cif --unpaired
+>9HRF|A
+# unpaired (13): A8, A11, A29-32, A44, A49-51, A61, A69-70  [derived from pair list]
+seq         : GGGCGCAUUUUGGUAGGUCGGUCGCUGCUUCGGCAGUGAGGGGUAGGCAUUGCUGGCCUAGGGUGCCCUU
+WC          : ((((.(...(...[[[[.[.[((.((((....)))).)).....)..(...)].].]]]]..).))))..
+...
+```
+
+Consecutive residue numbers within one strand are collapsed to ranges
+(`A29-32` instead of `A29, A30, A31, A32`); symmetry mates use the same
+bracketed-operator form the rest of the script uses (e.g. `A2[2_565]`).
+
+**Source rule.** The script picks where to get the unpaired list using a
+simple two-step check:
+
+1. **If the CIF contains `_ndb_base_unpaired_list`** — DNATCO's own
+   per-model annotation — read it directly (model 1 by default). This is the
+   authoritative source, particularly for NMR ensembles where the unpaired
+   set varies across models.
+2. **Otherwise** — derive it from `_ndb_base_pair_list`: every residue in
+   the chain that never appears in any pair row is unpaired.
+
+The output records which source was used:
+
+```
+# unpaired (4): A12-15  [from _ndb_base_unpaired_list, model 1]
+# unpaired (2): A13-14  [derived from pair list]
+```
+
+The bundled `examples/8VJT.cif` is the only example file shipped with the
+`_ndb_base_unpaired_list` block already populated, so it is the easiest way
+to try the "from `_ndb_base_unpaired_list`" path:
+
+```
+python3 standalone_lbn_script.py examples/8VJT.cif --unpaired
+# >8VJT|A|A:2_565|...
+# # unpaired (2): A2, B2  [from _ndb_base_unpaired_list, model 1]
+```
+
+The same 8VJT through the FR3D path (which has no separate unpaired list)
+derives the unpaired set from the TSV instead, and reports it across every
+displayed strand including the symmetry mates:
+
+```
+python3 layered_basepairs.py examples/8VJT.cif examples/8vjt_fr3d_basepairs.tsv --unpaired
+# # unpaired (8): A2, A2[2_565], A2[3_555], A2[4_455], B2, ...  [derived from FR3D pair list]
+```
+
+Both views are correct for the scope they describe (asymmetric unit vs the
+displayed assembly).
+
+The FR3D-driven script (`layered_basepairs.py`) always derives, since FR3D
+ships only a pair list.
+
+**Why a `#` comment line and not a new bracket row?** Standard 2D viewers
+(VARNA, R2DT, forna, fornac, ViennaRNA) require `.` for unpaired in
+dot-bracket. Putting a custom marker on a bracket row would either break
+bracket balance (`(` for unpaired) or break tool compatibility (`_`, `-`).
+A `#` comment follows the FASTA / Stockholm convention, is ignored by every
+standard tool, and stays human-readable. It also round-trips correctly:
+`notation_to_cif.py` ignores `#` lines, so the comment never affects the
+rebuilt CIF.
+
+The display-filter is honoured **but the count is structural**, by design:
+running `--unpaired --noncanonical` reports the same residues as `--unpaired`
+alone, because a residue paired only via Watson-Crick is still paired in the
+structure — its pair is just hidden when the WC layer is dropped from view.
+
 ## `standalone_lbn_script.py` — also draws the pairs in 3D
 
 If your CIF already carries the DNATCO base-pair annotation
@@ -258,7 +335,7 @@ would need structural modelling and is out of scope here.
 
 ## Common flags
 
-Both scripts share these flags:
+Both forward scripts share these flags:
 
 | Flag | Effect |
 | --- | --- |
@@ -266,8 +343,9 @@ Both scripts share these flags:
 | `--noncanonical` | Drop true Watson-Crick pairs entirely (the `WC` row becomes absent). cWW U-U / U-G wobbles still appear on the `cWW` row. |
 | `--layer` | Prepend slot numbers to each row label (`L0 WC`, `L1 cWW`, `L10 tWW`, ...). Off by default. |
 | `--metadata` | Add a `# chains: A[1_555](1-59); '&' separates chains` comment line below the header. The line starts with `#` so any parser ignores it. |
-| `--block N` | Wrap lines into fixed-width blocks of N columns (handy for long sequences). |
-| `--name NAME` | Header name (default `RNA`). |
+| `--unpaired` | Add a `# unpaired (N): A8, A11, A29-32, ...` comment line listing residues that have no pair. Consecutive residues within a strand are collapsed to ranges. See **Unpaired residues** below for how the source is chosen. |
+| `--block N` | Wrap lines into fixed-width blocks of N columns (handy for long sequences). `--block` with no value uses 100 columns. |
+| `--name NAME` | Header label. **Default: read from the CIF itself** (`_entry.id`, falling back to the `data_XXXX` block name at the top of the file). So for `8BWT.cif` you get `>8BWT|...` without typing `--name`. |
 
 ## Requirements
 
@@ -286,12 +364,13 @@ conda activate lbn
 ### From an FR3D TSV (any mmCIF for sequence/numbering)
 
 ```
-python3 layered_basepairs.py <cif> <tsv> [chains...] [--name NAME] [--block N]
-                              [--compact] [--noncanonical] [--layer] [--metadata]
+python3 layered_basepairs.py <cif> <tsv> [chains...] [options]
 ```
 
-The chain ids are optional — with none given, all chains present in the FR3D
-TSV are used automatically.
+Optional flags: `--name`, `--block`, `--compact`, `--noncanonical`, `--layer`,
+`--metadata`, `--unpaired`. With no chains, every chain present in the FR3D
+TSV is used automatically. With no `--name`, the label is read from the
+CIF's `_entry.id`.
 
 Base pairs come from the FR3D basepairs TSV (provided in `examples/`); the
 matching mmCIF is downloaded from RCSB. For example, the 1XPE kissing-loop
@@ -299,20 +378,32 @@ dimer:
 
 ```
 wget https://files.rcsb.org/download/1XPE.cif
-python3 layered_basepairs.py 1XPE.cif examples/1xpe_fr3d_basepairs.tsv A B --name 1XPE
+python3 layered_basepairs.py 1XPE.cif examples/1xpe_fr3d_basepairs.tsv A B
 # or let it pick up the chains itself:
-python3 layered_basepairs.py 1XPE.cif examples/1xpe_fr3d_basepairs.tsv --name 1XPE
+python3 layered_basepairs.py 1XPE.cif examples/1xpe_fr3d_basepairs.tsv
 ```
 
 ### From a DNATCO-extended mmCIF (no external pair list)
 
 ```
-python3 standalone_lbn_script.py <cif> [chains...] [--name NAME] [--id PDBID]
-                                  [--compact] [--noncanonical] [--layer]
-                                  [--metadata] [--block N] [--script FILE]
+python3 standalone_lbn_script.py <cif> [chains...] [options]
 ```
 
-`--id` overrides the PDB id iCn3D loads (defaults to the CIF file stem).
+Optional flags: `--name`, `--id`, `--compact`, `--noncanonical`, `--layer`,
+`--metadata`, `--unpaired`, `--block`, `--script FILE`. With no chains,
+every chain that appears in the pair list is used.
+
+- `--name` defaults to `_entry.id` from the CIF (or the `data_XXXX` block name).
+- `--id` overrides the PDB id iCn3D should load (defaults to the CIF file stem,
+  lowercased).
+- `--unpaired` reads `_ndb_base_unpaired_list` when the CIF contains it
+  (DNATCO's own per-model annotation), otherwise derives from the pair list.
+
+Minimal invocation, everything auto-detected:
+
+```
+python3 standalone_lbn_script.py 8BWT.cif --unpaired
+```
 
 The notation goes to stdout; the round-trip check (`True` = lossless) is
 printed to stderr. The standalone additionally emits iCn3D `add line` commands

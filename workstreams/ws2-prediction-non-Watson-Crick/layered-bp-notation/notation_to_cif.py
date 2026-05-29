@@ -30,9 +30,25 @@ notation encoded.
 Usage:
     python3 notation_to_cif.py <notation.txt> <any.cif> -o <new.cif>
 
-    # produce the notation, then invert it, then verify
-    python3 standalone_lbn_script.py 9cfn.cif > 9cfn.lbn
-    python3 notation_to_cif.py 9cfn.lbn 9cfn.cif -o 9cfn_rebuilt.cif
+Examples -- the typical pattern is "forward, inverse, verify":
+
+    # 1. Forward: CIF -> notation
+    python3 standalone_lbn_script.py 8BWT.cif > 8BWT.lbn
+
+    # 2. Inverse: notation + any CIF of the same structure -> rebuilt CIF
+    python3 notation_to_cif.py 8BWT.lbn 8BWT.cif -o 8BWT_rebuilt.cif
+
+    # 3. Verify: the rebuilt CIF should yield the SAME notation
+    python3 standalone_lbn_script.py 8BWT_rebuilt.cif > 8BWT_rebuilt.lbn
+    diff 8BWT.lbn 8BWT_rebuilt.lbn   # empty == perfect round-trip
+
+    # Comment lines ('# chains: ...', '# unpaired: ...') in the notation are
+    # IGNORED by the parser, so a notation file produced with --metadata or
+    # --unpaired still round-trips correctly.
+
+    # The input CIF need NOT be DNATCO-extended -- a vanilla RCSB-downloaded
+    # CIF or even a minimal atom-site-only CIF works.
+    python3 notation_to_cif.py 9CFN.lbn vanilla_9CFN.cif -o 9CFN_with_pairs.cif
 """
 
 import argparse

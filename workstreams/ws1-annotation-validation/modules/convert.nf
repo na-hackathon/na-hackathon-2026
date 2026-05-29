@@ -1,13 +1,16 @@
-// T1 Conversion — any input structure (.pdb/.cif) -> standardized mmCIF.
-// Conversion team owns bin/ws1-convert and envs/convert.yml.
+// T1 Conversion — standardize an input structure (.pdb/.cif) to mmCIF.
+// Calls bin/ws1-convert. params.converter selects the converter and its env:
+//   maxit  (default)    — RCSB MAXIT via conda (bioconda::maxit); pdb -> -o 1, cif -> -o 8 (#76)
+//   maxit-docker        — same maxit from the tzok/maxit image (fallback)
+//   gemmi  (DEPRECATED) — conda fallback
+// maxit/gemmi come from envs/convert.yml; maxit-docker runs in the tzok/maxit container.
 
 process CONVERT {
     tag   "${structure.name}"
     label 'conversion'
     publishDir "${params.outdir}/mmcif", mode: 'copy'
-    conda "${projectDir}/envs/convert.yml"
-    //this defines a docker container in which the maxit can run on it's own, but that stops the python wrapping from working
-    //container "tzok/maxit"
+    conda     { params.converter == 'maxit-docker' ? null : "${projectDir}/envs/convert.yml" }
+    container { params.converter == 'maxit-docker' ? 'tzok/maxit' : null }
 
     input:
     path structure
@@ -17,15 +20,6 @@ process CONVERT {
 
     script:
     """
-    python ${projectDir}/bin/convert_to_mmcif_with_maxit.py -o ${structure.baseName}.std.cif ${structure}
+    ws1-convert --input ${structure} --out ${structure.baseName}.std.cif --converter ${params.converter}
     """
-    //if you want to use this process but not the python wrapped version, enable docker and swap out the script above with what's below
-    //if (structure.extension == 'pdb')
-    //    """
-    //    maxit -input ${structure} -output ${structure.baseName}.std.cif -o 1
-    //    """
-    //else
-    //    """
-    //    maxit -input ${structure} -output ${structure.baseName}.std.cif -o 8
-    //    """
 }

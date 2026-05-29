@@ -10,3 +10,10 @@ results/
 
 #maxit artifact
 maxit.log
+
+# Python
+__pycache__/
+*.pyc
+
+# control-plane API run dirs
+.api_runs/
