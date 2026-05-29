@@ -15,17 +15,43 @@ This file owns the CIF-specific reading (operator list, annotation, pair list,
 reading, the layered-notation builder, parser helpers -- lives in common.py.
 
 Usage:
-    python3 standalone_lbn_script.py <cif> [chains...] [--name NAME] [--id PDBID]
-                                     [--noncanonical] [--compact] [--block N]
-                                     [--layer] [--metadata] [--script FILE]
+    python3 standalone_lbn_script.py <cif> [chains...] [options]
 
-    python3 standalone_lbn_script.py 9cfn.cif --name 9cfn          # auto chains
-    python3 standalone_lbn_script.py 1XPE.cif A B --name 1XPE      # pick chains
-    python3 standalone_lbn_script.py 9cfn.cif --noncanonical       # only non-canonical
-    python3 standalone_lbn_script.py 9cfn.cif --script 9cfn.icn3d  # write a script file
+Examples -- most users only need the first one:
 
-The notation prints to stdout; the round-trip result and the iCn3D commands (or
-a --script file path) follow.
+    # 1. Simplest. --name and chains are auto-detected from the CIF.
+    python3 standalone_lbn_script.py 8BWT.cif
+
+    # 2. Also list residues that have no pair.
+    #    Source: _ndb_base_unpaired_list (DNATCO's own per-model annotation,
+    #    model 1) when present in the CIF; otherwise derived from the pair list.
+    python3 standalone_lbn_script.py 8BWT.cif --unpaired
+
+    # 3. Show only non-canonical pairs (drops A-U, G-C, A-T from the WC row).
+    python3 standalone_lbn_script.py 9HRF.cif --noncanonical
+
+    # 4. Big RNA: wrap each row into 100-column blocks AND keep non-canonical
+    #    rows as a short pair list instead of full-width dot-bracket.
+    python3 standalone_lbn_script.py 9CFN.cif --block --compact
+
+    # 5. Pick chains explicitly + add slot numbers to each row label.
+    python3 standalone_lbn_script.py 1XPE.cif A B --layer
+
+    # 6. Add a '# chains: ...' header comment describing each strand.
+    python3 standalone_lbn_script.py 1XPE.cif --metadata
+
+    # 7. Override the auto-detected name.
+    python3 standalone_lbn_script.py 8BWT.cif --name MY-LABEL
+
+    # 8. Write iCn3D commands to a file (load via File > Open in iCn3D)
+    #    instead of pasting them into the iCn3D command box.
+    python3 standalone_lbn_script.py 9CFN.cif --script 9CFN.icn3d
+
+    # 9. Flags compose freely.
+    python3 standalone_lbn_script.py 9CFN.cif --unpaired --metadata --layer --block
+
+The notation prints to stdout; the round-trip result and the iCn3D commands
+(or a --script file path) follow.
 """
 
 import argparse
@@ -35,7 +61,7 @@ from pathlib import Path
 from common import (
     BLOCK, DIRECTED, IDENTITY,
     _flip_lw, _is_canonical, _loop_columns, _read_loop_rows,
-    _res_id, build_notation, read_residues,
+    _res_id, build_notation, read_entry_id, read_residues,
 )
 
 
@@ -294,44 +320,73 @@ def build_icn3d_lines(cif: Path, chains: list[str], noncanonical: bool = False
 
 def main() -> None:
     ap = argparse.ArgumentParser(
-        description="Layered base-pair notation + iCn3D commands to draw the "
-                    "pairs in 3D, from a single annotated mmCIF.")
+        description="Layered base-pair notation + iCn3D 3D overlay, from a "
+                    "single DNATCO-annotated mmCIF.")
+
+    # Positional --------------------------------------------------------------
     ap.add_argument("cif", type=Path,
-                    help="mmCIF with _ndb_base_pair_list/_annotation categories")
+                    help="input mmCIF file (must contain _ndb_base_pair_list "
+                         "and _ndb_base_pair_annotation)")
     ap.add_argument("chains", nargs="*",
-                    help="chain ids in ruler order; default: all chains that pair")
-    ap.add_argument("--name", default="RNA", help="label for the notation header")
+                    help="chain IDs to lay on the ruler, in order; "
+                         "default: every chain that appears in the pair list")
+
+    # Identity ----------------------------------------------------------------
+    ap.add_argument("--name", default=None,
+                    help="header label shown in the '>...' line; "
+                         "default: read from the CIF itself (_entry.id, or "
+                         "the 'data_XXXX' block name) -- so for 8BWT.cif you "
+                         "do not have to type --name 8BWT")
     ap.add_argument("--id", default=None,
-                    help="PDB id iCn3D should load (default: the cif file name); "
-                         "must be an id iCn3D can load")
+                    help="PDB id iCn3D should load; "
+                         "default: the CIF filename stem, lowercased "
+                         "(e.g. 8BWT.cif -> 8bwt). Must be an id iCn3D can fetch.")
+
+    # Display filters ---------------------------------------------------------
     ap.add_argument("--noncanonical", action="store_true",
-                    help="draw only non-canonical pairs (cWW U-U/G-U included)")
-    ap.add_argument("--block", type=int, nargs="?", const=BLOCK, default=None,
-                    help=f"wrap notation lines into blocks of N columns "
-                         f"(default {BLOCK})")
+                    help="drop canonical Watson-Crick pairs (A-U, G-C, A-T) "
+                         "from the display; non-canonical cWW pairs "
+                         "(U-U / U-G wobbles) stay on the cWW row")
     ap.add_argument("--compact", action="store_true",
-                    help="keep only the canonical WC layer as dot-bracket; "
-                         "print every non-canonical layer as an explicit pair "
-                         "list (e.g. A24,A31); saves space on large RNA")
+                    help="keep the canonical WC layer as full-width dot-bracket, "
+                         "but print every non-canonical layer as a short pair "
+                         "list (e.g. 'A24,A31  A25,A29'); saves vertical space "
+                         "on large RNAs")
+    ap.add_argument("--block", type=int, nargs="?", const=BLOCK, default=None,
+                    help=f"wrap each row into blocks of N columns "
+                         f"(default {BLOCK} when --block is given with no value); "
+                         f"useful for very long sequences")
+
+    # Row / strand labelling --------------------------------------------------
     ap.add_argument("--layer", action="store_true",
-                    help="prepend slot numbers to each layer label "
-                         "(L0 WC, L1 cWW, L10 tWW, ...). Off by default: "
-                         "labels are plain family names (WC, cWW, tWW, ...)")
+                    help="prepend slot numbers to each row label "
+                         "(L0 WC, L1 cWW, L2 cWH, ... L18 tSS); "
+                         "off by default -- labels are plain family names")
+
+    # Extra comment lines below the header -----------------------------------
     ap.add_argument("--metadata", action="store_true",
-                    help="add a '# chains: ...' comment line below the header "
-                         "with per-strand chain/symmetry/range info "
-                         "(e.g. 'A[1_555](1-59)'); off by default")
+                    help="add a '# chains: ...' line describing each strand "
+                         "(chain, symmetry operator, residue range)")
     ap.add_argument("--unpaired", action="store_true",
-                    help="add a '# unpaired (N): A8, A11, A29-32, ...' comment "
-                         "line below the header listing residues that "
-                         "participate in no displayed pair; off by default")
+                    help="add a '# unpaired (N): ...' line listing residues "
+                         "with no hydrogen-bond partner. Source order: "
+                         "(1) _ndb_base_unpaired_list from the CIF when "
+                         "present (DNATCO's own per-model annotation, "
+                         "model 1 by default); (2) otherwise derive from "
+                         "the pair list (residue is unpaired iff it never "
+                         "appears in any pair row)")
+
+    # 3D overlay output -------------------------------------------------------
     ap.add_argument("--script", metavar="FILE",
-                    help="write the iCn3D commands to FILE (one per line) to "
-                         "load via File > Open File > State/Script File, "
-                         "instead of a URL")
+                    help="write iCn3D commands to FILE (one per line) so you "
+                         "can load them via File > Open File > State/Script "
+                         "File in iCn3D, instead of pasting into the command box")
     a = ap.parse_args()
 
     chains = a.chains or list_chains(a.cif)
+    # If --name wasn't given, pull it from the CIF itself so users don't have
+    # to retype the PDB id that the file already declares.
+    name = a.name or read_entry_id(a.cif) or "RNA"
 
     # 1) notation -- caller does the CIF reads, common.py does the layering.
     # Unpaired list: if the CIF ships _ndb_base_unpaired_list (DNATCO's own
@@ -346,7 +401,7 @@ def main() -> None:
             unpaired_source = "from _ndb_base_unpaired_list, model 1"
         else:
             unpaired_source = "derived from pair list"
-    text, ok = build_notation(per_chain, pairs, chains, name=a.name, block=a.block,
+    text, ok = build_notation(per_chain, pairs, chains, name=name, block=a.block,
                               compact=a.compact, noncanonical=a.noncanonical,
                               show_layer=a.layer, show_metadata=a.metadata,
                               show_unpaired=a.unpaired,

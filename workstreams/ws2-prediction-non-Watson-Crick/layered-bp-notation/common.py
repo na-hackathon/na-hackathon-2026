@@ -163,6 +163,24 @@ def read_residues(cif: Path, chains: list[str]) -> dict[str, list]:
             else _read_atom_site(lines, chains))
 
 
+def read_entry_id(cif: Path) -> str | None:
+    """PDB id / entry id read from the CIF itself. Prefers _entry.id; if that
+    is missing or set to '?' / '.', falls back to the 'data_XXXX' block name
+    at the top of the file. Returns None only if neither is present. Used as
+    the default for --name so the user does not have to type the id that the
+    file already declares about itself."""
+    data_block = None
+    for line in cif.read_text().splitlines():
+        s = line.strip()
+        if data_block is None and s.startswith("data_") and len(s) > 5:
+            data_block = s[5:]
+        elif s.startswith("_entry.id"):
+            parts = s.split()
+            if len(parts) >= 2 and parts[1] not in ("?", "."):
+                return parts[1].strip("'\"")
+    return data_block
+
+
 # --------------------------------------------------------------------------- #
 #  Layout, render and parse                                                    #
 # --------------------------------------------------------------------------- #
