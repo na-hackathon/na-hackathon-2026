@@ -120,6 +120,10 @@ if __name__ == "__main__":
     ap.add_argument("--metadata", action="store_true",
                     help="add a '# chains: ...' comment line below the header "
                          "with per-strand chain/symmetry/range info; off by default")
+    ap.add_argument("--unpaired", action="store_true",
+                    help="add a '# unpaired (N): A8, A11, A29-32, ...' comment "
+                         "line below the header listing residues that "
+                         "participate in no displayed pair; off by default")
     a = ap.parse_args()
 
     chains = a.chains or list_chains(a.tsv)
@@ -128,7 +132,8 @@ if __name__ == "__main__":
     text, ok = build_notation(per_chain, pairs, chains, name=a.name,
                               block=a.block, compact=a.compact,
                               noncanonical=a.noncanonical,
-                              show_layer=a.layer, show_metadata=a.metadata)
+                              show_layer=a.layer, show_metadata=a.metadata,
+                              show_unpaired=a.unpaired)
     print(text)
     print(f"\n# round-trip recovers all pairs exactly: {ok}", file=sys.stderr)
     sys.exit(0 if ok else 1)

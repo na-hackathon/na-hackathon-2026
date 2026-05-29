@@ -293,6 +293,10 @@ def main() -> None:
                     help="add a '# chains: ...' comment line below the header "
                          "with per-strand chain/symmetry/range info "
                          "(e.g. 'A[1_555](1-59)'); off by default")
+    ap.add_argument("--unpaired", action="store_true",
+                    help="add a '# unpaired (N): A8, A11, A29-32, ...' comment "
+                         "line below the header listing residues that "
+                         "participate in no displayed pair; off by default")
     ap.add_argument("--script", metavar="FILE",
                     help="write the iCn3D commands to FILE (one per line) to "
                          "load via File > Open File > State/Script File, "
@@ -306,7 +310,8 @@ def main() -> None:
     pairs = read_pairs(a.cif, set(chains))
     text, ok = build_notation(per_chain, pairs, chains, name=a.name, block=a.block,
                               compact=a.compact, noncanonical=a.noncanonical,
-                              show_layer=a.layer, show_metadata=a.metadata)
+                              show_layer=a.layer, show_metadata=a.metadata,
+                              show_unpaired=a.unpaired)
     print(text)
     print(f"\n# round-trip recovers all pairs exactly: {ok}", file=sys.stderr)
 
