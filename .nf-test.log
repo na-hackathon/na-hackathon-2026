@@ -1,0 +1,8 @@
+May-29 10:26:28.313 [main] INFO  com.askimed.nf.test.App - nf-test 0.9.5
+May-29 10:26:28.339 [main] INFO  com.askimed.nf.test.App - Arguments: [test, tests/annotate.nf.test]
+May-29 10:26:29.425 [main] INFO  com.askimed.nf.test.App - Nextflow Version: 26.04.2
+May-29 10:26:29.429 [main] WARN  com.askimed.nf.test.commands.RunTestsCommand - No nf-test config file found.
+May-29 10:26:29.517 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Loaded 35 files from directory /home/louis/na-hackathon-2026 in 0.086 sec
+May-29 10:26:29.520 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Found 0 files containing tests.
+May-29 10:26:29.521 [main] DEBUG com.askimed.nf.test.lang.dependencies.DependencyResolver - Found files: []
+May-29 10:26:29.524 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Found 0 tests to execute.

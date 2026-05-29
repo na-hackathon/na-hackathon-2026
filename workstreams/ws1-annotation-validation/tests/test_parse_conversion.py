@@ -1,4 +1,4 @@
-"""Simple unit test for the base-pairing parsers in read_write_mmcif/.
+"""Simple unit test for the base-pairing parsers in bin/.
 you can run it with pytest using python -m pytest tests/test_parse_conversion.py
 Runs the FR3D and RNApolis conversion scripts on the sample inputs under
 data/tests/{fr3d_outputs,rnapolis_outputs} (with structures from
@@ -15,7 +15,7 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[3]
 WS1 = Path(__file__).resolve().parents[1]
-SCRIPTS = WS1 / "read_write_mmcif"
+SCRIPTS = WS1 / "bin"
 DATA = REPO / "data" / "tests"
 
 INPUTS = DATA / "Inputs"
