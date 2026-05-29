@@ -15,8 +15,8 @@ from pathlib import Path
 
 import gemmi
 
-# parse_basepairs lives next door in read_write_mmcif/
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "read_write_mmcif"))
+# parse_basepairs lives next to this script in bin/
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from parse_basepairs import parse_basepairs  # noqa: E402
 
 NA_RESIDUES = {"A", "U", "G", "C", "T", "DA", "DT", "DG", "DC"}

@@ -1,0 +1,118 @@
+// End-to-end pipeline tests for main.nf.
+//
+// Matrix:
+//   inputs : every structure under data/tests/Inputs/{*.cif, pdb/*.pdb}
+//   modes  : conda   -> --converter maxit         (bioconda::maxit via envs/convert.yml)
+//            docker  -> --converter maxit-docker  (tzok/maxit container)
+//
+// Each test asserts:
+//   - workflow.success
+//   - results/mmcif/<id>.std.cif      (CONVERT output)
+//   - results/basepairs/rnapolis_basepairs.cif  (PARSE output)
+//
+// Run with:    nf-test test tests/pipeline.nf.test
+
+nextflow_pipeline {
+
+    name "Test pipeline main.nf"
+    script "../main.nf"
+
+    def CIF_IDS = ['8bwt', '8vjt', '8xzn', '9e5i', '9hrf', '9sfq']
+    def PDB_IDS = ['8bwt', '8vjt']
+
+    // ---------- conda mode (--converter maxit, bioconda::maxit) ----------
+    CIF_IDS.each { id ->
+        test("conda | cif | ${id}") {
+            when {
+                params {
+                    input      = "${projectDir}/../../data/tests/Inputs/${id}.cif"
+                    converter  = "maxit"
+                    annotators = "rnapolis"
+                    outdir     = "${outputDir}"
+                }
+            }
+            then {
+                assert workflow.success
+                assert path("${outputDir}/mmcif/${id}.std.cif").exists()
+                assert path("${outputDir}/basepairs/rnapolis_basepairs.cif").exists()
+            }
+        }
+    }
+
+    PDB_IDS.each { id ->
+        test("conda | pdb | ${id}") {
+            when {
+                params {
+                    input      = "${projectDir}/../../data/tests/Inputs/pdb/${id}.pdb"
+                    converter  = "maxit"
+                    annotators = "rnapolis"
+                    outdir     = "${outputDir}"
+                }
+            }
+            then {
+                assert workflow.success
+                assert path("${outputDir}/mmcif/${id}.std.cif").exists()
+                assert path("${outputDir}/basepairs/rnapolis_basepairs.cif").exists()
+            }
+        }
+    }
+
+    // ---------- docker mode (--converter maxit-docker, tzok/maxit container) ----------
+    CIF_IDS.each { id ->
+        test("docker | cif | ${id}") {
+            config "./docker.config"
+            when {
+                params {
+                    input      = "${projectDir}/../../data/tests/Inputs/${id}.cif"
+                    converter  = "maxit-docker"
+                    annotators = "rnapolis"
+                    outdir     = "${outputDir}"
+                }
+            }
+            then {
+                assert workflow.success
+                assert path("${outputDir}/mmcif/${id}.std.cif").exists()
+                assert path("${outputDir}/basepairs/rnapolis_basepairs.cif").exists()
+            }
+        }
+    }
+
+    PDB_IDS.each { id ->
+        test("docker | pdb | ${id}") {
+            config "./docker.config"
+            when {
+                params {
+                    input      = "${projectDir}/../../data/tests/Inputs/pdb/${id}.pdb"
+                    converter  = "maxit-docker"
+                    annotators = "rnapolis"
+                    outdir     = "${outputDir}"
+                }
+            }
+            then {
+                assert workflow.success
+                assert path("${outputDir}/mmcif/${id}.std.cif").exists()
+                assert path("${outputDir}/basepairs/rnapolis_basepairs.cif").exists()
+            }
+        }
+    }
+
+    // ---------- multi-tool sanity (exercises ANNOTATE on fr3d too + VALIDATE branch) ----------
+    test("conda | cif | 8xzn | both annotators + VALIDATE") {
+        when {
+            params {
+                input      = "${projectDir}/../../data/tests/Inputs/8xzn.cif"
+                converter  = "maxit"
+                annotators = "fr3d,rnapolis"
+                outdir     = "${outputDir}"
+            }
+        }
+        then {
+            assert workflow.success
+            assert path("${outputDir}/mmcif/8xzn.std.cif").exists()
+            assert path("${outputDir}/basepairs/fr3d_basepairs.cif").exists()
+            assert path("${outputDir}/basepairs/rnapolis_basepairs.cif").exists()
+            assert path("${outputDir}/validation/validation_report.json").exists()
+            assert path("${outputDir}/validation/validation_report.tsv").exists()
+        }
+    }
+}

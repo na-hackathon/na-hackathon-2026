@@ -3,7 +3,7 @@
 // End-to-end annotation pipeline:
 //   structure (.pdb|.cif) -> T1 CONVERT (MaxIT) -> T2 ANNOTATE (fr3d|rnapolis)
 //   -> T2 PARSE -> standardized base-pairing mmCIF (per tool)
-//   -> T3 VALIDATE (only when more than one annotator is selected)
+//   -> T3 VALIDATE (cross-tool comparison) + optional VISUALIZE (--visualize: per-tool graphs)
 //
 // Usage:
 //   nextflow run main.nf <structure.pdb|.cif>                              # both tools, default
@@ -15,7 +15,7 @@
 include { CONVERT  } from './modules/convert.nf'
 include { ANNOTATE } from './modules/annotate.nf'
 include { PARSE    } from './modules/parse.nf'
-include { VALIDATE } from './modules/validate.nf'
+include { VALIDATE; VISUALIZE } from './modules/validate.nf'
 
 workflow {
     def input = params.input ?: ( args ? args[0] : null )
@@ -40,7 +40,12 @@ workflow {
 
     bp_ch.view { tool, cif -> "[${tool}] annotated mmCIF -> ${cif}" }
 
-    // T3 Validate: only meaningful when comparing across tools
-    if( tools.size() > 1 )
-        VALIDATE( bp_ch.map { tool, cif -> cif }.collect() )
+    // T3 Validate: cross-tool comparison — per-tool stats always; the comparison is
+    // skipped when only one tool is selected (gated in ws1-validate).
+    VALIDATE( bp_ch.map { tool, cif -> cif }.collect() )
+
+    // T3 Visualize (optional, --visualize): per-tool base-pair export — CSV/TSV tables
+    // plus a forgi BulgeGraph (.bg) and a matplotlib render (.jpg).
+    if( params.visualize )
+        VISUALIZE( bp_ch )
 }
