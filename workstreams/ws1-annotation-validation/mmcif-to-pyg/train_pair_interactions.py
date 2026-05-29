@@ -25,9 +25,10 @@ from collections import Counter
 from pathlib import Path
 
 import torch
+from torch_geometric.data import Batch
 
-from rna_pairs import (PairData, PairGNN, classification_metrics, load_graphs,
-                       parse_graph, train_eval_classification)
+from rna_pairs import (NT, NT_IDX, PairData, PairGNN, classification_metrics, is_canonical,
+                       load_graphs, parse_graph, train_eval_classification)
 
 PAIR_REL = 2          # message-passing relation id for "these residues pair"
 NUM_RELATIONS = 3     # B53, B35, PAIR
@@ -49,10 +50,11 @@ def load_dataset(graph_dir: Path):
         if not pg.base_pairs:
             continue
         src, dst, rel = list(pg.bb_src), list(pg.bb_dst), list(pg.bb_rel)
-        lo_idx, hi_idx, py = [], [], []
+        lo_idx, hi_idx, py, nt = [], [], [], []
         for lo, hi, fam in pg.base_pairs:
             src += [lo, hi]; dst += [hi, lo]; rel += [PAIR_REL, PAIR_REL]   # pair edge, both directions
             lo_idx.append(lo); hi_idx.append(hi); py.append(lw_vocab[fam])
+            nt.append([int(pg.x[lo].argmax()), int(pg.x[hi].argmax())])     # base identities, for canonicity
 
         data = PairData(
             x=pg.x,
@@ -60,6 +62,7 @@ def load_dataset(graph_dir: Path):
             edge_type=torch.tensor(rel, dtype=torch.long),
             pair_index=torch.tensor([lo_idx, hi_idx], dtype=torch.long),
             pair_y=torch.tensor(py, dtype=torch.long),
+            pair_nt=torch.tensor(nt, dtype=torch.long),
         )
         data.num_nodes = pg.num_nodes
         data_list.append(data)
@@ -71,11 +74,34 @@ class PairRGCN(PairGNN):
         super().__init__(out_dim=num_classes, num_relations=NUM_RELATIONS, hidden=hidden, use_geom=False)
 
 
+def _noncanonical_recall(model, data_list, device, include_wobble: bool = False) -> float:
+    """Base-aware: among truly non-canonical pairs (cWW + A-U/G-C excluded), the
+    fraction whose LW family the model predicts correctly. Needs model._inv_vocab."""
+    inv = getattr(model, "_inv_vocab", None)
+    if inv is None:
+        return 0.0
+    model.eval()
+    correct = total = 0
+    with torch.no_grad():
+        for d in data_list:
+            b = Batch.from_data_list([d]).to(device)
+            pred = model(b.x, b.edge_index, b.edge_type, b.pair_index).argmax(1).cpu()
+            for k in range(d.pair_y.numel()):
+                fam = inv[int(d.pair_y[k])]
+                b1, b2 = NT[int(d.pair_nt[k, 0])], NT[int(d.pair_nt[k, 1])]
+                if not is_canonical(fam, b1, b2, include_wobble):
+                    total += 1
+                    correct += int(pred[k] == d.pair_y[k])
+    return correct / max(total, 1)
+
+
 def run_epoch(model, data_list, *, train, optimizer, batch_size, gen, device) -> dict:
     conf, loss = train_eval_classification(model, data_list, train=train, optimizer=optimizer,
                                            batch_size=batch_size, gen=gen, device=device)
-    metrics = classification_metrics(conf, getattr(model, "_canon_idx", None))
+    metrics = classification_metrics(conf)
     metrics["loss"] = loss
+    # base-aware recall over genuinely non-canonical pairs (val only; it costs an extra pass)
+    metrics["noncanonical_recall"] = 0.0 if train else _noncanonical_recall(model, data_list, device)
     return metrics
 
 
@@ -114,7 +140,7 @@ def main(argv=None):
     print(f"[pairs] majority baseline ~{baseline:.3f}", file=sys.stderr)
 
     model = PairRGCN(num_classes=len(lw_vocab), hidden=args.hidden).to(device)
-    model._canon_idx = lw_vocab.get("cWW")
+    model._inv_vocab = inv          # enables base-aware non-canonical recall
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     for epoch in range(1, args.epochs + 1):
