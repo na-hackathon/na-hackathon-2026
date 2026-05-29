@@ -3,7 +3,7 @@
 // End-to-end annotation pipeline:
 //   structure (.pdb|.cif) -> T1 CONVERT (MaxIT) -> T2 ANNOTATE (fr3d|rnapolis)
 //   -> T2 PARSE -> standardized base-pairing mmCIF (per tool)
-//   -> T3 VALIDATE (only when more than one annotator is selected)
+//   -> T3 VALIDATE (per-tool stats always; cross-tool comparison only when >1 tool)
 //
 // Usage:
 //   nextflow run main.nf <structure.pdb|.cif>                              # both tools, default
@@ -40,7 +40,7 @@ workflow {
 
     bp_ch.view { tool, cif -> "[${tool}] annotated mmCIF -> ${cif}" }
 
-    // T3 Validate: only meaningful when comparing across tools
-    if( tools.size() > 1 )
-        VALIDATE( bp_ch.map { tool, cif -> cif }.collect() )
+    // T3 Validate: always run (emits per-tool stats); the cross-tool comparison
+    // inside ws1-validate is skipped when only one tool is selected.
+    VALIDATE( bp_ch.map { tool, cif -> cif }.collect() )
 }
