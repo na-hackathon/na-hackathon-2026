@@ -389,7 +389,8 @@ _ndb_base_pair_annotation.subclass
 """
 
 
-EDGE_PRIORITY = {"W": 0, "H": 1, "S": 2}        # canonical write order: W < H < S
+EDGE_PRIORITY = {"W": 0, "H": 1, "S": 2}        # canonical write order: W > H > S
+                                                # (lower number = higher priority)
 
 
 def _emit_sort_key(pair):
@@ -410,7 +411,7 @@ def emit_blocks(pairs, meta, oper_name_to_id) -> tuple[str, str]:
     list_rows, ann_rows = [], []
     for i, (Ra, Rb, lw) in enumerate(pairs, 1):
         # DNATCO convention: in the row, the first residue carries the
-        # higher-priority edge (W < H < S). If our canonicalised pair has the
+        # higher-priority edge (W > H > S). If our canonicalised pair has the
         # priorities reversed (e.g. tHW, cSW, tSH), swap the residues and flip
         # the LW string so it lands as tWH, cWS, tHS, ...  This is purely the
         # output-order convention; the underlying pair is unchanged.
