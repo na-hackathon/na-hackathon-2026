@@ -1,0 +1,165 @@
+data_1EHZ
+loop_
+_ndb_base_pair_provenance.entry_id
+_ndb_base_pair_provenance.software_id
+_ndb_base_pair_provenance.software_name
+_ndb_base_pair_provenance.software_version
+_ndb_base_pair_provenance.software_url
+_ndb_base_pair_provenance.bp_params_version
+_ndb_base_pair_provenance.details
+1EHZ 1 NAPAIR 1.0 ? 1.0 "Base pair assignment using geometric parameters"
+
+loop_
+_ndb_base_pair_list.id
+_ndb_base_pair_list.PDB_model_num
+_ndb_base_pair_list.label_asym_id_1
+_ndb_base_pair_list.label_entity_id_1
+_ndb_base_pair_list.label_seq_id_1
+_ndb_base_pair_list.label_comp_id_1
+_ndb_base_pair_list.PDB_ins_code_1
+_ndb_base_pair_list.label_alt_id_1
+_ndb_base_pair_list.struct_oper_id_1
+_ndb_base_pair_list.label_asym_id_2
+_ndb_base_pair_list.label_entity_id_2
+_ndb_base_pair_list.label_seq_id_2
+_ndb_base_pair_list.label_comp_id_2
+_ndb_base_pair_list.PDB_ins_code_2
+_ndb_base_pair_list.label_alt_id_2
+_ndb_base_pair_list.struct_oper_id_2
+_ndb_base_pair_list.auth_asym_id_1
+_ndb_base_pair_list.auth_seq_id_1
+_ndb_base_pair_list.auth_asym_id_2
+_ndb_base_pair_list.auth_seq_id_2
+1  1 A 1 1  G   ? . 1 A 1 72 C   ? . 1 A 1  A 72
+2  1 A 1 3  G   ? . 1 A 1 70 C   ? . 1 A 3  A 70
+3  1 A 1 4  G   ? . 1 A 1 69 U   ? . 1 A 4  A 69
+4  1 A 1 5  A   ? . 1 A 1 68 U   ? . 1 A 5  A 68
+5  1 A 1 8  U   ? . 1 A 1 14 A   ? . 1 A 8  A 14
+6  1 A 1 9  A   ? . 1 A 1 23 A   ? . 1 A 9  A 23
+7  1 A 1 10 2MG ? . 1 A 1 25 C   ? . 1 A 10 A 25
+8  1 A 1 15 G   ? . 1 A 1 48 C   ? . 1 A 15 A 48
+9  1 A 1 22 G   ? . 1 A 1 13 C   ? . 1 A 22 A 13
+10 1 A 1 23 A   ? . 1 A 1 12 U   ? . 1 A 23 A 12
+11 1 A 1 24 G   ? . 1 A 1 11 C   ? . 1 A 24 A 11
+12 1 A 1 29 A   ? . 1 A 1 41 U   ? . 1 A 29 A 41
+13 1 A 1 30 G   ? . 1 A 1 40 5MC ? . 1 A 30 A 40
+14 1 A 1 42 G   ? . 1 A 1 28 C   ? . 1 A 42 A 28
+15 1 A 1 43 G   ? . 1 A 1 27 C   ? . 1 A 43 A 27
+16 1 A 1 46 7MG ? . 1 A 1 22 G   ? . 1 A 46 A 22
+17 1 A 1 51 G   ? . 1 A 1 63 C   ? . 1 A 51 A 63
+18 1 A 1 53 G   ? . 1 A 1 61 C   ? . 1 A 53 A 61
+19 1 A 1 54 5MU ? . 1 A 1 58 1MA ? . 1 A 54 A 58
+20 1 A 1 62 A   ? . 1 A 1 52 U   ? . 1 A 62 A 52
+21 1 A 1 64 A   ? . 1 A 1 50 U   ? . 1 A 64 A 50
+22 1 A 1 65 G   ? . 1 A 1 49 5MC ? . 1 A 65 A 49
+23 1 A 1 66 A   ? . 1 A 1 7  U   ? . 1 A 66 A 7
+24 1 A 1 67 A   ? . 1 A 1 6  U   ? . 1 A 67 A 6
+25 1 A 1 71 G   ? . 1 A 1 2  C   ? . 1 A 71 A 2
+
+loop_
+_ndb_base_pair_annotation.id
+_ndb_base_pair_annotation.base_pair_id
+_ndb_base_pair_annotation.orientation
+_ndb_base_pair_annotation.base_1_edge
+_ndb_base_pair_annotation.base_2_edge
+_ndb_base_pair_annotation.l-w_family_num
+_ndb_base_pair_annotation.l-w_family_name
+_ndb_base_pair_annotation.class
+_ndb_base_pair_annotation.sub_class
+_ndb_base_pair_annotation.details
+1  1  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+2  2  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+3  3  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-U cWW_G-U_1 ?
+4  4  cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+5  5  trans Watson-Crick Hoogsteen    4 tWH tWH_U-A tWH_U-A_1 ?
+6  6  trans Hoogsteen    Hoogsteen    8 tHH tHH_A-A tHH_A-A_1 ?
+7  7  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+8  8  trans Watson-Crick Watson-Crick 2 tWW tWW_G-C tWW_G-C_1 ?
+9  9  cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+10 10 cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+11 11 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+12 12 cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+13 13 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+14 14 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+15 15 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+16 16 trans Watson-Crick Hoogsteen    4 tWH tWH_G-G tWH_G-G_1 ?
+17 17 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+18 18 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+19 19 trans Watson-Crick Hoogsteen    4 tWH tWH_U-A tWH_U-A_1 ?
+20 20 cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+21 21 cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+22 22 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+23 23 cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+24 24 cis   Watson-Crick Watson-Crick 1 cWW cWW_A-U cWW_A-U_1 ?
+25 25 cis   Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1 ?
+
+loop_
+_ndb_base_pair_validation.id
+_ndb_base_pair_validation.base_pair_id
+_ndb_base_pair_validation.napair_rmsd
+_ndb_base_pair_validation.napasco_metric
+_ndb_base_pair_validation.napasco_annotation
+_ndb_base_pair_validation.nearest_curated_BP
+_ndb_base_pair_validation.details
+1  1  0.291 26.54  preferred 3pdr_A_G_151_1_555_A_C_33_1_555 ?
+2  2  0.176 88.66  preferred 5d5l_A_G_73_1_555_A_C_38_1_555 ?
+3  3  0.347 26.31  preferred 7oax_A_G_17_1_555_A_U_30_1_555 ?
+4  4  0.196 59.84  preferred 1s72_0_A_1307_1_555_0_U_1347_1_555 ?
+5  5  0.001 89.17  preferred 1ehz_A_U_8_1_555_A_A_14_1_555  ?
+6  6  0.001 63.86  preferred 1ehz_A_A_9_1_555_A_A_23_1_555  ?
+7  7  0.164 49.13  preferred 7vru_I_DG_-8_1_555_H_DC_8_1_555 ?
+8  8  0.003 97.13  preferred 1ehz_A_G_15_1_555_A_C_48_1_555 ?
+9  9  0.213 65.31  preferred 4r2q_B_DG_2_1_555_C_DC_11_1_555 ?
+10 10 0.233 49.00  preferred 8v1i_B_A_30_1_555_B_U_22_1_555 ?
+11 11 0.303 32.25  preferred 2r8s_R_G_174_1_555_R_C_166_1_555 ?
+12 12 0.252 51.27  preferred 1gu5_D_DA_111_1_555_C_DT_7_1_555 ?
+13 13 0.333 22.78  preferred 4cn2_A_DG_4_1_555_B_DC_14_1_555 ?
+14 14 0.238 42.00  preferred 4ybb_AA_G_670_1_555_AA_C_736_1_555 ?
+15 15 0.328 26.05  preferred 6l9z_J_DG_165_1_555_I_DC_174_1_555 ?
+16 16 0.106 84.86  preferred 2zy6_A_G_19_1_555_A_G_12_1_555 ?
+17 17 0.238 59.41  preferred 4v9f_0_G_390_1_555_0_C_399_1_555 ?
+18 18 0.147 84.11  preferred 4v9f_0_G_941_1_555_0_C_1025_1_555 ?
+19 19 0.291 45.55  preferred 8k1e_A_U_40_1_555_A_A_44_1_555 ?
+20 20 0.075 100.00 preferred 4osv_J_DA_-12_1_555_I_DT_12_1_555 ?
+21 21 0.204 83.83  preferred 4z47_C_DA_25_1_555_D_DT_4_1_555 ?
+22 22 0.144 68.03  preferred 8ilh_E_DG_3_1_555_F_DC_6_1_555 ?
+23 23 0.122 72.57  preferred 3m9n_P_DA_11_1_555_T_DT_7_1_555 ?
+24 24 0.282 25.08  preferred 9n26_D_DA_7_1_555_C_DT_14_1_555 ?
+25 25 0.166 64.29  preferred 4oo8_C_DG_8_1_555_B_C_13_1_555 ?
+
+loop_
+_ndb_base_unpaired_list.id
+_ndb_base_unpaired_list.PDB_model_num
+_ndb_base_unpaired_list.label_entity_id
+_ndb_base_unpaired_list.label_asym_id
+_ndb_base_unpaired_list.label_seq_id
+_ndb_base_unpaired_list.label_comp_id
+_ndb_base_unpaired_list.label_alt_id
+_ndb_base_unpaired_list.PDB_ins_code
+_ndb_base_unpaired_list.auth_asym_id
+_ndb_base_unpaired_list.auth_seq_id
+1  1 1 A 16 H2U . ? A 16
+2  1 1 A 17 H2U . ? A 17
+3  1 1 A 18 G   . ? A 18
+4  1 1 A 19 G   . ? A 19
+5  1 1 A 20 G   . ? A 20
+6  1 1 A 21 A   . ? A 21
+7  1 1 A 31 A   . ? A 31
+8  1 1 A 32 OMC . ? A 32
+9  1 1 A 33 U   . ? A 33
+10 1 1 A 35 A   . ? A 35
+11 1 1 A 36 A   . ? A 36
+12 1 1 A 38 A   . ? A 38
+13 1 1 A 39 PSU . ? A 39
+14 1 1 A 44 A   . ? A 44
+15 1 1 A 45 G   . ? A 45
+16 1 1 A 47 U   . ? A 47
+17 1 1 A 55 PSU . ? A 55
+18 1 1 A 56 C   . ? A 56
+19 1 1 A 57 G   . ? A 57
+20 1 1 A 59 U   . ? A 59
+21 1 1 A 60 C   . ? A 60
+22 1 1 A 73 A   . ? A 73
+23 1 1 A 74 C   . ? A 74
+24 1 1 A 75 C   . ? A 75
+25 1 1 A 76 A   . ? A 76
