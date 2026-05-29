@@ -1,35 +1,44 @@
-#!/usr/bin/env python3
-"""WS1 skeleton STUB — Converter (T1).
+#!/usr/bin/env bash
+# WS1 Converter (T1) — standardize an input structure to mmCIF.
+#
+# Contract (the Nextflow CONVERT process depends on it):
+#     ws1-convert --input <structure.pdb|.cif> --out <structure.cif> [--converter maxit|gemmi]
+#
+# Converters (both provided by envs/convert.yml — no Docker needed):
+#   maxit  (default) — RCSB MAXIT from conda (bioconda::maxit).
+#                      Output mode matters: -o 1 for PDB, -o 8 to refresh an existing
+#                      mmCIF. Using -o 1 on a .cif yields malformed output (see #76),
+#                      so .cif/.mmcif inputs use -o 8. (fix from PR #70, @AderikVoorspoels)
+#   maxit-docker — same maxit, but from the tzok/maxit image (fallback if bioconda::maxit
+#                  is unavailable on your platform); select with --converter maxit-docker.
+#   gemmi  (DEPRECATED) — lightweight conda fallback; maxit is the supported path.
+set -euo pipefail
 
-Contract (do not change; the Nextflow CONVERT process depends on it):
-    ws1-convert --input <structure.pdb|.cif> --out <structure.cif>
+converter=maxit
+input=
+out=
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --input)     input=$2;     shift 2 ;;
+        --out)       out=$2;       shift 2 ;;
+        --converter) converter=$2; shift 2 ;;
+        *) echo "ws1-convert: unknown argument '$1'" >&2; exit 2 ;;
+    esac
+done
+[ -n "$input" ] && [ -n "$out" ] || { echo "usage: ws1-convert --input <pdb|cif> --out <cif> [--converter maxit|gemmi]" >&2; exit 2; }
 
-Conversion team: replace the body with the real conversion (e.g. MAxIT / gemmi).
-This stub passes mmCIF through unchanged and writes a placeholder for PDB inputs.
-"""
-import argparse
-import shutil
-import sys
-from pathlib import Path
-
-
-def main():
-    ap = argparse.ArgumentParser(description="WS1 converter (stub)")
-    ap.add_argument("--input", required=True)
-    ap.add_argument("--out", required=True)
-    args = ap.parse_args()
-
-    src = Path(args.input)
-    if src.suffix.lower() in (".cif", ".mmcif"):
-        shutil.copyfile(src, args.out)
-    else:
-        Path(args.out).write_text(
-            f"# WS1 stub conversion of {src.name}\n"
-            "data_stub\n"
-            "_struct.title 'WS1 skeleton stub conversion — replace ws1-convert'\n"
-        )
-    print(f"[ws1-convert] {src.name} -> {args.out}", file=sys.stderr)
-
-
-if __name__ == "__main__":
-    main()
+ext=${input##*.}
+ext=${ext,,}
+case "$converter" in
+    maxit|maxit-docker)
+        case "$ext" in
+            pdb) maxit -input "$input" -output "$out" -o 1 ;;   # PDB -> mmCIF
+            *)   maxit -input "$input" -output "$out" -o 8 ;;   # (m)mCIF -> refreshed mmCIF (#76)
+        esac ;;
+    gemmi)
+        echo "[ws1-convert] WARNING: the 'gemmi' converter is DEPRECATED; maxit is the supported path." >&2
+        gemmi convert "$input" "$out" ;;
+    *)
+        echo "ws1-convert: unknown converter '$converter' (expected maxit|gemmi)" >&2; exit 2 ;;
+esac
+echo "[ws1-convert:$converter] $input -> $out" >&2
