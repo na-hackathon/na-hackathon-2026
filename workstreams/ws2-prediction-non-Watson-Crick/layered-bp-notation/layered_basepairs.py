@@ -133,7 +133,9 @@ if __name__ == "__main__":
                               block=a.block, compact=a.compact,
                               noncanonical=a.noncanonical,
                               show_layer=a.layer, show_metadata=a.metadata,
-                              show_unpaired=a.unpaired)
+                              show_unpaired=a.unpaired,
+                              unpaired_source=("derived from FR3D pair list"
+                                               if a.unpaired else ""))
     print(text)
     print(f"\n# round-trip recovers all pairs exactly: {ok}", file=sys.stderr)
     sys.exit(0 if ok else 1)

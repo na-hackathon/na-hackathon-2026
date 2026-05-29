@@ -123,6 +123,34 @@ def read_pairs(cif: Path, chains: set[str]) -> list[tuple[tuple, tuple, str]]:
     return sorted(seen.values())
 
 
+def read_unpaired_list(cif: Path, chains: set[str],
+                       model: int = 1) -> list[tuple] | None:
+    """Residues marked unpaired by _ndb_base_unpaired_list for the given model,
+    as [(chain, IDENTITY, num), ...]. Returns None if the category is absent
+    (caller then derives the set from the pair list). DNATCO's annotation is
+    the authoritative source for NMR ensembles, where the unpaired set varies
+    across models; we default to model 1, matching the single-conformer
+    convention used elsewhere in this script (asymmetric unit, _atom_site,
+    coordinates). Symmetry mates never appear here -- the category lives in
+    label space, asymmetric unit only."""
+    lines = cif.read_text().splitlines()
+    if not any(l.startswith("_ndb_base_unpaired_list.") for l in lines):
+        return None
+    idx, i = _loop_columns(lines, "_ndb_base_unpaired_list.")
+    if not idx:
+        return None
+    c_model = idx.get("PDB_model_num")
+    c_ch, c_num = idx["auth_asym_id"], idx["auth_seq_id"]
+    out: list[tuple] = []
+    for row in _read_loop_rows(lines, i, len(idx)):
+        if c_model is not None and row[c_model] != str(model):
+            continue
+        ch = row[c_ch]
+        if ch in chains:
+            out.append((ch, IDENTITY, int(row[c_num])))
+    return out
+
+
 def list_chains(cif: Path) -> list[str]:
     """Chains that appear in the base-pair list, sorted. Used when no chains
     are given; these are exactly the nucleic-acid chains that form annotated
@@ -305,13 +333,25 @@ def main() -> None:
 
     chains = a.chains or list_chains(a.cif)
 
-    # 1) notation -- caller does the CIF reads, common.py does the layering
+    # 1) notation -- caller does the CIF reads, common.py does the layering.
+    # Unpaired list: if the CIF ships _ndb_base_unpaired_list (DNATCO's own
+    # per-model annotation), trust it -- otherwise common.py derives the set
+    # from the pair list.
     per_chain = read_residues(a.cif, chains)
     pairs = read_pairs(a.cif, set(chains))
+    explicit_unpaired, unpaired_source = None, ""
+    if a.unpaired:
+        explicit_unpaired = read_unpaired_list(a.cif, set(chains))
+        if explicit_unpaired is not None:
+            unpaired_source = "from _ndb_base_unpaired_list, model 1"
+        else:
+            unpaired_source = "derived from pair list"
     text, ok = build_notation(per_chain, pairs, chains, name=a.name, block=a.block,
                               compact=a.compact, noncanonical=a.noncanonical,
                               show_layer=a.layer, show_metadata=a.metadata,
-                              show_unpaired=a.unpaired)
+                              show_unpaired=a.unpaired,
+                              explicit_unpaired=explicit_unpaired,
+                              unpaired_source=unpaired_source)
     print(text)
     print(f"\n# round-trip recovers all pairs exactly: {ok}", file=sys.stderr)
 

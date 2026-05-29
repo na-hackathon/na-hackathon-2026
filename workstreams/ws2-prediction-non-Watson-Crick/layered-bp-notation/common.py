@@ -303,7 +303,9 @@ def build_notation(per_chain: dict[str, list], pairs: list, chains: list[str],
                    block: int | None = None, compact: bool = False,
                    noncanonical: bool = False, show_layer: bool = False,
                    show_metadata: bool = False,
-                   show_unpaired: bool = False) -> tuple[str, bool]:
+                   show_unpaired: bool = False,
+                   explicit_unpaired: list | None = None,
+                   unpaired_source: str = "") -> tuple[str, bool]:
     """Build the layered notation and return (text, round-trip ok).
 
     Args:
@@ -327,6 +329,15 @@ def build_notation(per_chain: dict[str, list], pairs: list, chains: list[str],
             the same regardless of --noncanonical: a stem residue that pairs
             only via WC is still paired in the structure, its pair is just
             hidden from the display.
+        explicit_unpaired: when given, use this list of residues directly
+            instead of deriving the unpaired set from `pairs`. Each entry is
+            (chain, symmetry, number). The caller passes this when the CIF
+            ships its own _ndb_base_unpaired_list annotation, which is the
+            authoritative source for NMR ensembles where the unpaired set
+            varies across models.
+        unpaired_source: short tag appended to the '# unpaired' line to record
+            where the list came from (e.g. 'from _ndb_base_unpaired_list,
+            model 1'). Only printed when non-empty.
         show_metadata: add a '# chains: ...' comment line below the header
             with per-strand chain/symmetry/range info.
 
@@ -423,12 +434,18 @@ def build_notation(per_chain: dict[str, list], pairs: list, chains: list[str],
         spans = ", ".join(f"{_label(s)}({_span(residues, s)})" for s in strands)
         head += f"\n# chains: {spans}; '{SEP}' separates chains"
     if show_unpaired:
-        # Residues that have no hydrogen-bond partner in the FULL structure.
-        # We use the pre-filter pair set so the count is a structural property
-        # of the molecule, independent of --noncanonical (residues paired only
-        # via Watson-Crick are still paired -- their pair is just hidden).
-        unpaired = [R for R in residues if R not in full_paired_keys]
-        head += f"\n# unpaired ({len(unpaired)}): {_format_unpaired(unpaired, strands)}"
+        # Prefer the caller-supplied explicit list (e.g. read directly from
+        # _ndb_base_unpaired_list) since it is authoritative for NMR ensembles;
+        # otherwise derive from the pre-filter pair set so the count is a
+        # structural property of the molecule, independent of --noncanonical
+        # (a residue paired only via Watson-Crick is still paired -- the pair
+        # is just hidden when --noncanonical drops the WC layer).
+        if explicit_unpaired is not None:
+            unpaired = sorted(explicit_unpaired)
+        else:
+            unpaired = [R for R in residues if R not in full_paired_keys]
+        tag = f"  [{unpaired_source}]" if unpaired_source else ""
+        head += f"\n# unpaired ({len(unpaired)}): {_format_unpaired(unpaired, strands)}{tag}"
 
     if compact:        # only the canonical WC layer stays as dot-bracket; every
         rows = [f"{'seq':12}: " + seq_line]   # non-canonical layer becomes a
