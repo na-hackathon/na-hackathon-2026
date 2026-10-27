@@ -30,7 +30,8 @@ CSV_COLUMNS = [
 
 def write_csv(pairs: list[dict], path: Path) -> None:
     with open(path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
+        # parse_basepairs also returns label ids, model, operators...; the CSV keeps its columns
+        w = csv.DictWriter(f, fieldnames=CSV_COLUMNS, extrasaction="ignore")
         w.writeheader()
         w.writerows(pairs)
 

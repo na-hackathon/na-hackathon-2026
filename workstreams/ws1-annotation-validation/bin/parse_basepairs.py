@@ -4,28 +4,64 @@ import sys
 import gemmi
 
 
+def _text(value):
+  """gemmi returns None for '?' and False for '.'; both mean 'no value' here."""
+  return '' if value is None or value is False else str(value)
+
+
+def _category(block, name):
+  """Category as {lower-cased tag: column}.
+
+  gemmi keeps the tag case written in the file (the exporters write PDB_model_number,
+  PDB_ins_code_1, ...) while mmCIF tags are case-insensitive, so look tags up in lower case.
+  """
+  return {tag.lower(): column for tag, column in block.get_mmcif_category(name).items()}
+
+
+def identity_operator_id(cif_file):
+  """Id of the identity operation in _pdbx_struct_oper_list, chosen as the exporters do ('1' if absent)."""
+  block = gemmi.cif.read(cif_file).sole_block()
+  opers = _category(block, '_pdbx_struct_oper_list.')
+  identity = '1'
+  for oper_id, oper_type in zip(opers.get('id', []), opers.get('type', [])):
+    if _text(oper_type) == 'identity operation':
+      identity = _text(oper_id)
+  return identity
+
+
 def parse_basepairs(cif_file):
   block = gemmi.cif.read(cif_file).sole_block()
 
-  bp_list = block.get_mmcif_category('_ndb_base_pair_list.')
-  bp_annot = block.get_mmcif_category('_ndb_base_pair_annotation.')
+  bp_list = _category(block, '_ndb_base_pair_list.')
+  bp_annot = _category(block, '_ndb_base_pair_annotation.')
 
   # map base_pair_id -> Leontis-Westhof family
   family = dict(zip(bp_annot.get('base_pair_id', []), bp_annot.get('l-w_family', [])))
 
+  def optional(tag, i):
+    # columns missing from older files read as '' instead of raising
+    column = bp_list.get(tag)
+    return _text(column[i]) if column else ''
+
   pairs = []
   ids = bp_list.get('base_pair_id', [])
   for i, pid in enumerate(ids):
-    pairs.append({
+    pair = {
       'base_pair_id': pid,
       'family': family.get(pid, '?'),
-      'auth_asym_id_1': bp_list['auth_asym_id_1'][i],
-      'auth_seq_id_1': bp_list['auth_seq_id_1'][i],
-      'comp_id_1': bp_list['comp_id_1'][i],
-      'auth_asym_id_2': bp_list['auth_asym_id_2'][i],
-      'auth_seq_id_2': bp_list['auth_seq_id_2'][i],
-      'comp_id_2': bp_list['comp_id_2'][i],
-    })
+      'model': optional('pdb_model_number', i),
+    }
+    for side in ('1', '2'):
+      pair[f'auth_asym_id_{side}'] = bp_list[f'auth_asym_id_{side}'][i]
+      pair[f'auth_seq_id_{side}'] = bp_list[f'auth_seq_id_{side}'][i]
+      pair[f'comp_id_{side}'] = bp_list[f'comp_id_{side}'][i]
+      # full residue identity as written by the exporters
+      pair[f'label_asym_id_{side}'] = optional(f'asym_id_{side}', i)
+      pair[f'label_seq_id_{side}'] = optional(f'seq_id_{side}', i)
+      pair[f'ins_code_{side}'] = optional(f'pdb_ins_code_{side}', i)
+      pair[f'alt_id_{side}'] = optional(f'alt_id_{side}', i)
+      pair[f'struct_oper_id_{side}'] = optional(f'struct_oper_id_{side}', i)
+    pairs.append(pair)
   return pairs
 
 
