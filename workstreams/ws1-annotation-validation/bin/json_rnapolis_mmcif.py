@@ -5,12 +5,18 @@
 
 import sys, json, re
 import gemmi
+from collections import Counter
 from pathlib import Path
 
 bp_families = { "cWW": '1', "tWW": '2', "cWH": '3', "tWH": '4', "cWS": '5', "tWS": '6', "cHH": '7', "tHH": '8', "cHS": '9', "tHS": '10', "cSS": '11', "tSS": '12' }
 long_names = {"W": "Watson-Crick", "H": "Hoogsteen", "S": "Sugar", "t": "trans", "c": "cis"}
 
 processed = []
+
+# input pairs that are not written to the output, with the reason; saved next to the output
+# as <out>.skipped.tsv. Pairs listed in both directions are only counted (duplicates).
+skipped = []
+duplicates = 0
 
 base_pair_id = 0
 annotation_id = 0
@@ -95,11 +101,13 @@ try:
 
     key12 = auth_key(auth1) + "_" + auth_key(auth2)
     if key12 in processed:
+      duplicates += 1
       continue
 
     # same family check as the FR3D exporter: anything but the 12 [ct][WHS][WHS] classes is skipped
     if not pattern.fullmatch(lw):
       print("Skipping unsupported pairing family", lw, auth_key(auth1), auth_key(auth2), file=sys.stderr)
+      skipped.append(('unsupported_family', auth_key(auth1), lw, auth_key(auth2), ''))
       continue
 
     # put the pair into canonical order (edge_1 <= edge_2); reverse families
@@ -116,16 +124,19 @@ try:
     resulta, error = get_residue_identifiers(structure, model_number=model_number, author_chain=autha['chain'], author_resnum=int(autha['number']), author_resname=autha['name'], author_ins_code=insa)
     if error:
       print(error, file=sys.stderr)
+      skipped.append(('residue_not_found', auth_key(auth1), lw, auth_key(auth2), error))
       continue
 
     resultb, error = get_residue_identifiers(structure, model_number=model_number, author_chain=authb['chain'], author_resnum=int(authb['number']), author_resname=authb['name'], author_ins_code=insb)
     if error:
       print(error, file=sys.stderr)
+      skipped.append(('residue_not_found', auth_key(auth1), lw, auth_key(auth2), error))
       continue
 
     # seq_id can be None for pairs to non-polymer nucleotides
     if not isinstance(resulta['seq_id'], int) or not isinstance(resultb['seq_id'], int):
       print(f"Skipping pair with invalid seq_id: {auth_key(auth1)} {auth_key(auth2)} (seq_id_1={resulta['seq_id']}, seq_id_2={resultb['seq_id']})", file=sys.stderr)
+      skipped.append(('no_label_seq_id', auth_key(auth1), lw, auth_key(auth2), f"seq_id_1={resulta['seq_id']}, seq_id_2={resultb['seq_id']}"))
       continue
 
     # add both directions to processed
@@ -150,6 +161,17 @@ options.align_loops = 30
 
 # and save the final mmcif
 doc.write_file(out_file, options)
+
+# save the pairs that were not written, with the reason
+skipped_file = Path(out_file).with_suffix('.skipped.tsv')
+with open(skipped_file, 'w') as f:
+  f.write("reason\tresidue_1\tfamily\tresidue_2\tdetail\n")
+  for row in skipped:
+    f.write("\t".join(row) + "\n")
+
+print(f"[json_rnapolis_mmcif] {len(pairs)} pairs read: {base_pair_id} written, {len(skipped)} skipped {dict(Counter(row[0] for row in skipped))}, {duplicates} duplicates of written pairs -> {skipped_file}", file=sys.stderr)
+if len(pairs) != base_pair_id + len(skipped) + duplicates:
+  print("[json_rnapolis_mmcif] WARNING: pairs read != written + skipped + duplicates", file=sys.stderr)
 
 # get also as string just to visualize if they are no errors
 cif_in_string = doc.as_string(options)

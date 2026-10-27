@@ -74,6 +74,7 @@ results/
   mmcif/            <name>.std.cif                 # T1 standardized structure
   annotations/<tool>/<tool>_raw.*                  # T2 raw tool output
   basepairs/<tool>_basepairs.cif                   # T2 standardized base pairs
+  basepairs/<tool>_basepairs.skipped.tsv           # T2 input pairs not written, with the reason
   validation/validation_report.{json,tsv}          # T3 cross-tool comparison
   validation/<tool>.{csv,tsv,bg,jpg}               # T3 optional, with --visualize
 ```

@@ -2,6 +2,7 @@
 
 import sys, json, re
 import gemmi
+from collections import Counter
 from pathlib import Path
 
 struct_opers = []
@@ -13,6 +14,15 @@ long_names = {"W": "Watson-Crick", "H": "Hoogsteen", "S": "Sugar", "t": "trans",
 #stdres = [ "A", "U", "G", "C", "DA", "DT", "DG", "DC" ]
 
 processed = []
+
+# input rows that are not written to the output, one per row with the reason; saved next to
+# the output as <out>.skipped.tsv (FR3D lists each pair in both directions, so a skipped
+# pair usually appears twice). Rows whose pair is already written are only counted.
+skipped = []
+duplicates = 0
+
+def skip(reason, pair, detail=''):
+  skipped.append((reason, pair[0], pair[1], pair[2], detail))
 
 # fr3d  unit_id reference
 #unit_id_parts = ['pdb', 'model', 'chain', 'component_id', 'component_number', 'atom_name', 'alt_id', 'insertion_code', 'symmetry']
@@ -101,6 +111,7 @@ try:
       # as long as we are using FR3D, we will skip the "near" pairs or anything unexpected
       if ( not pattern.fullmatch(pair[1]) ):
         print("Skipping unsupported pairing family", pair, file=sys.stderr)
+        skip('unsupported_family', pair)
         continue
       # check if the family is in the right order (only the bp_families are allowed)
       if (pair[1] in bp_families):
@@ -129,6 +140,7 @@ try:
 
       if (alta != '' and altb != '' and alta != altb):
         print("Skipping suspicious alt position combination", alta, altb, "in", pair, file=sys.stderr)
+        skip('alt_position_mismatch', pair, f"{alta}/{altb}")
         continue
 
       # TODO to be corected when gemmi allows access to _pdbx_struct_oper_list.name and/or when our base-pairing code is used instead of fr3d
@@ -140,6 +152,7 @@ try:
           syma = struct_oper_dict[syma]
         else:
           print("Symmetry code", syma, "not found in _pdbx_struct_oper_list for", pair, file=sys.stderr)
+          skip('symmetry_code_not_found', pair, syma)
           continue
 
       if (symb != identity_id):
@@ -147,21 +160,25 @@ try:
           symb = struct_oper_dict[symb]
         else:
           print("Symmetry code", symb, "not found in _pdbx_struct_oper_list for", pair, file=sys.stderr)
+          skip('symmetry_code_not_found', pair, symb)
           continue
 
       resulta, error = get_atom_identifiers(structure, model_number=str(resa[1]), author_chain=resa[2], author_resnum=int(resa[4]), author_resname=resa[3], author_ins_code=insa, author_alt_id=alta)
       if error:
         print(error, file=sys.stderr)
+        skip('residue_not_found', pair, error)
         continue
 
       resultb, error = get_atom_identifiers(structure, model_number=str(resb[1]), author_chain=resb[2], author_resnum=int(resb[4]), author_resname=resb[3], author_ins_code=insb, author_alt_id=altb)
       if error:
         print(error, file=sys.stderr)
+        skip('residue_not_found', pair, error)
         continue
 
       # Validate that seq_id values are valid integers (it can be None for pairs to non-polymer nucleotides)
       if not isinstance(resulta['seq_id'], int) or not isinstance(resultb['seq_id'], int):
         print(f"Skipping pair with invalid seq_id: {pair} (seq_id_1={resulta['seq_id']}, seq_id_2={resultb['seq_id']})", file=sys.stderr)
+        skip('no_label_seq_id', pair, f"seq_id_1={resulta['seq_id']}, seq_id_2={resultb['seq_id']}")
         continue
 
       # add both directions to processed
@@ -190,12 +207,14 @@ try:
         if ('|'.join(resa)+"_"+'|'.join(resb) not in processed):
           processed.append('|'.join(resa)+"_"+'|'.join(resb))
         else:
-          print("skipF", pair, file=sys.stderr)
+          print("Skipping, the within-ASU variant is already written", pair, file=sys.stderr)
+          duplicates += 1
           continue
         if ('|'.join(resb)+"_"+'|'.join(resa) not in processed):
           processed.append('|'.join(resb)+"_"+'|'.join(resa))
         else:
-          print("skipR", pair, file=sys.stderr)
+          print("Skipping, the reversed within-ASU variant is already written", pair, file=sys.stderr)
+          duplicates += 1
           continue
 
       base_pair_id += 1
@@ -207,8 +226,8 @@ try:
       # populate _ndb_base_pair_annotation loop; subclass hardcoded to class_1
       ndb_base_pair_annotation_loop.add_row([str(annotation_id), str(base_pair_id), long_names[fam[0]], long_names[fam[1]], long_names[fam[2]], bp_families[fam], fam, fam+'_'+resa[3]+'-'+resb[3], fam+'_'+resa[3]+'-'+resb[3]+'_1'])
     else:
-      #print(pair[0]+"_"+pair[2], "already processed", file=sys.stderr)
-      pass
+      # the same pair listed in the other direction
+      duplicates += 1
 except Exception as e:
   print(f"error {e=}, {type(e)=}", file=sys.stderr)
   raise
@@ -220,6 +239,18 @@ options.align_loops = 30
 
 # write to mmCIF file
 doc.write_file(out_file, options)
+
+# save the rows that were not written, with the reason
+skipped_file = Path(out_file).with_suffix('.skipped.tsv')
+with open(skipped_file, 'w') as f:
+  f.write("reason\tunit_id_1\tfamily\tunit_id_2\tdetail\n")
+  for row in skipped:
+    f.write("\t".join(row) + "\n")
+
+rows_read = len(pairs["details"])
+print(f"[json_fr3d_mmcif] {rows_read} rows read: {base_pair_id} pairs written, {len(skipped)} skipped {dict(Counter(row[0] for row in skipped))}, {duplicates} duplicates of written pairs -> {skipped_file}", file=sys.stderr)
+if rows_read != base_pair_id + len(skipped) + duplicates:
+  print("[json_fr3d_mmcif] WARNING: rows read != written + skipped + duplicates", file=sys.stderr)
 
 # get also as string
 cif_in_string = doc.as_string(options)

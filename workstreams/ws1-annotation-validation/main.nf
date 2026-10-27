@@ -36,7 +36,8 @@ workflow {
     raw_ch   = ANNOTATE( tools_ch.combine(mmcif_ch) )
 
     // T2 Parse: tool-native output -> standardized base-pairing mmCIF
-    bp_ch = PARSE( raw_ch )
+    PARSE( raw_ch )
+    bp_ch = PARSE.out.basepairs
 
     bp_ch.view { tool, cif -> "[${tool}] annotated mmCIF -> ${cif}" }
 

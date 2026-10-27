@@ -7,6 +7,8 @@
 #       rnapolis : raw JSON -> NDB base-pairing mmCIF
 #
 # The conversion logic lives next to this CLI in bin/ (run with the conda python3).
+# The exporters also write <out minus .cif>.skipped.tsv: the input pairs they did not write,
+# with the reason.
 set -euo pipefail
 
 tool= ; raw= ; structure= ; out=

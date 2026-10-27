@@ -39,6 +39,7 @@ nextflow_process {
                 def out = path(emitted[1].toString())
                 assert out.exists()
                 assert emitted[1].toString().endsWith('fr3d_basepairs.cif')
+                assert path(process.out.skipped[0].toString()).text.startsWith('reason\tunit_id_1\tfamily\tunit_id_2\tdetail')
 
                 def cif = out.text
                 assert cif.contains('_ndb_base_pair_list.base_pair_id')
@@ -73,6 +74,7 @@ nextflow_process {
                 def out = path(emitted[1].toString())
                 assert out.exists()
                 assert emitted[1].toString().endsWith('rnapolis_basepairs.cif')
+                assert path(process.out.skipped[0].toString()).text.startsWith('reason\tresidue_1\tfamily\tresidue_2\tdetail')
 
                 def cif = out.text
                 assert cif.contains('_ndb_base_pair_list.base_pair_id')
