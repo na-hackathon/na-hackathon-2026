@@ -235,20 +235,35 @@ def per_class_prf(conf: torch.Tensor):
     return precision, recall, f1, support
 
 
-def classification_metrics(conf: torch.Tensor, canon_idx: int | None = None) -> dict:
-    """micro acc, balanced acc (macro recall), macro-F1, non-canonical recall."""
+# Canonical base pairs: cWW geometry AND a Watson-Crick base combination.
+WC_BASE_PAIRS = ({"A", "U"}, {"G", "C"})
+
+
+def is_canonical(family: str, b1: str, b2: str, include_wobble: bool = False) -> bool:
+    """A base pair is canonical only if it is cWW *and* a Watson-Crick combination.
+
+    A-U and G-C are canonical; G-U wobble counts only when include_wobble=True.
+    A cWW pair with any other base combo (e.g. U-U) is NOT canonical.
+    """
+    if family != "cWW":
+        return False
+    s = {b1, b2}
+    return s in WC_BASE_PAIRS or (include_wobble and s == {"G", "U"})
+
+
+def classification_metrics(conf: torch.Tensor) -> dict:
+    """Per-family metrics: micro acc, balanced acc (macro recall), macro-F1.
+
+    (Canonical vs non-canonical is base-aware and lives outside the family
+    confusion matrix -- see rna_pairs.is_canonical / the trainers' recall.)
+    """
     precision, recall, f1, support = per_class_prf(conf)
     correct = conf.float().diag()
     present = support > 0
     micro = (correct.sum() / support.sum().clamp(min=1)).item()
     balanced = recall[present].mean().item() if present.any() else 0.0
     macro_f1 = f1[present].mean().item() if present.any() else 0.0
-    nc = present.clone()
-    if canon_idx is not None and canon_idx < nc.numel():
-        nc[canon_idx] = False
-    nc_recall = (correct[nc].sum() / support[nc].sum()).item() if nc.any() and support[nc].sum() > 0 else 0.0
-    return {"micro_acc": micro, "balanced_acc": balanced,
-            "macro_f1": macro_f1, "noncanonical_recall": nc_recall}
+    return {"micro_acc": micro, "balanced_acc": balanced, "macro_f1": macro_f1}
 
 
 def detection_typing_metrics(conf: torch.Tensor) -> dict:

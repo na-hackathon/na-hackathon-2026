@@ -16,8 +16,10 @@ Input ──▶ T1 Conversion ──▶ T2 Core (annotate ▸ parse) ──▶ T
 mamba env create -f environment.yml      # or: conda env create -f environment.yml
 conda activate ws1-dev
 
-# 2. fetch the pinned annotator sources (fr3d-python, rnapolis-py)
-git submodule update --init annotations_tools/fr3d-python annotations_tools/rnapolis-py
+# 2. fetch the pinned annotator sources (see "Annotator submodules" below)
+git submodule update --init \
+    annotations_tools/fr3d-python \
+    annotations_tools/rnapolis-py
 
 # 3. smoke test — runs end-to-end on the bundled 9CFN data
 nextflow run main.nf -profile test
@@ -25,6 +27,45 @@ nextflow run main.nf -profile test
 # 4. a real run
 nextflow run main.nf --input ../../data/tests/Inputs/8xzn.cif
 ```
+
+### Annotator submodules
+
+FR3D and RNApolis are pinned as git submodules under `annotations_tools/`. `ws1-annotate`
+runs them straight from those checkouts (no `pip install`) via `PYTHONPATH`, so the exact
+commit recorded in the parent repo is what executes.
+
+```bash
+# from the repo root (na-hackathon-2026/), once after cloning
+git submodule update --init \
+    workstreams/ws1-annotation-validation/annotations_tools/fr3d-python \
+    workstreams/ws1-annotation-validation/annotations_tools/rnapolis-py
+
+# or, equivalently, from this workstream's directory
+git submodule update --init \
+    annotations_tools/fr3d-python \
+    annotations_tools/rnapolis-py
+
+# alternative: clone the parent repo with all submodules in one shot
+git clone --recurse-submodules <repo-url>
+
+# in an existing clone that didn't recurse:
+git submodule update --init --recursive
+
+# later, pull the pinned commits if upstream bumps them
+git submodule update --remote \
+    annotations_tools/fr3d-python \
+    annotations_tools/rnapolis-py
+```
+
+A correctly initialised tree should have these files present:
+
+```
+annotations_tools/fr3d-python/fr3d/classifiers/NA_pairwise_interactions.py
+annotations_tools/rnapolis-py/src/rnapolis/annotator.py
+```
+
+If either is missing, ANNOTATE will fail with `python: can't open file ...` — run the
+`git submodule update --init` command above.
 
 Results are written under `--outdir` (default `results/`):
 

@@ -95,7 +95,10 @@ def write_forgi_bg(bg, out_path: Path) -> None:
 
 
 def write_forgi_jpeg(bg, out_path: Path) -> None:
-    """Render the BulgeGraph as a JPEG via forgi.visual.mplotlib."""
+    """Render the BulgeGraph as a JPEG via forgi.visual.mplotlib.
+    Falls back to an empty placeholder when forgi's plot_rna can't import its
+    ViennaRNA dependency (env-specific; doesn't fail the pipeline).
+    """
     if bg is None:
         # empty placeholder so downstream tools see the file
         out_path.write_bytes(b"")
@@ -106,7 +109,17 @@ def write_forgi_jpeg(bg, out_path: Path) -> None:
     import forgi.visual.mplotlib as fvm
 
     fig, ax = plt.subplots(figsize=(8, 8))
-    fvm.plot_rna(bg, ax=ax)
+    try:
+        fvm.plot_rna(bg, ax=ax)
+    except (ImportError, ModuleNotFoundError) as exc:
+        print(
+            f"[export_basepairs] forgi.plot_rna unavailable ({exc}); "
+            "skipping JPEG render (install viennarna with python bindings to enable).",
+            file=sys.stderr,
+        )
+        plt.close(fig)
+        out_path.write_bytes(b"")
+        return
     ax.set_title(bg.name or "")
     ax.set_axis_off()
     fig.tight_layout()
