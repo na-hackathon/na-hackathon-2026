@@ -4,14 +4,11 @@
 
 
 import sys, json, re
-from purine_pyrimidine import *
 import gemmi
 from pathlib import Path
 
 bp_families = { "cWW": '1', "tWW": '2', "cWH": '3', "tWH": '4', "cWS": '5', "tWS": '6', "cHH": '7', "tHH": '8', "cHS": '9', "tHS": '10', "cSS": '11', "tSS": '12' }
 long_names = {"W": "Watson-Crick", "H": "Hoogsteen", "S": "Sugar", "t": "trans", "c": "cis"}
-
-complementary = [ ("A", "U"), ("G", "C"), ("DA", "DT"), ("DG", "DC") ]
 
 processed = []
 
@@ -38,6 +35,7 @@ try:
   block = doc.sole_block()
 
   asym_loop = block.get_mmcif_category('_struct_asym.')
+  entity_of_asym = dict(zip(asym_loop.get('id', []), asym_loop.get('entity_id', [])))
   struct_oper_list_loop = block.get_mmcif_category('_pdbx_struct_oper_list.')
 
   # rnapolis annotates a single model within the asymmetric unit, so every pair
@@ -70,10 +68,12 @@ def get_residue_identifiers(structure, model_number, author_chain, author_resnum
     if chain.name.strip() == author_chain:
       for residue in chain:
         if (residue.seqid.num == author_resnum and residue.name == author_resname and (residue.seqid.icode if residue.seqid.icode != ' ' else ' ') == author_ins_code):
+          if residue.subchain not in entity_of_asym:
+            return None, f"No _struct_asym entry for subchain '{residue.subchain}'."
           return {
             'model': model.num,
             'asym_id': residue.subchain,
-            'entity_id': asym_loop["entity_id"][asym_loop["id"].index(residue.subchain)],
+            'entity_id': entity_of_asym[residue.subchain],
             'seq_id': residue.label_seq,
             'comp_id': residue.name,
             'PDB_ins_code': (residue.seqid.icode if residue.seqid.icode != ' ' else '?'),
@@ -97,6 +97,10 @@ try:
     if key12 in processed:
       continue
 
+    # same family check as the FR3D exporter: anything but the 12 [ct][WHS][WHS] classes is skipped
+    if not pattern.fullmatch(lw):
+      print("Skipping unsupported pairing family", lw, auth_key(auth1), auth_key(auth2), file=sys.stderr)
+      continue
 
     # put the pair into canonical order (edge_1 <= edge_2); reverse families
     if (lw in bp_families):

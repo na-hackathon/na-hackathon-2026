@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import sys, json, re
-from purine_pyrimidine import *
 import gemmi
 from pathlib import Path
 
@@ -13,11 +12,7 @@ long_names = {"W": "Watson-Crick", "H": "Hoogsteen", "S": "Sugar", "t": "trans",
 # list of standard residues
 #stdres = [ "A", "U", "G", "C", "DA", "DT", "DG", "DC" ]
 
-# definition of the complementary pairs (colored separately if cWW)
-complementary = [ ("A", "U"), ("G", "C"), ("DA", "DT"), ("DG", "DC") ]
-
 processed = []
-allres = []
 
 # fr3d  unit_id reference
 #unit_id_parts = ['pdb', 'model', 'chain', 'component_id', 'component_number', 'atom_name', 'alt_id', 'insertion_code', 'symmetry']
@@ -46,13 +41,14 @@ try:
   block = doc.sole_block()
 
   asym_loop = block.get_mmcif_category('_struct_asym.')
+  entity_of_asym = dict(zip(asym_loop.get('id', []), asym_loop.get('entity_id', [])))
   struct_oper_list_loop = block.get_mmcif_category('_pdbx_struct_oper_list.')
-  
+
   num_sym_oper = 1
   identity_id='1'
+  struct_oper_dict = {}
   if (struct_oper_list_loop):
     tagpos = {'id':None, 'type':None, 'name':None}
-    struct_oper_dict = {}
 #    struct_oper_list_loop = block.find_loop_item('_pdbx_struct_oper_list.id').loop
     num_sym_oper = len(struct_oper_list_loop['id'])
     # TODO in the real case, we will compare the trans and rot operations between gemmi and the _pdbx_struct_oper_list
@@ -83,10 +79,12 @@ def get_atom_identifiers(structure, model_number, author_chain, author_resnum, a
         if (residue.seqid.num == author_resnum and residue.name == author_resname and (residue.seqid.icode if residue.seqid.icode != ' ' else ' ') == author_ins_code):
           for atom in residue:
             if (atom.altloc if atom.altloc != '\x00' else '') == author_alt_id:
+              if residue.subchain not in entity_of_asym:
+                return None, f"No _struct_asym entry for subchain '{residue.subchain}'."
               return {
                 'model': model.num,
                 'asym_id': residue.subchain,
-                'entity_id': asym_loop["entity_id"][asym_loop["id"].index(residue.subchain)] ,
+                'entity_id': entity_of_asym[residue.subchain],
                 'seq_id': residue.label_seq,
                 'comp_id': residue.name,
                 'PDB_ins_code': (residue.seqid.icode if residue.seqid.icode != ' ' else '?'),
@@ -135,7 +133,7 @@ try:
 
       # TODO to be corected when gemmi allows access to _pdbx_struct_oper_list.name and/or when our base-pairing code is used instead of fr3d
       if (len(fr3d_syms) > num_sym_oper):
-        sys.exit("Number of FR3D symmetry operations is larger than size of _pdbx_struct_oper_list", pair)
+        sys.exit(f"Number of FR3D symmetry operations is larger than size of _pdbx_struct_oper_list: {pair}")
 
       if (syma != identity_id):
         if (syma in struct_oper_dict):
@@ -165,12 +163,6 @@ try:
       if not isinstance(resulta['seq_id'], int) or not isinstance(resultb['seq_id'], int):
         print(f"Skipping pair with invalid seq_id: {pair} (seq_id_1={resulta['seq_id']}, seq_id_2={resultb['seq_id']})", file=sys.stderr)
         continue
-
-      if resa not in allres:
-        allres.append(pair[0])
-
-      if resb not in allres:
-        allres.append(pair[2])
 
       # add both directions to processed
       processed.append(pair[0]+"_"+pair[2])
