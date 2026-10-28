@@ -1,7 +1,8 @@
 // T2 Core (parser) — tool-native annotation output -> standardized base-pairing
 // mmCIF (NDB extended categories). Calls bin/ws1-parse, which dispatches per tool.
 // Besides <tool>_basepairs.cif it emits <tool>_basepairs.skipped.tsv: the input pairs the
-// exporter did not write, with the reason.
+// exporter did not write, with the reason. The annotator's provenance file (from ANNOTATE)
+// adds the annotator to the _software category of the mmCIF.
 
 process PARSE {
     tag   "${tool}"
@@ -10,7 +11,7 @@ process PARSE {
     conda "${projectDir}/envs/ws1.yml"
 
     input:
-    tuple val(tool), path(raw), path(mmcif)
+    tuple val(tool), path(raw), path(mmcif), path(provenance)
 
     output:
     tuple val(tool), path("${tool}_basepairs.cif"), emit: basepairs
@@ -18,6 +19,6 @@ process PARSE {
 
     script:
     """
-    ws1-parse --tool ${tool} --raw ${raw} --structure ${mmcif} --out ${tool}_basepairs.cif
+    ws1-parse --tool ${tool} --raw ${raw} --structure ${mmcif} --out ${tool}_basepairs.cif --provenance ${provenance}
     """
 }

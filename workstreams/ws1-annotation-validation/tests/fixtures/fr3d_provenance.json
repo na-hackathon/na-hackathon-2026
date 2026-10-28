@@ -1,0 +1,13 @@
+{
+  "tool": "fr3d",
+  "software": {
+    "name": "FR3D",
+    "repository": "https://github.com/BGSU-RNA/fr3d-python.git",
+    "commit": "995de6cf5fb67e689ab8b6626988799ec4362f1e",
+    "describe": "master-archive-2026-10-15~2",
+    "package_version": "0.0.2"
+  },
+  "command": "python annotations_tools/fr3d-python/fr3d/classifiers/NA_pairwise_interactions.py -i . structure.cif -o fr3d_raw",
+  "structure": {"name": "structure.cif", "sha256": null},
+  "python": "3.12.16"
+}

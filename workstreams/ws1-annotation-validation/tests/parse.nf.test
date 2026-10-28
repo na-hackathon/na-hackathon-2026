@@ -24,7 +24,8 @@ nextflow_process {
                     input[0] = [
                         'fr3d',
                         file("${projectDir}/../../data/tests/fr3d_outputs/${pdbId}/${pdbId}_basepair.txt"),
-                        file("${projectDir}/../../data/tests/Inputs/${pdbId}.cif")
+                        file("${projectDir}/../../data/tests/Inputs/${pdbId}.cif"),
+                        file("${projectDir}/tests/fixtures/fr3d_provenance.json")
                     ]
                     """
                 }
@@ -42,6 +43,8 @@ nextflow_process {
                 assert path(process.out.skipped[0].toString()).text.startsWith('reason\tunit_id_1\tfamily\tunit_id_2\tdetail')
 
                 def cif = out.text
+                // the annotator is appended to _software
+                assert cif.contains('FR3D') && cif.contains('995de6cf5fb67e689ab8b6626988799ec4362f1e')
                 assert cif.contains('_ndb_base_pair_list.base_pair_id')
                 assert cif.contains('_ndb_base_pair_annotation.id')
                 assert cif =~ /[ct][WHS][WHS]/
@@ -59,7 +62,8 @@ nextflow_process {
                     input[0] = [
                         'rnapolis',
                         file("${projectDir}/../../data/tests/rnapolis_outputs/${pdbId}.json"),
-                        file("${projectDir}/../../data/tests/Inputs/${pdbId}.cif")
+                        file("${projectDir}/../../data/tests/Inputs/${pdbId}.cif"),
+                        file("${projectDir}/tests/fixtures/rnapolis_provenance.json")
                     ]
                     """
                 }
@@ -77,6 +81,8 @@ nextflow_process {
                 assert path(process.out.skipped[0].toString()).text.startsWith('reason\tresidue_1\tfamily\tresidue_2\tdetail')
 
                 def cif = out.text
+                // the annotator is appended to _software
+                assert cif.contains('RNApolis') && cif.contains('5ba519b5af6de0086d02e61640bdff56e2ef6bc5')
                 assert cif.contains('_ndb_base_pair_list.base_pair_id')
                 assert cif.contains('_ndb_base_pair_annotation.id')
                 assert cif =~ /[ct][WHS][WHS]/

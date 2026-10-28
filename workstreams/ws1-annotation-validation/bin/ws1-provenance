@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+"""Write the provenance of one annotator run as JSON.
+
+    ws1-provenance --tool fr3d|rnapolis --src <annotations_tools dir> --structure <cif>
+                   --command "<command line>" --out <provenance.json>
+
+Records the annotator (name, repository, git commit and `git describe` of its submodule under
+--src, version in its pyproject.toml), the command line, the sha256 of the structure it ran on
+and the python version. Values that cannot be determined (git missing, submodule not a git
+checkout) are null. ws1-parse hands the file to the exporters, which add the annotator to the
+_software category of the base-pair mmCIF; ws1-manifest collects it into the run manifest.
+"""
+import argparse
+import json
+import platform
+import re
+from pathlib import Path
+
+from provenance_utils import git, sha256
+
+# tool -> (name in _software, submodule directory under --src)
+TOOLS = {"fr3d": ("FR3D", "fr3d-python"), "rnapolis": ("RNApolis", "rnapolis-py")}
+
+
+def package_version(directory):
+    try:
+        text = (Path(directory) / "pyproject.toml").read_text()
+    except OSError:
+        return None
+    found = re.search(r'^version\s*=\s*"([^"]+)"', text, re.M)
+    return found.group(1) if found else None
+
+
+def provenance(tool, src, structure, command):
+    name, submodule = TOOLS[tool]
+    directory = Path(src) / submodule
+    return {
+        "tool": tool,
+        "software": {
+            "name": name,
+            "repository": git(directory, "remote", "get-url", "origin"),
+            "commit": git(directory, "rev-parse", "HEAD"),
+            "describe": git(directory, "describe", "--tags", "--always"),
+            "package_version": package_version(directory),
+        },
+        "command": command,
+        "structure": {"name": Path(structure).name, "sha256": sha256(structure)},
+        "python": platform.python_version(),
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Write the provenance of an annotator run as JSON")
+    ap.add_argument("--tool", required=True, choices=sorted(TOOLS))
+    ap.add_argument("--src", required=True, help="annotations_tools directory")
+    ap.add_argument("--structure", required=True)
+    ap.add_argument("--command", required=True, help="command line of the annotator")
+    ap.add_argument("--out", required=True)
+    args = ap.parse_args()
+    Path(args.out).write_text(
+        json.dumps(provenance(args.tool, args.src, args.structure, args.command), indent=2) + "\n")
+
+
+if __name__ == "__main__":
+    main()

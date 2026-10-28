@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 """Convert RNApolis annotator JSON to base-pairing mmCIF (same categories as json_fr3d_mmcif.py).
 
-Usage: json_rnapolis_mmcif.py RNAPOLIS_OUTPUT.json structure.cif [out.cif]
+Usage: json_rnapolis_mmcif.py RNAPOLIS_OUTPUT.json structure.cif [out.cif] [--provenance provenance.json]
 
 RNApolis annotates the first model of the asymmetric unit only: every pair is written with that
 model and the identity symmetry operator, and without an alternate position. Input pairs that
@@ -13,6 +13,7 @@ import sys, json, re
 import gemmi
 from collections import Counter
 from pathlib import Path
+from mmcif_software import add_software_row
 
 bp_families = { "cWW": '1', "tWW": '2', "cWH": '3', "tWH": '4', "cWS": '5', "tWS": '6', "cHH": '7', "tHH": '8', "cHS": '9', "tHS": '10', "cSS": '11', "tSS": '12' }
 long_names = {"W": "Watson-Crick", "H": "Hoogsteen", "S": "Sugar", "t": "trans", "c": "cis"}
@@ -30,13 +31,21 @@ annotation_id = 0
 pattern = re.compile("[ct][WHS][WHS]")
 
 try:
-  with open(sys.argv[1], 'r') as file:
+  # optional --provenance <json from ws1-provenance>: the annotator is added to _software
+  args = sys.argv[1:]
+  provenance_file = None
+  if '--provenance' in args:
+    i = args.index('--provenance')
+    provenance_file = args[i + 1]
+    del args[i:i + 2]
+
+  with open(args[0], 'r') as file:
     annotation = json.load(file)
 
   pairs = annotation["base_pairs"]
 
-  mmcif_file = sys.argv[2]
-  out_file = sys.argv[3] if len(sys.argv) > 3 else Path(mmcif_file).stem + '_rnapolis_basepairs.cif'
+  mmcif_file = args[1]
+  out_file = args[2] if len(args) > 2 else Path(mmcif_file).stem + '_rnapolis_basepairs.cif'
 
   # TODO read the file once: structure.make_mmcif_document() does not return the complete
   # document, so the file is read as a structure and again as a cif document
@@ -64,7 +73,7 @@ try:
   ndb_base_pair_annotation_loop = block.init_mmcif_loop('_ndb_base_pair_annotation.', ['id', 'base_pair_id', 'orientation', 'base_1_edge', 'base_2_edge', 'l-w_family_num', 'l-w_family', 'class', 'subclass'])
 
 except:
-  print("usage:", sys.argv[0], "RNAPOLIS_OUTPUT.json", "structure.cif", "[out.cif]", file=sys.stderr)
+  print("usage:", sys.argv[0], "RNAPOLIS_OUTPUT.json", "structure.cif", "[out.cif]", "[--provenance provenance.json]", file=sys.stderr)
   raise
 
 def get_residue_identifiers(structure, model_number, author_chain, author_resnum, author_resname, author_ins_code):
@@ -157,6 +166,11 @@ try:
 except Exception as e:
   print(f"error {e=}, {type(e)=}", file=sys.stderr)
   raise
+
+if provenance_file:
+  with open(provenance_file) as f:
+    if not add_software_row(block, json.load(f)["software"], "base-pair annotation (WS1 pipeline)"):
+      print("[json_rnapolis_mmcif] _software is written as key-value pairs: annotator not added", file=sys.stderr)
 
 options = gemmi.cif.WriteOptions()
 options.align_pairs = 33

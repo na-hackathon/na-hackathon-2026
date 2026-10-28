@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 """Convert FR3D base pairs (JSON from fr3d_basepair_to_json.py) to base-pairing mmCIF.
 
-Usage: json_fr3d_mmcif.py basepairs.json structure.cif [out.cif]
+Usage: json_fr3d_mmcif.py basepairs.json structure.cif [out.cif] [--provenance provenance.json]
 
 Writes a copy of structure.cif with the _ndb_base_pair_list and _ndb_base_pair_annotation
-categories added (layout at the end of this file). Input rows that are not written are saved
+categories added (layout at the end of this file). With --provenance (JSON from ws1-provenance)
+the annotator is added to the _software category. Input rows that are not written are saved
 to <out minus .cif>.skipped.tsv with the reason; a summary line is printed to stderr.
 """
 
@@ -12,6 +13,7 @@ import sys, json, re
 import gemmi
 from collections import Counter
 from pathlib import Path
+from mmcif_software import add_software_row
 
 bp_families = { "cWW": '1', "tWW": '2', "cWH": '3', "tWH": '4', "cWS": '5', "tWS": '6', "cHH": '7', "tHH": '8', "cHS": '9', "tHS": '10', "cSS": '11', "tSS": '12' }
 long_names = {"W": "Watson-Crick", "H": "Hoogsteen", "S": "Sugar", "t": "trans", "c": "cis"}
@@ -39,11 +41,19 @@ fr3d_syms = []
 pattern = re.compile("[ct][WHS][WHS]")
 
 try:
-  with open(sys.argv[1], 'r') as file:
+  # optional --provenance <json from ws1-provenance>: the annotator is added to _software
+  args = sys.argv[1:]
+  provenance_file = None
+  if '--provenance' in args:
+    i = args.index('--provenance')
+    provenance_file = args[i + 1]
+    del args[i:i + 2]
+
+  with open(args[0], 'r') as file:
     pairs = json.load(file)
 
-  mmcif_file = sys.argv[2]
-  out_file = sys.argv[3] if len(sys.argv) > 3 else Path(mmcif_file).stem + '_basepairs.cif'
+  mmcif_file = args[1]
+  out_file = args[2] if len(args) > 2 else Path(mmcif_file).stem + '_basepairs.cif'
 
   # TODO read the file once: structure.make_mmcif_document() does not return the complete
   # document, so the file is read as a structure and again as a cif document
@@ -72,7 +82,7 @@ try:
   ndb_base_pair_annotation_loop = block.init_mmcif_loop('_ndb_base_pair_annotation.', ['id', 'base_pair_id', 'orientation', 'base_1_edge', 'base_2_edge', 'l-w_family_num', 'l-w_family', 'class', 'subclass'])
 
 except:
-  print("usage:",sys.argv[0],"basepairs.json","structure.cif","[out.cif]", file=sys.stderr)
+  print("usage:",sys.argv[0],"basepairs.json","structure.cif","[out.cif]","[--provenance provenance.json]", file=sys.stderr)
   raise
 
 def get_atom_identifiers(structure, model_number, author_chain, author_resnum, author_resname, author_ins_code, author_alt_id):
@@ -229,6 +239,11 @@ try:
 except Exception as e:
   print(f"error {e=}, {type(e)=}", file=sys.stderr)
   raise
+
+if provenance_file:
+  with open(provenance_file) as f:
+    if not add_software_row(block, json.load(f)["software"], "base-pair annotation (WS1 pipeline)"):
+      print("[json_fr3d_mmcif] _software is written as key-value pairs: annotator not added", file=sys.stderr)
 
 # set "nice output" writing options for gemmi
 options = gemmi.cif.WriteOptions()
