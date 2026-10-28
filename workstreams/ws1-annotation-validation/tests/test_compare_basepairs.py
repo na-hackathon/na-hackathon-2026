@@ -136,6 +136,21 @@ def test_key_auth_reproduces_earlier_counts(pdb_id, tmp_path):
     assert (report["total_distinct_pairs"], report["agreed_by_all_tools"]) == LEGACY[pdb_id]
 
 
+# default key (model + label ids + symmetry operator), model 1:
+# (distinct, shared, agreed, discordant, only in FR3D, only in RNApolis)
+DEFAULT = {"8bwt": (12, 12, 12, 0, 0, 0), "8vjt": (14, 0, 0, 0, 13, 1), "8xzn": (27, 21, 21, 0, 2, 4),
+           "9e5i": (72, 52, 48, 4, 2, 18), "9hrf": (33, 32, 32, 0, 0, 1), "9sfq": (40, 35, 33, 2, 0, 5)}
+
+
+@pytest.mark.parametrize("pdb_id", sorted(DEFAULT))
+def test_default_key_counts_on_stored_cases(pdb_id, tmp_path):
+    report = run_compare(pdb_id, tmp_path)
+    only = {tool.split("_")[-1]: n for tool, n in report["only_in"].items()}       # fr3d / annotated (RNApolis)
+    assert (report["total_distinct_pairs"], report["shared_by_all_tools"], report["agreed_by_all_tools"],
+            report["discordant_family"], only["fr3d"], only["annotated"]) == DEFAULT[pdb_id]
+    assert report["comp_id_mismatch"] == 0
+
+
 def test_default_key_keeps_models_apart(tmp_path):
     # 8BWT: FR3D annotated 10 models (120 rows), RNApolis only the first (12 rows)
     report = run_compare("8bwt", tmp_path)
