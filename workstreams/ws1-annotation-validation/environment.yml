@@ -1,6 +1,6 @@
 # ws1-dev: toolchain for developing WS1 (Nextflow + JVM, nf-test, pytest, gemmi).
 # Pipeline processes run in envs/ws1.yml, which Nextflow builds on first use
-# (nf-test builds it into .nf-test/conda).
+# into the conda cache shared by runs and tests (NXF_CONDA_CACHEDIR, default ~/.cache/ws1-conda).
 #
 #   mamba env create -f environment.yml      # (or: conda env create -f ...)
 #   conda activate ws1-dev

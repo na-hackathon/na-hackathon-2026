@@ -4,7 +4,7 @@
 process RUN_MANIFEST {
     label 'manifest'
     publishDir "${params.outdir}", mode: 'copy'
-    conda "${projectDir}/envs/ws1.yml"
+    conda params.env_file
 
     input:
     path structure          // the input of the run

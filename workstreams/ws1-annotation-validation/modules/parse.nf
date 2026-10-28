@@ -8,7 +8,7 @@ process PARSE {
     tag   "${tool}"
     label 'parsing'
     publishDir "${params.outdir}/basepairs", mode: 'copy'
-    conda "${projectDir}/envs/ws1.yml"
+    conda params.env_file
 
     input:
     tuple val(tool), path(raw), path(mmcif), path(provenance)

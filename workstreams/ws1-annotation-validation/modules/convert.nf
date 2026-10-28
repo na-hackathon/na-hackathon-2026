@@ -9,7 +9,7 @@ process CONVERT {
     tag   "${structure.name}"
     label 'conversion'
     publishDir "${params.outdir}/mmcif", mode: 'copy'
-    conda     { params.converter == 'maxit-docker' ? null : "${projectDir}/envs/ws1.yml" }
+    conda     { params.converter == 'maxit-docker' ? null : params.env_file }
     container { params.converter == 'maxit-docker' ? 'tzok/maxit' : null }
 
     input:

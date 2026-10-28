@@ -8,7 +8,7 @@
 process VALIDATE {
     label 'validation'
     publishDir "${params.outdir}/validation", mode: 'copy'
-    conda "${projectDir}/envs/ws1.yml"
+    conda params.env_file
 
     input:
     path bp_cifs
@@ -27,7 +27,7 @@ process VISUALIZE {
     tag   "${tool}"
     label 'validation'
     publishDir "${params.outdir}/validation", mode: 'copy'
-    conda "${projectDir}/envs/ws1.yml"
+    conda params.env_file
 
     input:
     tuple val(tool), path(bp_cif)
