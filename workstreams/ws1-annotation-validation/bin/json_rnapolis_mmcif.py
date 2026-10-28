@@ -101,68 +101,68 @@ def get_residue_identifiers(structure, model_number, author_chain, author_resnum
 
   return None, f"No match found for model '{model_number}', chain '{author_chain}', residue '{author_resnum}', name '{author_resname}', insertion code '{author_ins_code}'."
 
-def auth_key(auth):
-  ic = auth.get('icode') or ''
-  return f"{auth['chain']}|{auth['number']}|{ic}|{auth['name']}"
+def residue_key(residue):
+  ic = residue.get('icode') or ''
+  return f"{residue['chain']}|{residue['number']}|{ic}|{residue['name']}"
 
 try:
   for pair in pairs:
-    auth1 = pair["nt1"]["auth"]
-    auth2 = pair["nt2"]["auth"]
+    res1 = pair["nt1"]["auth"]
+    res2 = pair["nt2"]["auth"]
     lw = pair["lw"]
 
-    key12 = auth_key(auth1) + "_" + auth_key(auth2)
+    key12 = residue_key(res1) + "_" + residue_key(res2)
     if key12 in processed:
       duplicates += 1
       continue
 
     # same family check as the FR3D exporter: anything but the 12 [ct][WHS][WHS] classes is skipped
     if not pattern.fullmatch(lw):
-      print("Skipping unsupported pairing family", lw, auth_key(auth1), auth_key(auth2), file=sys.stderr)
-      skipped.append(('unsupported_family', auth_key(auth1), lw, auth_key(auth2), ''))
+      print("Skipping unsupported pairing family", lw, residue_key(res1), residue_key(res2), file=sys.stderr)
+      skipped.append(('unsupported_family', residue_key(res1), lw, residue_key(res2), ''))
       continue
 
     # put the pair into canonical order (edge_1 <= edge_2); reverse families
     if (lw in bp_families):
-      autha, authb = auth1, auth2
+      res_a, res_b = res1, res2
       fam = lw
     else:
-      autha, authb = auth2, auth1
+      res_a, res_b = res2, res1
       fam = lw[0] + lw[2] + lw[1]
 
-    insa = autha.get('icode') if autha.get('icode') else ' '
-    insb = authb.get('icode') if authb.get('icode') else ' '
+    insa = res_a.get('icode') if res_a.get('icode') else ' '
+    insb = res_b.get('icode') if res_b.get('icode') else ' '
 
-    resulta, error = get_residue_identifiers(structure, model_number=model_number, author_chain=autha['chain'], author_resnum=int(autha['number']), author_resname=autha['name'], author_ins_code=insa)
+    resulta, error = get_residue_identifiers(structure, model_number=model_number, author_chain=res_a['chain'], author_resnum=int(res_a['number']), author_resname=res_a['name'], author_ins_code=insa)
     if error:
       print(error, file=sys.stderr)
-      skipped.append(('residue_not_found', auth_key(auth1), lw, auth_key(auth2), error))
+      skipped.append(('residue_not_found', residue_key(res1), lw, residue_key(res2), error))
       continue
 
-    resultb, error = get_residue_identifiers(structure, model_number=model_number, author_chain=authb['chain'], author_resnum=int(authb['number']), author_resname=authb['name'], author_ins_code=insb)
+    resultb, error = get_residue_identifiers(structure, model_number=model_number, author_chain=res_b['chain'], author_resnum=int(res_b['number']), author_resname=res_b['name'], author_ins_code=insb)
     if error:
       print(error, file=sys.stderr)
-      skipped.append(('residue_not_found', auth_key(auth1), lw, auth_key(auth2), error))
+      skipped.append(('residue_not_found', residue_key(res1), lw, residue_key(res2), error))
       continue
 
     # seq_id can be None for pairs to non-polymer nucleotides
     if not isinstance(resulta['seq_id'], int) or not isinstance(resultb['seq_id'], int):
-      print(f"Skipping pair with invalid seq_id: {auth_key(auth1)} {auth_key(auth2)} (seq_id_1={resulta['seq_id']}, seq_id_2={resultb['seq_id']})", file=sys.stderr)
-      skipped.append(('no_label_seq_id', auth_key(auth1), lw, auth_key(auth2), f"seq_id_1={resulta['seq_id']}, seq_id_2={resultb['seq_id']}"))
+      print(f"Skipping pair with invalid seq_id: {residue_key(res1)} {residue_key(res2)} (seq_id_1={resulta['seq_id']}, seq_id_2={resultb['seq_id']})", file=sys.stderr)
+      skipped.append(('no_label_seq_id', residue_key(res1), lw, residue_key(res2), f"seq_id_1={resulta['seq_id']}, seq_id_2={resultb['seq_id']}"))
       continue
 
     # add both directions to processed
     processed.append(key12)
-    processed.append(auth_key(auth2) + "_" + auth_key(auth1))
+    processed.append(residue_key(res2) + "_" + residue_key(res1))
 
     base_pair_id += 1
     annotation_id += 1
 
     # populate _ndb_base_pair_list loop (struct_oper_id is always the identity operation)
-    ndb_base_pair_list_loop.add_row([str(base_pair_id), str(model_number), resulta['asym_id'], resulta['entity_id'], str(resulta['seq_id']), resulta['comp_id'], resulta['PDB_ins_code'], resulta['alt_id'], identity_id, resultb['asym_id'], resultb['entity_id'], str(resultb['seq_id']), resultb['comp_id'], resultb['PDB_ins_code'], resultb['alt_id'], identity_id, autha['chain'], str(autha['number']), authb['chain'], str(authb['number'])])
+    ndb_base_pair_list_loop.add_row([str(base_pair_id), str(model_number), resulta['asym_id'], resulta['entity_id'], str(resulta['seq_id']), resulta['comp_id'], resulta['PDB_ins_code'], resulta['alt_id'], identity_id, resultb['asym_id'], resultb['entity_id'], str(resultb['seq_id']), resultb['comp_id'], resultb['PDB_ins_code'], resultb['alt_id'], identity_id, res_a['chain'], str(res_a['number']), res_b['chain'], str(res_b['number'])])
 
     # populate _ndb_base_pair_annotation loop
-    ndb_base_pair_annotation_loop.add_row([str(annotation_id), str(base_pair_id), long_names[fam[0]], long_names[fam[1]], long_names[fam[2]], bp_families[fam], fam, fam + '_' + autha['name'] + '-' + authb['name'], fam + '_' + autha['name'] + '-' + authb['name'] + '_1'])
+    ndb_base_pair_annotation_loop.add_row([str(annotation_id), str(base_pair_id), long_names[fam[0]], long_names[fam[1]], long_names[fam[2]], bp_families[fam], fam, fam + '_' + res_a['name'] + '-' + res_b['name'], fam + '_' + res_a['name'] + '-' + res_b['name'] + '_1'])
 except Exception as e:
   print(f"error {e=}, {type(e)=}", file=sys.stderr)
   raise
