@@ -17,7 +17,7 @@ import gemmi
 
 # parse_basepairs lives next to this script in bin/
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from parse_basepairs import parse_basepairs  # noqa: E402
+from parse_basepairs import identity_operator_id, parse_basepairs  # noqa: E402
 
 NA_RESIDUES = {"A", "U", "G", "C", "T", "DA", "DT", "DG", "DC"}
 
@@ -47,44 +47,108 @@ def write_tsv(pairs: list[dict], path: Path) -> None:
             )
 
 
-def _chain_dotbracket(chain, pairs: list[dict]) -> tuple[str, str] | None:
-    """For one chain: build (sequence, dot-bracket) from its cWW pairs.
+# Bracket types of the dot-bracket: nested pairs use (), pairs crossing them [] and then <>;
+# forgi reads all three (a crossing pair is a pseudoknot).
+BRACKETS = ("()", "[]", "<>")
+
+
+def _crosses(p: tuple[int, int], q: tuple[int, int]) -> bool:
+    return p[0] < q[0] < p[1] < q[1] or q[0] < p[0] < q[1] < p[1]
+
+
+def layer_pairs(pairs: list[tuple[int, int]]):
+    """Distribute the pairs (i, j), i < j, over the bracket types so that no two pairs of a layer cross.
+    Shorter pairs are placed first: nested helices get (), pairs crossing them [] and then <>.
+    Returns the layers and the pairs left out (no layer without a crossing pair)."""
+    layers = [[] for _ in BRACKETS]
+    left_out = []
+    for pair in sorted(pairs, key=lambda p: (p[1] - p[0], p[0])):
+        for layer in layers:
+            if not any(_crosses(pair, other) for other in layer):
+                layer.append(pair)
+                break
+        else:
+            left_out.append(pair)
+    return layers, left_out
+
+
+def _nucleotide_letter(residue, nucleic_chain: bool = False) -> str | None:
+    """One-letter code of a nucleotide residue; None for any other residue (ligand, ion, amino acid).
+    A modified nucleotide gets the letter of its parent base (N when gemmi has none). In a nucleic-acid
+    chain (nucleic_chain), a polymer residue that gemmi does not know as a nucleotide, such as a
+    5'-terminal GTP, is a nucleotide too: N. Polymer residues have a label_seq, ligands do not."""
+    if residue.name in NA_RESIDUES:
+        return residue.name[-1]                       # DA -> A, U -> U
+    info = gemmi.find_tabulated_residue(residue.name)
+    if info is not None and info.is_nucleic_acid():
+        return info.one_letter_code.strip().upper() or "N"
+    if nucleic_chain and residue.label_seq is not None and (info is None or not (info.is_amino_acid() or info.is_water())):
+        return "N"
+    return None
+
+
+def _chain_dotbracket(chain, pairs: list[dict]) -> tuple[str, str, int] | None:
+    """For one chain: build (sequence, dot-bracket, number of cWW pairs left out) from its cWW pairs.
+    Residues are the nucleotides of the chain, modified ones included, matched on auth number and
+    insertion code. A residue takes part in one pair of the dot-bracket (later pairs of it are left
+    out), and pairs that cannot be placed without crossing in the three bracket types are left out.
     Returns None if the chain has no nucleic-acid residues.
     """
-    residues = [(r.seqid.num, r.name) for r in chain if r.name in NA_RESIDUES]
-    if not residues:
+    nucleic_chain = any(_nucleotide_letter(r) for r in chain)
+    nucleotides = [(r, letter) for r in chain if (letter := _nucleotide_letter(r, nucleic_chain))]
+    if not nucleotides:
         return None
-    idx = {seq: i for i, (seq, _) in enumerate(residues)}
-    seq_str = "".join(name[-1] for _, name in residues)  # DA -> A, U -> U
-    db = ["."] * len(residues)
+    residues = [r for r, _ in nucleotides]
+    idx = {(r.seqid.num, r.seqid.icode.strip()): i for i, r in enumerate(residues)}
+    seq_str = "".join(letter for _, letter in nucleotides)
+    placed, used, left_out = [], set(), 0
     for p in pairs:
         if p["family"] != "cWW":
             continue
         if p["auth_asym_id_1"] != chain.name or p["auth_asym_id_2"] != chain.name:
             continue
-        i = idx.get(int(p["auth_seq_id_1"]))
-        j = idx.get(int(p["auth_seq_id_2"]))
-        if i is None or j is None:
+        i = idx.get((int(p["auth_seq_id_1"]), p.get("ins_code_1", "")))
+        j = idx.get((int(p["auth_seq_id_2"]), p.get("ins_code_2", "")))
+        if i is None or j is None or i == j:
             continue
-        a, b = sorted((i, j))
-        db[a], db[b] = "(", ")"
-    return seq_str, "".join(db)
+        if i in used or j in used:
+            left_out += 1
+            continue
+        used.update((i, j))
+        placed.append((min(i, j), max(i, j)))
+    layers, crossing = layer_pairs(placed)
+    db = ["."] * len(residues)
+    for (opening, closing), layer in zip(BRACKETS, layers):
+        for i, j in layer:
+            db[i], db[j] = opening, closing
+    return seq_str, "".join(db), left_out + len(crossing)
 
 
-def build_bulge_graphs(pairs: list[dict], cif_path: Path) -> list:
+def build_bulge_graphs(pairs: list[dict], cif_path: Path, identity: str = "1") -> list:
     """Build one forgi BulgeGraph per nucleic-acid chain from its cWW pairs.
 
     Only intrachain pairs enter a chain's dot-bracket, so the chains are never connected by
     a base pair and forgi refuses to join them with '&' ("Found two sequences not connected
     by any base-pair"). Each chain therefore gets its own graph, named <stem>_<chain>
     (just <stem> when there is a single chain). Returns [] when no nucleic-acid chain was found.
+
+    The graphs are drawn on the first model of the structure: pairs of other models and pairs
+    with a residue of a symmetry mate (operator other than `identity`, the id of the identity
+    operation) are not used.
     """
     from forgi.graph.bulge_graph import BulgeGraph
 
     structure = gemmi.read_structure(str(cif_path))
+    model = str(structure[0].num)
+    pairs = [p for p in pairs
+             if p.get("model", "") in ("", model)
+             and all(p.get(f"struct_oper_id_{side}", "") in ("", identity) for side in ("1", "2"))]
     blocks = [(c.name, b) for c in structure[0] if (b := _chain_dotbracket(c, pairs))]
     graphs = []
-    for name, (seq, dotbracket) in blocks:
+    for name, (seq, dotbracket, left_out) in blocks:
+        if left_out:
+            print(f"[export_basepairs] chain {name}: {left_out} cWW pair(s) left out of the dot-bracket "
+                  "(residue already paired, or more than three crossing layers)", file=sys.stderr)
         bg = BulgeGraph.from_dotbracket(dotbracket, seq)
         bg.name = cif_path.stem if len(blocks) == 1 else f"{cif_path.stem}_{name}"
         graphs.append(bg)
@@ -141,7 +205,7 @@ def main() -> None:
     pairs = parse_basepairs(str(cif))
     write_csv(pairs, prefix.with_suffix(".csv"))
     write_tsv(pairs, prefix.with_suffix(".tsv"))
-    graphs = build_bulge_graphs(pairs, cif)
+    graphs = build_bulge_graphs(pairs, cif, identity_operator_id(str(cif)))
     write_forgi_bg(graphs, prefix.with_suffix(".bg"))
     write_forgi_jpeg(graphs, prefix.with_suffix(".jpg"))
 
