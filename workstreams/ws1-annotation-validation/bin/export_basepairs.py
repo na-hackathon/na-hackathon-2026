@@ -2,8 +2,8 @@
 """Reparse a base-pair mmCIF and emit:
     <prefix>.csv   pair table (CSV)
     <prefix>.tsv   pair table (TSV, same as parse_basepairs.py stdout)
-    <prefix>.bg    forgi BulgeGraph built from cWW pairs
-    <prefix>.jpg   matplotlib render of that BulgeGraph
+    <prefix>.bg    forgi BulgeGraph(s) built from cWW pairs, one per nucleic-acid chain
+    <prefix>.jpg   matplotlib render of the BulgeGraph(s), one panel per chain
 
 Usage: export_basepairs.py <basepairs.cif> <out_prefix>
 """
@@ -71,36 +71,39 @@ def _chain_dotbracket(chain, pairs: list[dict]) -> tuple[str, str] | None:
     return seq_str, "".join(db)
 
 
-def build_bulge_graph(pairs: list[dict], cif_path: Path):
-    """Build a forgi BulgeGraph from the cWW pairs of every nucleic-acid chain.
-    Returns the BulgeGraph, or None when no nucleic-acid chain was found.
+def build_bulge_graphs(pairs: list[dict], cif_path: Path) -> list:
+    """Build one forgi BulgeGraph per nucleic-acid chain from its cWW pairs.
+
+    Only intrachain pairs enter a chain's dot-bracket, so the chains are never connected by
+    a base pair and forgi refuses to join them with '&' ("Found two sequences not connected
+    by any base-pair"). Each chain therefore gets its own graph, named <stem>_<chain>
+    (just <stem> when there is a single chain). Returns [] when no nucleic-acid chain was found.
     """
     from forgi.graph.bulge_graph import BulgeGraph
 
     structure = gemmi.read_structure(str(cif_path))
-    blocks = [b for b in (_chain_dotbracket(c, pairs) for c in structure[0]) if b]
-    if not blocks:
-        return None
-    seq = "&".join(s for s, _ in blocks)
-    dotbracket = "&".join(d for _, d in blocks)
-    bg = BulgeGraph.from_dotbracket(dotbracket, seq)
-    bg.name = cif_path.stem
-    return bg
+    blocks = [(c.name, b) for c in structure[0] if (b := _chain_dotbracket(c, pairs))]
+    graphs = []
+    for name, (seq, dotbracket) in blocks:
+        bg = BulgeGraph.from_dotbracket(dotbracket, seq)
+        bg.name = cif_path.stem if len(blocks) == 1 else f"{cif_path.stem}_{name}"
+        graphs.append(bg)
+    return graphs
 
 
-def write_forgi_bg(bg, out_path: Path) -> None:
-    if bg is None:
+def write_forgi_bg(graphs: list, out_path: Path) -> None:
+    if not graphs:
         out_path.write_text("# no nucleic-acid chains found\n")
         return
-    out_path.write_text(bg.to_bg_string())
+    out_path.write_text("\n".join(bg.to_bg_string() for bg in graphs))
 
 
-def write_forgi_jpeg(bg, out_path: Path) -> None:
-    """Render the BulgeGraph as a JPEG via forgi.visual.mplotlib.
+def write_forgi_jpeg(graphs: list, out_path: Path) -> None:
+    """Render the BulgeGraphs as one JPEG (one panel per chain) via forgi.visual.mplotlib.
     Falls back to an empty placeholder when forgi's plot_rna can't import its
     ViennaRNA dependency (env-specific; doesn't fail the pipeline).
     """
-    if bg is None:
+    if not graphs:
         # empty placeholder so downstream tools see the file
         out_path.write_bytes(b"")
         return
@@ -109,9 +112,12 @@ def write_forgi_jpeg(bg, out_path: Path) -> None:
     import matplotlib.pyplot as plt
     import forgi.visual.mplotlib as fvm
 
-    fig, ax = plt.subplots(figsize=(8, 8))
+    fig, axes = plt.subplots(1, len(graphs), figsize=(8 * len(graphs), 8), squeeze=False)
     try:
-        fvm.plot_rna(bg, ax=ax)
+        for bg, ax in zip(graphs, axes[0]):
+            fvm.plot_rna(bg, ax=ax)
+            ax.set_title(bg.name or "")
+            ax.set_axis_off()
     except (ImportError, ModuleNotFoundError) as exc:
         print(
             f"[export_basepairs] forgi.plot_rna unavailable ({exc}); "
@@ -121,8 +127,6 @@ def write_forgi_jpeg(bg, out_path: Path) -> None:
         plt.close(fig)
         out_path.write_bytes(b"")
         return
-    ax.set_title(bg.name or "")
-    ax.set_axis_off()
     fig.tight_layout()
     fig.savefig(out_path, dpi=150, format="jpg")
     plt.close(fig)
@@ -137,9 +141,9 @@ def main() -> None:
     pairs = parse_basepairs(str(cif))
     write_csv(pairs, prefix.with_suffix(".csv"))
     write_tsv(pairs, prefix.with_suffix(".tsv"))
-    bg = build_bulge_graph(pairs, cif)
-    write_forgi_bg(bg, prefix.with_suffix(".bg"))
-    write_forgi_jpeg(bg, prefix.with_suffix(".jpg"))
+    graphs = build_bulge_graphs(pairs, cif)
+    write_forgi_bg(graphs, prefix.with_suffix(".bg"))
+    write_forgi_jpeg(graphs, prefix.with_suffix(".jpg"))
 
 
 if __name__ == "__main__":
