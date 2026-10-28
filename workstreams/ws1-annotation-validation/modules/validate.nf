@@ -1,22 +1,21 @@
-// T3 Exploration —
-//   VALIDATE  : compare the per-tool base-pairing mmCIFs across tools. Per-tool pair
-//               counts always; the cross-tool agreement comparison runs only when more
-//               than one tool is selected (gated in bin/ws1-validate).
-//   VISUALIZE : optional per-tool export (enabled by params.visualize) — CSV/TSV pair
-//               tables plus a forgi BulgeGraph (.bg) and a matplotlib render (.jpg) of
-//               the cWW secondary structure. From PR #86.
+// T3 Exploration
+//   VALIDATE  : per-tool pair counts, and the cross-tool comparison of the base-pairing
+//               mmCIFs when more than one tool is selected (gated in bin/ws1-validate).
+//   VISUALIZE : optional per-tool export (params.visualize): CSV/TSV pair tables, and per
+//               nucleic-acid chain a forgi BulgeGraph (.bg) and a matplotlib render (.jpg)
+//               of the cWW secondary structure.
 
 process VALIDATE {
     label 'validation'
     publishDir "${params.outdir}/validation", mode: 'copy'
-    conda "${projectDir}/envs/parse.yml"
+    conda params.env_file
 
     input:
     path bp_cifs
 
     output:
-    path "validation_report.json"
-    path "validation_report.tsv"
+    path "validation_report.json", emit: json
+    path "validation_report.tsv",  emit: tsv
 
     script:
     """
@@ -28,7 +27,7 @@ process VISUALIZE {
     tag   "${tool}"
     label 'validation'
     publishDir "${params.outdir}/validation", mode: 'copy'
-    conda "${projectDir}/envs/visualize.yml"
+    conda params.env_file
 
     input:
     tuple val(tool), path(bp_cif)

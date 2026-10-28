@@ -3,40 +3,61 @@
 #
 # Contract (the Nextflow ANNOTATE process depends on it):
 #     ws1-annotate --tool <name> --structure <cif> --out <prefix> --src <annotations_tools dir>
+#                  [--provenance <file.json>]
 #       fr3d     -> writes <prefix>.txt   (FR3D basepair TSV)
 #       rnapolis -> writes <prefix>.json  (RNApolis annotator JSON)
+#     With --provenance, ws1-provenance writes the annotator version and command line to <file.json>.
 #
-# Each tool runs from its pinned submodule under --src (via PYTHONPATH), so the
-# exact annotator commit is what executes — the conda envs supply only deps, not
-# the tool itself. --src is passed by the module so this CLI stays location-agnostic.
+# Each tool runs from its pinned submodule under --src (via PYTHONPATH): the submodule
+# commit determines the annotator version, the conda env provides dependencies only.
+# The module passes --src, so the CLI does not depend on its own location.
 set -euo pipefail
 
-tool= ; structure= ; out= ; src=
+tool= ; structure= ; out= ; src= ; provenance=
 while [ $# -gt 0 ]; do
     case "$1" in
-        --tool)      tool=$2;      shift 2 ;;
-        --structure) structure=$2; shift 2 ;;
-        --out)       out=$2;       shift 2 ;;
-        --src)       src=$2;       shift 2 ;;
+        --tool)       tool=$2;       shift 2 ;;
+        --structure)  structure=$2;  shift 2 ;;
+        --out)        out=$2;        shift 2 ;;
+        --src)        src=$2;        shift 2 ;;
+        --provenance) provenance=$2; shift 2 ;;
         *) echo "ws1-annotate: unknown argument '$1'" >&2; exit 2 ;;
     esac
 done
 [ -n "$tool" ] && [ -n "$structure" ] && [ -n "$out" ] && [ -n "$src" ] || {
-    echo "usage: ws1-annotate --tool <name> --structure <cif> --out <prefix> --src <dir>" >&2; exit 2; }
+    echo "usage: ws1-annotate --tool <name> --structure <cif> --out <prefix> --src <dir> [--provenance <file.json>]" >&2; exit 2; }
+
+# the annotator sources are git submodules
+require() {
+    [ -f "$1" ] || {
+        echo "ws1-annotate: $1 not found: initialise the annotator submodules with 'git submodule update --init' (README, 'Annotator submodules')" >&2
+        exit 2; }
+}
 
 case "$tool" in
     fr3d)
         fr3d_src="$src/fr3d-python"
+        script="$fr3d_src/fr3d/classifiers/NA_pairwise_interactions.py"
+        require "$script"
         export PYTHONPATH="$fr3d_src:${PYTHONPATH:-}"
-        python "$fr3d_src/fr3d/classifiers/NA_pairwise_interactions.py" -i . "$structure" -o "$out"
+        cmdline="python $script -i . $structure -o $out"
+        python "$script" -i . "$structure" -o "$out"
         mv "$(find . -name '*_basepair.txt' | head -n 1)" "$out.txt"
         ;;
     rnapolis)
         rnapolis_src="$src/rnapolis-py/src"
+        script="$rnapolis_src/rnapolis/annotator.py"
+        require "$script"
         export PYTHONPATH="$rnapolis_src:${PYTHONPATH:-}"
-        python "$rnapolis_src/rnapolis/annotator.py" "$structure" -j "$out.json" -e
+        cmdline="python $script $structure -j $out.json -e"
+        python "$script" "$structure" -j "$out.json" -e
         ;;
     *)
         echo "ws1-annotate: no annotator wired for tool '$tool'" >&2; exit 2 ;;
 esac
+
+if [ -n "$provenance" ]; then
+    "$(dirname "${BASH_SOURCE[0]}")/ws1-provenance" --tool "$tool" --src "$src" --structure "$structure" \
+        --command "$cmdline" --out "$provenance"
+fi
 echo "[ws1-annotate:$tool] $structure -> $out" >&2

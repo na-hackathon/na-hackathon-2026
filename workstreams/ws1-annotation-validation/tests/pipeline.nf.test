@@ -2,7 +2,7 @@
 //
 // Matrix:
 //   inputs : every structure under data/tests/Inputs/{*.cif, pdb/*.pdb}
-//   modes  : conda   -> --converter maxit         (bioconda::maxit via envs/convert.yml)
+//   modes  : conda   -> --converter maxit         (bioconda::maxit via envs/ws1.yml)
 //            docker  -> --converter maxit-docker  (tzok/maxit container)
 //
 // Each test asserts:
@@ -23,6 +23,7 @@ nextflow_pipeline {
     // ---------- conda mode (--converter maxit, bioconda::maxit) ----------
     CIF_IDS.each { id ->
         test("conda | cif | ${id}") {
+            tag "conda"
             when {
                 params {
                     input      = "${projectDir}/../../data/tests/Inputs/${id}.cif"
@@ -41,6 +42,7 @@ nextflow_pipeline {
 
     PDB_IDS.each { id ->
         test("conda | pdb | ${id}") {
+            tag "conda"
             when {
                 params {
                     input      = "${projectDir}/../../data/tests/Inputs/pdb/${id}.pdb"
@@ -60,6 +62,7 @@ nextflow_pipeline {
     // ---------- docker mode (--converter maxit-docker, tzok/maxit container) ----------
     CIF_IDS.each { id ->
         test("docker | cif | ${id}") {
+            tag "docker"
             config "./docker.config"
             when {
                 params {
@@ -79,6 +82,7 @@ nextflow_pipeline {
 
     PDB_IDS.each { id ->
         test("docker | pdb | ${id}") {
+            tag "docker"
             config "./docker.config"
             when {
                 params {
@@ -98,6 +102,7 @@ nextflow_pipeline {
 
     // ---------- multi-tool sanity (exercises ANNOTATE on fr3d too + VALIDATE branch) ----------
     test("conda | cif | 8xzn | both annotators + VALIDATE") {
+        tag "conda"
         when {
             params {
                 input      = "${projectDir}/../../data/tests/Inputs/8xzn.cif"
@@ -113,6 +118,24 @@ nextflow_pipeline {
             assert path("${outputDir}/basepairs/rnapolis_basepairs.cif").exists()
             assert path("${outputDir}/validation/validation_report.json").exists()
             assert path("${outputDir}/validation/validation_report.tsv").exists()
+
+            // pair counts of the two annotators on 8XZN (model 1)
+            def report = new groovy.json.JsonSlurper().parseText(path("${outputDir}/validation/validation_report.json").text)
+            assert report.pair_counts == [fr3d: 23, rnapolis: 25]
+            assert report.total_distinct_pairs == 27
+            assert report.shared_by_all_tools == 21 && report.agreed_by_all_tools == 21
+            assert report.only_in == [fr3d: 2, rnapolis: 4]
+            // the summary is printed at the end of the run
+            assert workflow.stdout.any { it.contains('agreed by all tools:  21') }
+
+            // provenance: annotator rows in _software, sidecar files and the run manifest
+            assert path("${outputDir}/basepairs/fr3d_basepairs.cif").text.contains('FR3D')
+            assert path("${outputDir}/basepairs/rnapolis_basepairs.cif").text.contains('RNApolis')
+            assert path("${outputDir}/annotations/fr3d/fr3d_provenance.json").exists()
+            def manifest = new groovy.json.JsonSlurper().parseText(path("${outputDir}/run_manifest.json").text)
+            assert manifest.annotators*.tool.sort() == ['fr3d', 'rnapolis']
+            assert manifest.input.name == '8xzn.cif' && manifest.input.sha256 ==~ /[0-9a-f]{64}/
+            assert manifest.environment.conda_packages.maxit.version == '11.400'
         }
     }
 }

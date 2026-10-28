@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Write the exact version of every package of a conda env (conda and pip, builds omitted) as an
+# env file, to pin the transitive dependencies of envs/ws1.yml.
+#
+#     ws1-lock <env prefix> > envs/ws1.lock.yml
+#
+# Create the env from envs/ws1.yml first (nextflow run main.nf builds it under the conda cache,
+# or: conda env create -p <prefix> -f envs/ws1.yml). The lock is used with
+#     nextflow run main.nf --env_file envs/ws1.lock.yml
+set -euo pipefail
+
+prefix=${1:?usage: ws1-lock <env prefix>}
+echo "# Exact versions of every package of envs/ws1.yml (conda and pip), written by bin/ws1-lock."
+echo "# Rebuild with: nextflow run main.nf --env_file envs/ws1.lock.yml"
+echo "# Regenerate after changing envs/ws1.yml; tests/test_env_lock.py checks that both files agree."
+echo "name: ws1-lock"
+# drop the name and prefix keys (conda wraps their long path onto a continuation line)
+conda env export -p "$prefix" --no-builds | awk '/^(name|prefix):/ { skip = 1; next } skip && /^ / { next } { skip = 0; print }'

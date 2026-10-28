@@ -1,13 +1,15 @@
-"""Simple unit test for the base-pairing parsers in bin/.
-you can run it with pytest using python -m pytest tests/test_parse_conversion.py
-Runs the FR3D and RNApolis conversion scripts on the sample inputs under
-data/tests/{fr3d_outputs,rnapolis_outputs} (with structures from
-data/tests/Inputs/) and compares the produced _ndb_base_pair_* rows
+"""Regression test for the base-pair exporters in bin/.
+
+Runs the FR3D and RNApolis exporters on the sample inputs under
+data/tests/{fr3d_outputs,rnapolis_outputs} (structures in data/tests/Inputs/) and compares the
+produced _ndb_base_pair_* rows with data/tests/conversion_outputs.
+Run with:  python -m pytest tests/test_parse_conversion.py
 """
 from __future__ import annotations
 
 import subprocess
 import sys
+from collections import Counter
 from pathlib import Path
 
 import gemmi
@@ -30,16 +32,16 @@ BP_LIST = "_ndb_base_pair_list."
 BP_ANNOT = "_ndb_base_pair_annotation."
 
 
-def _rows(cif_path: Path, category: str) -> set[tuple[str, ...]]:
-    """Return the rows of `category` as a set of tuples (order-independent)."""
+def _rows(cif_path: Path, category: str) -> Counter:
+    """Return the rows of `category` with their multiplicity (order-independent, ids dropped)."""
     block = gemmi.cif.read(str(cif_path)).sole_block()
     cat = block.get_mmcif_category(category)
     if not cat:
-        return set()
+        return Counter()
     key_drop = {BP_LIST: {"base_pair_id"}, BP_ANNOT: {"id", "base_pair_id"}}[category]
     keys = [k for k in cat.keys() if k not in key_drop]
     n = len(next(iter(cat.values())))
-    return {tuple(str(cat[k][i]) for k in keys) for i in range(n)}
+    return Counter(tuple(str(cat[k][i]) for k in keys) for i in range(n))
 
 
 def _run(*cmd: str) -> None:

@@ -27,10 +27,10 @@ callback points back correctly.
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/tools` | annotator names available (from `envs/*.yml`) |
-| GET | `/profiles` | Nextflow profiles (`conda`, `mamba`, `docker`, `singularity`, `test`) |
+| GET | `/tools` | annotator names available (`fr3d`, `rnapolis`; see `ANNOTATORS` in `runner.py`) |
+| GET | `/profiles` | Nextflow profiles defined in `nextflow.config` (`test`) |
 | POST | `/uploads` | upload a `.pdb`/`.cif`/`.mmcif`; returns an opaque `upload_id` |
-| POST | `/runs` | launch a run — body `{input?: upload_id, annotators?, profile}` |
+| POST | `/runs` | launch a run — body `{input?: upload_id, annotators?, profile?}` |
 | GET | `/runs` | list runs |
 | GET | `/runs/{id}` | run status + task progress |
 | DELETE | `/runs/{id}` | cancel a run |
@@ -51,7 +51,7 @@ curl -s -X POST localhost:8000/runs -H 'content-type: application/json' \
 # run on your own structure: upload first, then pass the returned id
 UID=$(curl -s -X POST localhost:8000/uploads -F 'file=@my.cif' | jq -r .upload_id)
 curl -s -X POST localhost:8000/runs -H 'content-type: application/json' \
-     -d "{\"profile\":\"conda\",\"input\":\"$UID\"}"
+     -d "{\"input\":\"$UID\"}"
 
 curl -s localhost:8000/runs/<run_id>                       # status
 curl -sN localhost:8000/runs/<run_id>/events               # live SSE stream

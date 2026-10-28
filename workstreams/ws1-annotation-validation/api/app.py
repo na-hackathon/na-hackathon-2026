@@ -69,6 +69,8 @@ async def create_run(req: RunRequest) -> RunInfo:
         return await mgr.launch(req)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
+    except RuntimeError as exc:                 # the conda env could not be built
+        raise HTTPException(503, str(exc))
 
 
 @app.get("/runs", response_model=list[RunInfo])

@@ -2,34 +2,41 @@
 # WS1 Parser (T2) — tool-native annotation output -> standardized base-pairing mmCIF.
 #
 # Contract (the Nextflow PARSE process depends on it):
-#     ws1-parse --tool <name> --raw <file> --structure <cif> --out <out.cif>
+#     ws1-parse --tool <name> --raw <file> --structure <cif> --out <out.cif> [--provenance <file.json>]
 #       fr3d     : raw TSV -> JSON -> NDB base-pairing mmCIF
 #       rnapolis : raw JSON -> NDB base-pairing mmCIF
+#     --provenance (from ws1-annotate) adds the annotator to the _software category of <out.cif>.
 #
 # The conversion logic lives next to this CLI in bin/ (run with the conda python3).
+# The exporters also write <out minus .cif>.skipped.tsv: the input pairs they did not write,
+# with the reason.
 set -euo pipefail
 
-tool= ; raw= ; structure= ; out=
+tool= ; raw= ; structure= ; out= ; provenance=
 while [ $# -gt 0 ]; do
     case "$1" in
-        --tool)      tool=$2;      shift 2 ;;
-        --raw)       raw=$2;       shift 2 ;;
-        --structure) structure=$2; shift 2 ;;
-        --out)       out=$2;       shift 2 ;;
+        --tool)       tool=$2;       shift 2 ;;
+        --raw)        raw=$2;        shift 2 ;;
+        --structure)  structure=$2;  shift 2 ;;
+        --out)        out=$2;        shift 2 ;;
+        --provenance) provenance=$2; shift 2 ;;
         *) echo "ws1-parse: unknown argument '$1'" >&2; exit 2 ;;
     esac
 done
 [ -n "$tool" ] && [ -n "$raw" ] && [ -n "$structure" ] && [ -n "$out" ] || {
-    echo "usage: ws1-parse --tool <name> --raw <file> --structure <cif> --out <out.cif>" >&2; exit 2; }
+    echo "usage: ws1-parse --tool <name> --raw <file> --structure <cif> --out <out.cif> [--provenance <file.json>]" >&2; exit 2; }
+
+prov=()
+[ -z "$provenance" ] || prov=(--provenance "$provenance")
 
 lib="$(dirname "$(command -v ws1-parse)")"
 case "$tool" in
     fr3d)
         python3 "$lib/fr3d_basepair_to_json.py" "$raw" basepairs.json
-        python3 "$lib/json_fr3d_mmcif.py" basepairs.json "$structure" "$out" >/dev/null
+        python3 "$lib/json_fr3d_mmcif.py" basepairs.json "$structure" "$out" ${prov[@]+"${prov[@]}"} >/dev/null
         ;;
     rnapolis)
-        python3 "$lib/json_rnapolis_mmcif.py" "$raw" "$structure" "$out" >/dev/null
+        python3 "$lib/json_rnapolis_mmcif.py" "$raw" "$structure" "$out" ${prov[@]+"${prov[@]}"} >/dev/null
         ;;
     *)
         echo "ws1-parse: no parser wired for tool '$tool'" >&2; exit 2 ;;

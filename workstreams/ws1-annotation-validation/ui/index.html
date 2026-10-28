@@ -167,7 +167,7 @@
     <div class="field">
       <label for="profile-select">Nextflow profile</label>
       <select id="profile-select">
-        <option value="conda">conda</option>
+        <option value="">default</option>
       </select>
     </div>
 
@@ -225,11 +225,10 @@
       const res = await fetch(`${API}/profiles`);
       if (!res.ok) return;
       const { profiles } = await res.json();
-      profileSelect.innerHTML = '';
+      profileSelect.innerHTML = '<option value="">default</option>';
       profiles.forEach(p => {
         const opt = document.createElement('option');
         opt.value = opt.textContent = p;
-        if (p === 'conda') opt.selected = true;
         profileSelect.appendChild(opt);
       });
     } catch { /* server not up yet — keep defaults */ }
@@ -278,7 +277,7 @@
       const runRes = await fetch(`${API}/runs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input: upload_id, profile: profileSelect.value }),
+        body: JSON.stringify({ input: upload_id, profile: profileSelect.value || null }),
       });
       if (!runRes.ok) throw new Error(`Launch failed: ${(await runRes.json()).detail}`);
       const run = await runRes.json();

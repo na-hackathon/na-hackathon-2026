@@ -2,16 +2,15 @@
 # WS1 Converter (T1) — standardize an input structure to mmCIF.
 #
 # Contract (the Nextflow CONVERT process depends on it):
-#     ws1-convert --input <structure.pdb|.cif> --out <structure.cif> [--converter maxit|gemmi]
+#     ws1-convert --input <structure.pdb|.cif> --out <structure.cif> [--converter maxit|maxit-docker|gemmi]
 #
-# Converters (both provided by envs/convert.yml — no Docker needed):
-#   maxit  (default) — RCSB MAXIT from conda (bioconda::maxit).
-#                      Output mode matters: -o 1 for PDB, -o 8 to refresh an existing
-#                      mmCIF. Using -o 1 on a .cif yields malformed output (see #76),
-#                      so .cif/.mmcif inputs use -o 8. (fix from PR #70, @AderikVoorspoels)
-#   maxit-docker — same maxit, but from the tzok/maxit image (fallback if bioconda::maxit
-#                  is unavailable on your platform); select with --converter maxit-docker.
-#   gemmi  (DEPRECATED) — lightweight conda fallback; maxit is the supported path.
+# Converters (--converter):
+#   maxit (default)  RCSB MAXIT from conda (bioconda::maxit, envs/ws1.yml). Output mode:
+#                    -o 1 for PDB input, -o 8 to refresh an existing mmCIF; -o 1 on a .cif
+#                    gives malformed output (#76), so .cif/.mmcif inputs use -o 8.
+#   maxit-docker     the same maxit, run from the tzok/maxit image (the module starts the
+#                    container); for platforms without bioconda::maxit.
+#   gemmi            DEPRECATED conda fallback.
 set -euo pipefail
 
 converter=maxit
@@ -25,7 +24,7 @@ while [ $# -gt 0 ]; do
         *) echo "ws1-convert: unknown argument '$1'" >&2; exit 2 ;;
     esac
 done
-[ -n "$input" ] && [ -n "$out" ] || { echo "usage: ws1-convert --input <pdb|cif> --out <cif> [--converter maxit|gemmi]" >&2; exit 2; }
+[ -n "$input" ] && [ -n "$out" ] || { echo "usage: ws1-convert --input <pdb|cif> --out <cif> [--converter maxit|maxit-docker|gemmi]" >&2; exit 2; }
 
 ext=${input##*.}
 ext=${ext,,}
@@ -39,6 +38,6 @@ case "$converter" in
         echo "[ws1-convert] WARNING: the 'gemmi' converter is DEPRECATED; maxit is the supported path." >&2
         gemmi convert "$input" "$out" ;;
     *)
-        echo "ws1-convert: unknown converter '$converter' (expected maxit|gemmi)" >&2; exit 2 ;;
+        echo "ws1-convert: unknown converter '$converter' (expected maxit|maxit-docker|gemmi)" >&2; exit 2 ;;
 esac
 echo "[ws1-convert:$converter] $input -> $out" >&2
