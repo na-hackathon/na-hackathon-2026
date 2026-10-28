@@ -16,3 +16,5 @@ dependencies:
   - nf-test              # pipeline tests
   - pytest               # unit tests (tests/test_*.py)
 # Dependencies of maxit, FR3D, RNApolis and forgi are in envs/ws1.yml.
+variables:
+  NXF_LOG_FILE: .nextflow/nextflow.log    # Nextflow log inside .nextflow/ instead of .nextflow.log in the cwd

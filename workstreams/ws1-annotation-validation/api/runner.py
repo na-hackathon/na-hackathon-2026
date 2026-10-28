@@ -20,10 +20,16 @@ ANNOTATORS = ("fr3d", "rnapolis")                      # keep in sync with bin/w
 PROFILES = ["test"]                                    # profiles defined in nextflow.config
 
 
+ENV_SCRIPT = PROJECT_DIR / "bin" / "ws1-env"           # builds the pipeline conda env once and prints its prefix
+
+
 def build_command(run_id: str, run_dir: Path, base_url: str, profile: str | None = None,
-                  input_path: str | None = None, annotators: list[str] | None = None) -> list[str]:
-    """The `nextflow run` command line of one run; `-profile` is passed only when a profile is set."""
-    cmd = ["nextflow", "run", "main.nf"]
+                  input_path: str | None = None, annotators: list[str] | None = None,
+                  env_file: str | None = None) -> list[str]:
+    """The `nextflow run` command line of one run; `-profile` is passed only when a profile is set and
+    `--env_file` when the conda env is already built (the run then never creates one).
+    The Nextflow log goes to the run directory instead of .nextflow.log in the project directory."""
+    cmd = ["nextflow", "-log", str(run_dir / ".nextflow.log"), "run", "main.nf"]
     if profile:
         cmd += ["-profile", profile]
     cmd += [
@@ -36,6 +42,8 @@ def build_command(run_id: str, run_dir: Path, base_url: str, profile: str | None
         cmd += ["--input", input_path]
     if annotators:
         cmd += ["--annotators", ",".join(annotators)]
+    if env_file:
+        cmd += ["--env_file", env_file]
     return cmd
 
 
@@ -76,6 +84,16 @@ class RunManager:
         return upload_id
 
     # ---- run lifecycle ----
+    async def ensure_env(self) -> str:
+        """Prefix of the pipeline conda env, built first if needed (bin/ws1-env serialises builds with a
+        lock, so concurrent runs wait for one build instead of racing on the conda cache)."""
+        proc = await asyncio.create_subprocess_exec(
+            str(ENV_SCRIPT), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        out, err = await proc.communicate()
+        if proc.returncode != 0:
+            raise RuntimeError(f"the conda env could not be built: {err.decode(errors='replace')[-500:]}")
+        return out.decode().strip()
+
     async def launch(self, req) -> RunInfo:
         # Validate every user-supplied value before it reaches the command line.
         if req.profile is not None and req.profile not in PROFILES:
@@ -93,11 +111,13 @@ class RunManager:
                 raise ValueError("unknown upload id")
             input_path = str(stored)            # trusted path from the upload registry
 
+        env_prefix = await self.ensure_env()    # takes minutes the first time, later runs reuse the env
+
         run_id = uuid.uuid4().hex[:12]
         run_dir = RUNS_DIR / run_id
         run_dir.mkdir(parents=True, exist_ok=True)
 
-        cmd = build_command(run_id, run_dir, self.base_url, req.profile, input_path, annotators)
+        cmd = build_command(run_id, run_dir, self.base_url, req.profile, input_path, annotators, env_prefix)
 
         info = RunInfo(
             id=run_id, status=RunStatus.running, profile=req.profile,
