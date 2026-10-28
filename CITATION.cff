@@ -3,6 +3,8 @@ message: "If you use outputs from this repository, please cite it."
 title: "NA Hackathon 2026 — Nucleic Acid Structure Annotation & Prediction"
 version: "0.1.0"
 date-released: "2026-02-10"
+# Only the Workstream 1 (annotation & validation) contributors are listed so far.
+# The author list and its order are tentative, to be agreed with all contributors.
 authors:
   - family-names: "Crouzet"
     given-names: "Simon"
@@ -16,6 +18,8 @@ authors:
   - family-names: "Voorspoels"
     given-names: "Aderik"
     alias: "AderikVoorspoels"
+  - family-names: "Liao"
+    given-names: "Cheng-Wei"
   - family-names: "Saydam"
     given-names: "Ezgi"
     alias: "ezgisaydam"
@@ -28,8 +32,6 @@ authors:
     given-names: "Paulina"
   - family-names: "Cerny"
     given-names: "Jiri"
-  - family-names: "Liao"
-    given-names: "Cheng-Wei"
   - family-names: "Schneider"
     given-names: "Bohdan"
   - family-names: "Svoboda"
