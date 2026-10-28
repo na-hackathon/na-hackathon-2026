@@ -22,7 +22,8 @@ git submodule update --init \
     annotations_tools/rnapolis-py
 
 # 3. smoke test — runs end-to-end on the bundled 9CFN data
-#    (the first run builds the pipeline env envs/ws1.yml, about 2.7 GB; later runs reuse it)
+#    (the first run builds the pipeline env envs/ws1.yml, about 2.7 GB, into ~/.cache/ws1-conda;
+#     all later runs, nf-test and the API reuse it; NXF_CONDA_CACHEDIR changes the location)
 nextflow run main.nf -profile test
 
 # 4. a real run
@@ -74,11 +75,31 @@ Results are written under `--outdir` (default `results/`):
 results/
   mmcif/            <name>.std.cif                 # T1 standardized structure
   annotations/<tool>/<tool>_raw.*                  # T2 raw tool output
+  annotations/<tool>/<tool>_provenance.json        # T2 annotator commit, command line, input checksum
   basepairs/<tool>_basepairs.cif                   # T2 standardized base pairs
   basepairs/<tool>_basepairs.skipped.tsv           # T2 input pairs not written, with the reason
   validation/validation_report.{json,tsv}          # T3 cross-tool comparison
   validation/<tool>.{csv,tsv,bg,jpg}               # T3 optional, with --visualize
+  run_manifest.json                                # pipeline commit, versions, checksums of the run
+  pipeline_info/{trace.txt,report.html,timeline.html}   # Nextflow execution reports
 ```
+
+The end of a run prints a summary of the validation report (tools, pairs per tool, distinct,
+agreed, discordant and single-tool pairs, and the path of the full table).
+
+### Provenance
+
+- **`_software` in `basepairs/<tool>_basepairs.cif`:** one row per annotator is appended to the
+  structure's `_software` category (name, `version` = git commit of the annotator submodule,
+  `type` = `program`, repository URL as `location`, and `pdbx_ordinal` = next free integer). The
+  rows of the input structure are kept.
+- **`annotations/<tool>/<tool>_provenance.json`:** annotator name, repository, git commit,
+  `git describe`, version from its `pyproject.toml`, the command line, name and sha256 of the
+  structure it ran on, and the python version. Values that cannot be determined are `null`.
+- **`run_manifest.json`:** commit of the pipeline directory and whether it has uncommitted changes,
+  sha256 of `envs/ws1.yml`, Nextflow version, command line, run name, profile, start time and
+  parameters, name and sha256 of the input, the provenance of every annotator, and the version of
+  every conda package and python distribution in the pipeline env.
 
 ### Validation report
 
@@ -123,6 +144,20 @@ base-pair mmCIF, with columns `reason`, the two residues, the family and `detail
 directions, or already written, is counted but not listed. Each exporter prints a summary line:
 rows read = pairs written + skipped + duplicates.
 
+### Visualization (`--visualize`)
+
+For each annotator, `validation/<tool>.csv` and `.tsv` list the pairs; `<tool>.bg` and `<tool>.jpg`
+show the cWW secondary structure, one forgi BulgeGraph and one panel per nucleic-acid chain.
+
+- Only the first model and the pairs inside the asymmetric unit are drawn: pairs of other models
+  and pairs with a symmetry mate are not.
+- Residues are matched on auth number and insertion code. Modified nucleotides are drawn with the
+  one-letter code of their parent base (`N` when unknown); ligands are not drawn.
+- Crossing cWW pairs (pseudoknots) are written with `[]` and then `<>` brackets. A residue that is in
+  several cWW pairs keeps the first one, and pairs beyond three crossing layers are left out; both are
+  reported on stderr.
+- Pairs between two chains are not drawn: each chain is a separate graph.
+
 ## Pipeline commands
 
 The pipeline accepts an input structure positionally or via `--input`, lets you pick which
@@ -161,9 +196,36 @@ nextflow run main.nf --input <file> --outdir out/8xzn
 | `--annotators` | `fr3d,rnapolis`   | Comma-separated annotator names (those wired in `bin/ws1-annotate`) |
 | `--visualize`  | `false`           | Also export per-tool CSV/TSV tables and, per chain, a forgi BulgeGraph (`.bg`) and render (`.jpg`) |
 | `--outdir`     | `results`         | Output directory |
+| `--env_file`   | `envs/ws1.yml`    | Conda env of every process; `envs/ws1.lock.yml` pins the version of every package |
 
-`-profile test` sets `--input` to the bundled `data/9CFN/9CFN_clean.cif`. Conda and Docker
-are both turned on globally in `nextflow.config`; pick the converter, the rest follows.
+`-profile test` sets `--input` to the bundled `data/9CFN/9CFN_clean.cif`. Every process runs in the
+conda env. Docker is optional: only `--converter maxit-docker` (and the nf-tests tagged `docker`) run
+a container; `docker.enabled` is set in `nextflow.config` for that, and no process uses a container
+otherwise, so the default pipeline runs on a machine without Docker.
+
+### Environment versions
+
+`envs/ws1.yml` pins the direct dependencies to minor versions. `envs/ws1.lock.yml` lists the exact
+version of every package, transitive dependencies included (linux-64, conda and pip). To run with
+it: `nextflow run main.nf --env_file envs/ws1.lock.yml`. To regenerate it after changing
+`envs/ws1.yml`, create the env from `envs/ws1.yml` (`conda env create -p <prefix> -f envs/ws1.yml`)
+and run `bin/ws1-lock <prefix> > envs/ws1.lock.yml`. `run_manifest.json` of every run records the
+versions installed.
+
+The conda env is built once into `~/.cache/ws1-conda` (or `$NXF_CONDA_CACHEDIR`) and shared by
+runs started from different directories, by nf-test and by the API.
+
+### Concurrent runs
+
+- **Build the env first.** `bin/ws1-env` builds the env into the cache (name `ws1-<hash of the env
+  file>`) and prints its prefix. Builds are serialised with `flock`, so concurrent calls build it once,
+  and an interrupted build is detected and redone. Nextflow uses an existing env directory as it is:
+  `nextflow run main.nf --env_file "$(bin/ws1-env)"`. The API calls `bin/ws1-env` before every run.
+- **One output directory per run.** Runs that share `--outdir` overwrite each other's results. Runs
+  started in the same project directory share `work/` and `.nextflow/`; give each its own `-w <dir>`
+  when they overlap, as the API does.
+- Without `bin/ws1-env`, Nextflow builds the env itself on the first run and takes a lock; if that
+  build is killed, delete the `env-*` directory it was creating in the cache.
 
 ## Tests
 
@@ -186,7 +248,9 @@ tests/
 ```
 
 Run the tests from an activated `ws1-dev` (`conda activate ws1-dev`). nf-test builds the
-pipeline env `envs/ws1.yml` into `.nf-test/conda` during the first test and reuses it afterwards.
+pipeline env `envs/ws1.yml` into the shared conda cache during the first test and reuses it afterwards.
+`bin/ws1-nftest [nf-test test arguments]` runs `nf-test test` with its log in `.nf-test/nf-test.log`;
+plain `nf-test test` writes `.nf-test.log` to the project root, as nf-test has no setting for it.
 
 If the annotator tests fail with `No module named 'numpy'`, `ws1-dev/bin` precedes the process
 env on `PATH`: activate `ws1-dev` instead of prepending its `bin/` to `PATH`.
@@ -223,10 +287,10 @@ with `--converter maxit` (conda) and once with `--converter maxit-docker` (tzok/
 
 ```bash
 # Only the conda-side pipeline tests (no docker daemon required)
-nf-test test tests/pipeline.nf.test --tag '*conda*'
+bin/ws1-nftest tests/pipeline.nf.test --tag conda
 
 # Only the docker-side pipeline tests (needs docker access)
-nf-test test tests/pipeline.nf.test --tag '*docker*'
+bin/ws1-nftest tests/pipeline.nf.test --tag docker
 ```
 
 ## The module contract
@@ -251,7 +315,8 @@ keep them unchanged when modifying a stage.
   PDB inputs run as `maxit -o 1`, mmCIF inputs as `maxit -o 8` (refresh).
 - **`maxit-docker`** — same MAXIT, but from the prebuilt
   [`tzok/maxit`](https://github.com/tzok/maxit-docker) image. Useful as a fallback when
-  bioconda::maxit can't be installed (e.g. ARM Macs).
+  bioconda::maxit can't be installed (e.g. ARM Macs). This is the only converter that needs Docker;
+  the annotators, parser and validation still run in the conda env.
 - **`gemmi`** (DEPRECATED) — lightweight conda fallback for development only.
 
 ## Adding an annotator
@@ -269,7 +334,8 @@ main.nf            workflow wiring (Input → T1 → T2 → T3)
 nextflow.config    params + conda/docker enabled by default
 modules/           one .nf process per stage
 bin/               stage CLIs (ws1-*) + the python parser scripts they call
-envs/ws1.yml       the single conda env shared by every process (pinned python, pulp)
+envs/ws1.yml       the single conda env shared by every process (exact versions)
+docs/              six_example_comparison.md: FR3D vs RNApolis on the six stored structures
 annotations_tools/ pinned annotator submodules (fr3d-python, rnapolis-py)
 tests/             nf-test + pytest suites (see Tests above)
 environment.yml    ws1-dev toolchain: Nextflow, nf-test, pytest, gemmi (not used by pipeline processes)
@@ -277,7 +343,6 @@ environment.yml    ws1-dev toolchain: Nextflow, nf-test, pytest, gemmi (not used
 
 ## Status
 
-End-to-end runnable: every stage has a real implementation (no stubs left), all four
-nf-test suites + the pytest suite are green on the bundled test inputs, and both
-`--converter maxit` (conda) and `--converter maxit-docker` paths are exercised by
-`tests/pipeline.nf.test`.
+Every stage runs end to end. `tests/` has nf-test suites for each stage and for the full
+pipeline (`--converter maxit` and `--converter maxit-docker`) and pytest suites for the Python
+code. `docs/six_example_comparison.md` documents the pipeline run on the six stored structures.
