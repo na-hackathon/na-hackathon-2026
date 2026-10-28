@@ -14,8 +14,8 @@ process VALIDATE {
     path bp_cifs
 
     output:
-    path "validation_report.json"
-    path "validation_report.tsv"
+    path "validation_report.json", emit: json
+    path "validation_report.tsv",  emit: tsv
 
     script:
     """

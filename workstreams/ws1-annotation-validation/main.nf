@@ -17,6 +17,24 @@ include { ANNOTATE } from './modules/annotate.nf'
 include { PARSE    } from './modules/parse.nf'
 include { VALIDATE; VISUALIZE } from './modules/validate.nf'
 
+// "a=1, b=2" for a map of counts
+def formatCounts(counts) {
+    return counts.collect { name, n -> "${name}=${n}" }.join(', ')
+}
+
+// Console summary of validation_report.json; the full table is validation_report.tsv.
+def validationSummary(report) {
+    def r = new groovy.json.JsonSlurper().parse(report.toFile())
+    def lines = [ "tools:                ${r.tools.join(', ')}",
+                  "pairs per tool:       ${formatCounts(r.pair_counts)}" ]
+    if( r.total_distinct_pairs != null ) {
+        lines << "total distinct pairs: ${r.total_distinct_pairs}"
+        lines << "agreed by all tools:  ${r.agreed_by_all_tools} (discordant ${r.discordant_family}; only in one tool: ${formatCounts(r.only_in)})"
+    }
+    lines << "full report:          ${params.outdir}/validation/validation_report.tsv"
+    return lines.join('\n')
+}
+
 workflow {
     def input = params.input ?: ( args ? args[0] : null )
     if( !input )
@@ -44,9 +62,11 @@ workflow {
     // T3 Validate: cross-tool comparison — per-tool stats always; the comparison is
     // skipped when only one tool is selected (gated in ws1-validate).
     VALIDATE( bp_ch.map { tool, cif -> cif }.collect() )
+    VALIDATE.out.json.view { report -> validationSummary(report) }
 
     // T3 Visualize (optional, --visualize): per-tool base-pair export — CSV/TSV tables
-    // plus a forgi BulgeGraph (.bg) and a matplotlib render (.jpg).
+    // plus, per nucleic-acid chain, a forgi BulgeGraph (.bg) and a matplotlib render (.jpg).
     if( params.visualize )
         VISUALIZE( bp_ch )
+
 }
