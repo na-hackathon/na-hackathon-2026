@@ -16,7 +16,7 @@ from .models import RunInfo, RunStatus, TaskProgress
 PROJECT_DIR = Path(__file__).resolve().parent.parent   # the Nextflow project (main.nf)
 RUNS_DIR = PROJECT_DIR / ".api_runs"
 UPLOAD_DIR = RUNS_DIR / "_uploads"
-RESERVED_ENVS = {"convert", "parse"}                   # stage envs, not annotators
+ANNOTATORS = ("fr3d", "rnapolis")                      # keep in sync with bin/ws1-annotate and bin/ws1-parse
 PROFILES = ["conda", "mamba", "docker", "singularity", "test"]
 
 
@@ -42,8 +42,7 @@ class RunManager:
 
     # ---- discovery (so the UI can build its form) ----
     def list_annotators(self) -> list[str]:
-        envs = (PROJECT_DIR / "envs").glob("*.yml")
-        return sorted(p.stem for p in envs if p.stem not in RESERVED_ENVS)
+        return list(ANNOTATORS)
 
     def list_profiles(self) -> list[str]:
         return list(PROFILES)

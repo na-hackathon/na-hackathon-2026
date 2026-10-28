@@ -6,7 +6,7 @@ process ANNOTATE {
     tag   "${tool}:${mmcif.name}"
     label 'annotation'
     publishDir { "${params.outdir}/annotations/${tool}" }, mode: 'copy'
-    conda { "${projectDir}/envs/${tool}.yml" }
+    conda "${projectDir}/envs/ws1.yml"
 
     input:
     tuple val(tool), path(mmcif)

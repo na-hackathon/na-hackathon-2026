@@ -2,7 +2,7 @@
 //
 // Matrix:
 //   inputs : every structure under data/tests/Inputs/{*.cif, pdb/*.pdb}
-//   modes  : conda   -> --converter maxit         (bioconda::maxit via envs/convert.yml)
+//   modes  : conda   -> --converter maxit         (bioconda::maxit via envs/ws1.yml)
 //            docker  -> --converter maxit-docker  (tzok/maxit container)
 //
 // Each test asserts:

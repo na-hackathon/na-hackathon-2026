@@ -27,7 +27,7 @@ callback points back correctly.
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/tools` | annotator names available (from `envs/*.yml`) |
+| GET | `/tools` | annotator names available (`fr3d`, `rnapolis`; see `ANNOTATORS` in `runner.py`) |
 | GET | `/profiles` | Nextflow profiles (`conda`, `mamba`, `docker`, `singularity`, `test`) |
 | POST | `/uploads` | upload a `.pdb`/`.cif`/`.mmcif`; returns an opaque `upload_id` |
 | POST | `/runs` | launch a run — body `{input?: upload_id, annotators?, profile}` |
