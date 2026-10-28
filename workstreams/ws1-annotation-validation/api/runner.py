@@ -17,7 +17,26 @@ PROJECT_DIR = Path(__file__).resolve().parent.parent   # the Nextflow project (m
 RUNS_DIR = PROJECT_DIR / ".api_runs"
 UPLOAD_DIR = RUNS_DIR / "_uploads"
 ANNOTATORS = ("fr3d", "rnapolis")                      # keep in sync with bin/ws1-annotate and bin/ws1-parse
-PROFILES = ["conda", "mamba", "docker", "singularity", "test"]
+PROFILES = ["test"]                                    # profiles defined in nextflow.config
+
+
+def build_command(run_id: str, run_dir: Path, base_url: str, profile: str | None = None,
+                  input_path: str | None = None, annotators: list[str] | None = None) -> list[str]:
+    """The `nextflow run` command line of one run; `-profile` is passed only when a profile is set."""
+    cmd = ["nextflow", "run", "main.nf"]
+    if profile:
+        cmd += ["-profile", profile]
+    cmd += [
+        "-name", f"ws1-{run_id}",
+        "-work-dir", str(run_dir / "work"),
+        "--outdir", str(run_dir / "results"),
+        "-with-weblog", f"{base_url}/runs/{run_id}/_weblog",
+    ]
+    if input_path:
+        cmd += ["--input", input_path]
+    if annotators:
+        cmd += ["--annotators", ",".join(annotators)]
+    return cmd
 
 
 class Run:
@@ -59,7 +78,7 @@ class RunManager:
     # ---- run lifecycle ----
     async def launch(self, req) -> RunInfo:
         # Validate every user-supplied value before it reaches the command line.
-        if req.profile not in PROFILES:
+        if req.profile is not None and req.profile not in PROFILES:
             raise ValueError(f"unknown profile {req.profile!r}")
         annotators = req.annotators
         if annotators:
@@ -78,18 +97,7 @@ class RunManager:
         run_dir = RUNS_DIR / run_id
         run_dir.mkdir(parents=True, exist_ok=True)
 
-        cmd = [
-            "nextflow", "run", "main.nf",
-            "-profile", req.profile,
-            "-name", f"ws1-{run_id}",
-            "-work-dir", str(run_dir / "work"),
-            "--outdir", str(run_dir / "results"),
-            "-with-weblog", f"{self.base_url}/runs/{run_id}/_weblog",
-        ]
-        if input_path:
-            cmd += ["--input", input_path]
-        if annotators:
-            cmd += ["--annotators", ",".join(annotators)]
+        cmd = build_command(run_id, run_dir, self.base_url, req.profile, input_path, annotators)
 
         info = RunInfo(
             id=run_id, status=RunStatus.running, profile=req.profile,
