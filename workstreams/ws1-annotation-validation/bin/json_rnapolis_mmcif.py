@@ -1,7 +1,13 @@
 #!/usr/bin/python3
+"""Convert RNApolis annotator JSON to base-pairing mmCIF (same categories as json_fr3d_mmcif.py).
 
-# Convert RNApolis annotator JSON output to the same base-pairing mmCIF
+Usage: json_rnapolis_mmcif.py RNAPOLIS_OUTPUT.json structure.cif [out.cif]
 
+RNApolis annotates the first model of the asymmetric unit only: every pair is written with that
+model and the identity symmetry operator, and without an alternate position. Input pairs that
+are not written are saved to <out minus .cif>.skipped.tsv with the reason; a summary line is
+printed to stderr.
+"""
 
 import sys, json, re
 import gemmi
@@ -32,11 +38,9 @@ try:
   mmcif_file = sys.argv[2]
   out_file = sys.argv[3] if len(sys.argv) > 3 else Path(mmcif_file).stem + '_rnapolis_basepairs.cif'
 
-  # TODO replace structure with something else so we can drop the double reading
+  # TODO read the file once: structure.make_mmcif_document() does not return the complete
+  # document, so the file is read as a structure and again as a cif document
   structure = gemmi.read_structure(mmcif_file)
-
-  # there is some error getting correct document from structure, so we read it twice
-  # BUG doc = structure.make_mmcif_document()
   doc = gemmi.cif.read(mmcif_file)
   block = doc.sole_block()
 
@@ -44,7 +48,7 @@ try:
   entity_of_asym = dict(zip(asym_loop.get('id', []), asym_loop.get('entity_id', [])))
   struct_oper_list_loop = block.get_mmcif_category('_pdbx_struct_oper_list.')
 
-  # rnapolis annotates a single model within the asymmetric unit, so every pair
+  # RNApolis annotates a single model within the asymmetric unit, so every pair
   # references the identity symmetry operation
   identity_id = '1'
   if (struct_oper_list_loop):
@@ -53,8 +57,7 @@ try:
       if (gemmi.cif.as_string(struct_oper_list_loop['type'][idx]) == 'identity operation'):
         identity_id = str(sym_id)
 
-  # the model number rnapolis annotated is not in the JSON; use the structure's
-  # first model (commonly 1)
+  # the JSON does not give the annotated model; use the first model of the structure
   model_number = structure[0].num
 
   ndb_base_pair_list_loop = block.init_mmcif_loop('_ndb_base_pair_list.', ['base_pair_id', 'PDB_model_number', 'asym_id_1', 'entity_id_1', 'seq_id_1', 'comp_id_1', 'PDB_ins_code_1', 'alt_id_1', 'struct_oper_id_1', 'asym_id_2', 'entity_id_2', 'seq_id_2', 'comp_id_2', 'PDB_ins_code_2', 'alt_id_2', 'struct_oper_id_2', 'auth_asym_id_1', 'auth_seq_id_1', 'auth_asym_id_2', 'auth_seq_id_2'])
@@ -83,7 +86,7 @@ def get_residue_identifiers(structure, model_number, author_chain, author_resnum
             'seq_id': residue.label_seq,
             'comp_id': residue.name,
             'PDB_ins_code': (residue.seqid.icode if residue.seqid.icode != ' ' else '?'),
-            # rnapolis does not report altloc per pair
+            # RNApolis does not report an alternate position per pair
             'alt_id': '.'
           }, None
 
@@ -146,7 +149,7 @@ try:
     base_pair_id += 1
     annotation_id += 1
 
-    # populate _ndb_base_pair_list loop (struct_oper_id is always identity, like in original script
+    # populate _ndb_base_pair_list loop (struct_oper_id is always the identity operation)
     ndb_base_pair_list_loop.add_row([str(base_pair_id), str(model_number), resulta['asym_id'], resulta['entity_id'], str(resulta['seq_id']), resulta['comp_id'], resulta['PDB_ins_code'], resulta['alt_id'], identity_id, resultb['asym_id'], resultb['entity_id'], str(resultb['seq_id']), resultb['comp_id'], resultb['PDB_ins_code'], resultb['alt_id'], identity_id, autha['chain'], str(autha['number']), authb['chain'], str(authb['number'])])
 
     # populate _ndb_base_pair_annotation loop
@@ -173,6 +176,6 @@ print(f"[json_rnapolis_mmcif] {len(pairs)} pairs read: {base_pair_id} written, {
 if len(pairs) != base_pair_id + len(skipped) + duplicates:
   print("[json_rnapolis_mmcif] WARNING: pairs read != written + skipped + duplicates", file=sys.stderr)
 
-# get also as string just to visualize if they are no errors
+# print the document to stdout
 cif_in_string = doc.as_string(options)
 print(cif_in_string)

@@ -12,7 +12,7 @@ Input ──▶ T1 Conversion ──▶ T2 Core (annotate ▸ parse) ──▶ T
 ## Quickstart
 
 ```bash
-# 1. dev toolchain (Nextflow + Java + gemmi + nf-test + pytest)
+# 1. toolchain (Nextflow, Java, gemmi, nf-test, pytest)
 mamba env create -f environment.yml      # or: conda env create -f environment.yml
 conda activate ws1-dev
 
@@ -22,6 +22,7 @@ git submodule update --init \
     annotations_tools/rnapolis-py
 
 # 3. smoke test — runs end-to-end on the bundled 9CFN data
+#    (the first run builds the pipeline env envs/ws1.yml, about 2.7 GB; later runs reuse it)
 nextflow run main.nf -profile test
 
 # 4. a real run
@@ -79,6 +80,49 @@ results/
   validation/<tool>.{csv,tsv,bg,jpg}               # T3 optional, with --visualize
 ```
 
+### Validation report
+
+`validation/validation_report.{json,tsv}` compares the tools pair by pair when more than one
+annotator ran. Two tools report the same pair when the model, both residues (label chain, label
+sequence number, insertion code) and the symmetry operator match; residue names are compared
+separately.
+
+| Field | Meaning |
+|---|---|
+| `rows` | pairs in each tool's `<tool>_basepairs.cif` |
+| `pair_counts` | distinct pairs per tool, after the model selection |
+| `total_distinct_pairs` | pairs found by at least one tool |
+| `shared_by_all_tools` | pairs found by every tool |
+| `agreed_by_all_tools` | shared pairs with the same Leontis–Westhof family in every tool |
+| `discordant_family` | shared pairs whose family differs between tools |
+| `only_in` | pairs found by a single tool, per tool |
+| `comp_id_mismatch` | shared pairs whose residue names differ between tools |
+| `duplicate_keys` | rows of a tool that fall on an already counted pair (e.g. alternate positions) |
+| `model`, `rows_outside_compared_model` | model compared, and rows of other models left out |
+| `rows_with_symmetry_operator` | rows involving a symmetry-related residue |
+
+By default the lowest model present in every tool is compared (RNApolis annotates the first
+model only). Other matching rules are available by running the script directly:
+
+```bash
+python bin/compare_basepairs.py --compare --out report \
+    --annotations results/basepairs/fr3d_basepairs.cif results/basepairs/rnapolis_basepairs.cif \
+    [--model all|N] [--asu-only] [--key auth]
+```
+
+`--model all|N` selects the models, `--asu-only` drops pairs that involve a symmetry mate, and
+`--key auth` matches on auth chain, auth number and residue name only (no model, insertion code
+or symmetry operator).
+
+### Skipped pairs
+
+`basepairs/<tool>_basepairs.skipped.tsv` lists the annotator rows that were not written to the
+base-pair mmCIF, with columns `reason`, the two residues, the family and `detail`. Reasons:
+`unsupported_family` (for example FR3D "near" pairs), `alt_position_mismatch`,
+`symmetry_code_not_found`, `residue_not_found` and `no_label_seq_id`. A pair listed in both
+directions, or already written, is counted but not listed. Each exporter prints a summary line:
+rows read = pairs written + skipped + duplicates.
+
 ## Pipeline commands
 
 The pipeline accepts an input structure positionally or via `--input`, lets you pick which
@@ -100,7 +144,8 @@ nextflow run main.nf --input <file> --converter maxit          # default, biocon
 nextflow run main.nf --input <file> --converter maxit-docker   # tzok/maxit container
 nextflow run main.nf --input <file> --converter gemmi          # DEPRECATED fallback
 
-# Optional T3 export: per-tool CSV/TSV pair tables + forgi BulgeGraph (.bg) + matplotlib .jpg
+# Optional T3 export: per-tool CSV/TSV pair tables, and per nucleic-acid chain a forgi
+# BulgeGraph (.bg) and a matplotlib render (.jpg)
 nextflow run main.nf --input <file> --visualize
 
 # Custom output dir
@@ -113,8 +158,8 @@ nextflow run main.nf --input <file> --outdir out/8xzn
 |---|---|---|
 | `--input`      | _(required)_      | Structure file, `.pdb` or `.cif` |
 | `--converter`  | `maxit`           | T1 converter: `maxit` (bioconda) \| `maxit-docker` (tzok/maxit) \| `gemmi` (deprecated) |
-| `--annotators` | `fr3d,rnapolis`   | Comma-separated annotator names (one `envs/<tool>.yml` each) |
-| `--visualize`  | `false`           | Also export per-tool CSV/TSV/forgi BulgeGraph (`.bg`) + render (`.jpg`) |
+| `--annotators` | `fr3d,rnapolis`   | Comma-separated annotator names (those wired in `bin/ws1-annotate`) |
+| `--visualize`  | `false`           | Also export per-tool CSV/TSV tables and, per chain, a forgi BulgeGraph (`.bg`) and render (`.jpg`) |
 | `--outdir`     | `results`         | Output directory |
 
 `-profile test` sets `--input` to the bundled `data/9CFN/9CFN_clean.cif`. Conda and Docker
@@ -131,7 +176,7 @@ Two test stacks live under `tests/`:
 
 ```
 tests/
-  nextflow.config          base nf-test config (conda + docker off)
+  nextflow.config          base nf-test config (conda on, env cache shared across tests; docker off)
   docker.config            per-test overlay that turns docker.enabled on
   parse.nf.test            PARSE process, 6 PDBs × 2 tools
   annotate.nf.test         ANNOTATE process, 6 PDBs × 2 tools + unsupported-tool guard
@@ -139,6 +184,12 @@ tests/
   pipeline.nf.test         full main.nf end-to-end, per input × per converter mode
   test_parse_conversion.py pytest unit test for the bin/ parser scripts
 ```
+
+Run the tests from an activated `ws1-dev` (`conda activate ws1-dev`). nf-test builds the
+pipeline env `envs/ws1.yml` into `.nf-test/conda` during the first test and reuses it afterwards.
+
+If the annotator tests fail with `No module named 'numpy'`, `ws1-dev/bin` precedes the process
+env on `PATH`: activate `ws1-dev` instead of prepending its `bin/` to `PATH`.
 
 ### Run individual nf-test suites
 
@@ -160,10 +211,10 @@ pytest tests/               # all pytests
 
 | Suite | Needs |
 |---|---|
-| `tests/parse.nf.test`         | `gemmi` on PATH (host or `ws1-dev` env) |
-| `tests/annotate.nf.test`      | `rnapolis` + `fr3d` deps (`mmcif-pdbx`, etc.); submodules initialized |
-| `tests/convert.nf.test`       | `maxit` (bioconda) or the docker daemon for the `tzok/maxit` image |
-| `tests/pipeline.nf.test`      | Same as the per-stage suites combined; pulls `tzok/maxit` for docker tests |
+| `tests/parse.nf.test`         | the `ws1-dev` toolchain (the process env `envs/ws1.yml` is built on first use) |
+| `tests/annotate.nf.test`      | same; annotator submodules initialized |
+| `tests/convert.nf.test`       | same (maxit comes from `envs/ws1.yml`) |
+| `tests/pipeline.nf.test`      | same; the docker tests also need the docker daemon and pull `tzok/maxit` |
 | `tests/test_parse_conversion.py` | `gemmi` + `pytest` |
 
 The pipeline tests are parameterized over every structure under `data/tests/Inputs/` (six
@@ -180,8 +231,9 @@ nf-test test tests/pipeline.nf.test --tag '*docker*'
 
 ## The module contract
 
-A stage is wired in `modules/*.nf` and calls a CLI on `PATH` (Nextflow puts `bin/` there).
-Teams replace the CLI body; **keep the signature stable**.
+Each stage is a process in `modules/*.nf` that calls a CLI on `PATH` (Nextflow adds `bin/`).
+The CLI signatures below are the interface between the processes and the implementations;
+keep them unchanged when modifying a stage.
 
 | Stage | CLI | Signature |
 |---|---|---|
@@ -195,7 +247,7 @@ Teams replace the CLI body; **keep the signature stable**.
 
 `modules/convert.nf` dispatches via `--converter`:
 
-- **`maxit`** (default) — MAXIT from `bioconda::maxit`, installed into `envs/convert.yml`.
+- **`maxit`** (default) — MAXIT from `bioconda::maxit`, installed into `envs/ws1.yml`.
   PDB inputs run as `maxit -o 1`, mmCIF inputs as `maxit -o 8` (refresh).
 - **`maxit-docker`** — same MAXIT, but from the prebuilt
   [`tzok/maxit`](https://github.com/tzok/maxit-docker) image. Useful as a fallback when
@@ -205,7 +257,7 @@ Teams replace the CLI body; **keep the signature stable**.
 ## Adding an annotator
 
 1. Add the tool's source to `annotations_tools/` (preferably as a submodule pin).
-2. Add `envs/<tool>.yml` with its dependencies.
+2. Add its dependencies to `envs/ws1.yml` (the single env shared by every process).
 3. Add a dispatch branch for it in `bin/ws1-annotate` (FR3D and RNApolis are the templates).
 4. Teach `bin/ws1-parse` to read its native output (drop a small `<tool>_to_*` script in `bin/`).
 5. Include the name in `--annotators` — the `ANNOTATE` process is generic over the tool.
@@ -217,10 +269,10 @@ main.nf            workflow wiring (Input → T1 → T2 → T3)
 nextflow.config    params + conda/docker enabled by default
 modules/           one .nf process per stage
 bin/               stage CLIs (ws1-*) + the python parser scripts they call
-envs/              per-process conda envs (convert/fr3d/rnapolis/parse/visualize)
+envs/ws1.yml       the single conda env shared by every process (pinned python, pulp)
 annotations_tools/ pinned annotator submodules (fr3d-python, rnapolis-py)
 tests/             nf-test + pytest suites (see Tests above)
-environment.yml    ws1-dev developer toolchain (NOT a pipeline env)
+environment.yml    ws1-dev toolchain: Nextflow, nf-test, pytest, gemmi (not used by pipeline processes)
 ```
 
 ## Status

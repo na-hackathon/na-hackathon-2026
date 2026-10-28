@@ -2,7 +2,7 @@
 // branches against every sample input under data/tests/Inputs and asserts
 // the process emits the expected (tool, raw, mmcif) tuple with a non-empty
 // raw output file.
-// it can be ran using nf-test test tests/annotate.nf.test
+// Run with: nf-test test tests/annotate.nf.test
 nextflow_process {
 
     name "Test Process ANNOTATE"

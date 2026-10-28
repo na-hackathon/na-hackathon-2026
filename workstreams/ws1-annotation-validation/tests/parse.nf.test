@@ -1,8 +1,8 @@
-// nf-test for the PARSE module, runs the FR3D and RNApolis dispatch branches
-// against every sample input under data/tests/ and asserts the produced
-// base-pair mmCIF contains the expected NDB categories. The full row-by-row
-// content check against the reference files lives in tests/test_parse_conversion.py. (which is not using nf-test but only pytest :(
-// it can be ran using nf-test test tests/parse.nf.test 
+// nf-test for the PARSE module: runs the FR3D and RNApolis branches on every sample input
+// under data/tests/ and checks that the base-pair mmCIF and the skipped-pairs file are emitted
+// and that the mmCIF has the expected NDB categories. The row-by-row comparison with the
+// reference files is in tests/test_parse_conversion.py (pytest).
+// Run with: nf-test test tests/parse.nf.test
 nextflow_process {
 
     name "Test Process PARSE"

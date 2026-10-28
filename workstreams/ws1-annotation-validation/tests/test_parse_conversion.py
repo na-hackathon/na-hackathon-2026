@@ -1,8 +1,9 @@
-"""Simple unit test for the base-pairing parsers in bin/.
-you can run it with pytest using python -m pytest tests/test_parse_conversion.py
-Runs the FR3D and RNApolis conversion scripts on the sample inputs under
-data/tests/{fr3d_outputs,rnapolis_outputs} (with structures from
-data/tests/Inputs/) and compares the produced _ndb_base_pair_* rows
+"""Regression test for the base-pair exporters in bin/.
+
+Runs the FR3D and RNApolis exporters on the sample inputs under
+data/tests/{fr3d_outputs,rnapolis_outputs} (structures in data/tests/Inputs/) and compares the
+produced _ndb_base_pair_* rows with data/tests/conversion_outputs.
+Run with:  python -m pytest tests/test_parse_conversion.py
 """
 from __future__ import annotations
 

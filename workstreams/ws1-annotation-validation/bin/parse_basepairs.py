@@ -1,4 +1,12 @@
 #!/usr/bin/python3
+"""Read the _ndb_base_pair_list / _ndb_base_pair_annotation categories of a base-pairing mmCIF.
+
+parse_basepairs(cif) returns one dict per pair: base_pair_id, family (Leontis-Westhof, '?' if
+missing), model, and for each residue (suffix _1 / _2) auth_asym_id, auth_seq_id, comp_id,
+label_asym_id, label_seq_id, ins_code, alt_id and struct_oper_id. Missing values are ''.
+
+Usage: parse_basepairs.py structure_basepairs.cif   (prints a sorted pair table to stdout)
+"""
 
 import sys
 import gemmi

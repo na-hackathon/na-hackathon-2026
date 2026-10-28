@@ -1,4 +1,10 @@
 #!/usr/bin/python3
+"""Convert an FR3D basepair table (TSV: unit id, family, unit id, ...) to JSON for json_fr3d_mmcif.py.
+
+Usage: fr3d_basepair_to_json.py fr3d_basepairs.tsv [out.json]   (default out: basepairs.json)
+
+The JSON has "summary" (rows per family) and "details" (the rows as read).
+"""
 
 import csv
 import json

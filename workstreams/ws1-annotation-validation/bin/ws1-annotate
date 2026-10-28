@@ -6,9 +6,9 @@
 #       fr3d     -> writes <prefix>.txt   (FR3D basepair TSV)
 #       rnapolis -> writes <prefix>.json  (RNApolis annotator JSON)
 #
-# Each tool runs from its pinned submodule under --src (via PYTHONPATH), so the
-# exact annotator commit is what executes — the conda envs supply only deps, not
-# the tool itself. --src is passed by the module so this CLI stays location-agnostic.
+# Each tool runs from its pinned submodule under --src (via PYTHONPATH): the submodule
+# commit determines the annotator version, the conda env provides dependencies only.
+# The module passes --src, so the CLI does not depend on its own location.
 set -euo pipefail
 
 tool= ; structure= ; out= ; src=

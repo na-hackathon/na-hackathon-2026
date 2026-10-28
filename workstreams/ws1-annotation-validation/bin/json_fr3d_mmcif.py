@@ -1,17 +1,20 @@
 #!/usr/bin/python3
+"""Convert FR3D base pairs (JSON from fr3d_basepair_to_json.py) to base-pairing mmCIF.
+
+Usage: json_fr3d_mmcif.py basepairs.json structure.cif [out.cif]
+
+Writes a copy of structure.cif with the _ndb_base_pair_list and _ndb_base_pair_annotation
+categories added (layout at the end of this file). Input rows that are not written are saved
+to <out minus .cif>.skipped.tsv with the reason; a summary line is printed to stderr.
+"""
 
 import sys, json, re
 import gemmi
 from collections import Counter
 from pathlib import Path
 
-struct_opers = []
-
 bp_families = { "cWW": '1', "tWW": '2', "cWH": '3', "tWH": '4', "cWS": '5', "tWS": '6', "cHH": '7', "tHH": '8', "cHS": '9', "tHS": '10', "cSS": '11', "tSS": '12' }
 long_names = {"W": "Watson-Crick", "H": "Hoogsteen", "S": "Sugar", "t": "trans", "c": "cis"}
-
-# list of standard residues
-#stdres = [ "A", "U", "G", "C", "DA", "DT", "DG", "DC" ]
 
 processed = []
 
@@ -42,11 +45,9 @@ try:
   mmcif_file = sys.argv[2]
   out_file = sys.argv[3] if len(sys.argv) > 3 else Path(mmcif_file).stem + '_basepairs.cif'
 
-  # TODO replace structure with something else so we can drop the double reading
+  # TODO read the file once: structure.make_mmcif_document() does not return the complete
+  # document, so the file is read as a structure and again as a cif document
   structure = gemmi.read_structure(mmcif_file)
-
-  # there is some error getting correct document from structure, so we read it twice
-  # BUG doc = structure.make_mmcif_document()
   doc = gemmi.cif.read(mmcif_file)
   block = doc.sole_block()
 
@@ -58,13 +59,11 @@ try:
   identity_id='1'
   struct_oper_dict = {}
   if (struct_oper_list_loop):
-    tagpos = {'id':None, 'type':None, 'name':None}
-#    struct_oper_list_loop = block.find_loop_item('_pdbx_struct_oper_list.id').loop
     num_sym_oper = len(struct_oper_list_loop['id'])
-    # TODO in the real case, we will compare the trans and rot operations between gemmi and the _pdbx_struct_oper_list
+    # TODO compare the rotation and translation of the operations between gemmi and _pdbx_struct_oper_list
     for idx, sym_id in enumerate(struct_oper_list_loop['id']):
       struct_oper_dict[struct_oper_list_loop['name'][idx]] = sym_id
-      # identity is not always first (e.g. 5a39 was creative)
+      # the identity operation is not always listed first (e.g. 5A39)
       # as_string removes quotes
       if (gemmi.cif.as_string(struct_oper_list_loop['type'][idx]) == 'identity operation'):
         identity_id = str(sym_id)
@@ -82,7 +81,6 @@ def get_atom_identifiers(structure, model_number, author_chain, author_resnum, a
   except StopIteration:
     return None, f"Model '{model_number}' not found."
 
-  #print("model", model.name, "found", file=sys.stderr)
   for chain in model:
     if chain.name.strip() == author_chain:
       for residue in chain:
@@ -108,12 +106,12 @@ def get_atom_identifiers(structure, model_number, author_chain, author_resnum, a
 try:
   for pair in pairs["details"]:
     if pair[0]+"_"+pair[2] not in processed:
-      # as long as we are using FR3D, we will skip the "near" pairs or anything unexpected
+      # FR3D "near" pairs (n-prefixed families) and anything else outside [ct][WHS][WHS] are skipped
       if ( not pattern.fullmatch(pair[1]) ):
         print("Skipping unsupported pairing family", pair, file=sys.stderr)
         skip('unsupported_family', pair)
         continue
-      # check if the family is in the right order (only the bp_families are allowed)
+      # families are written with edge 1 <= edge 2 (the keys of bp_families); otherwise swap the residues and the edges
       if (pair[1] in bp_families):
         resa = pair[0].split("|")
         resb = pair[2].split("|")
@@ -143,7 +141,7 @@ try:
         skip('alt_position_mismatch', pair, f"{alta}/{altb}")
         continue
 
-      # TODO to be corected when gemmi allows access to _pdbx_struct_oper_list.name and/or when our base-pairing code is used instead of fr3d
+      # TODO correct this once gemmi gives access to _pdbx_struct_oper_list.name and/or our own base-pairing code replaces FR3D
       if (len(fr3d_syms) > num_sym_oper):
         sys.exit(f"Number of FR3D symmetry operations is larger than size of _pdbx_struct_oper_list: {pair}")
 
@@ -185,8 +183,8 @@ try:
       processed.append(pair[0]+"_"+pair[2])
       processed.append(pair[2]+"_"+pair[0])
 
-      # FR3D sometimes returns the same pairs within ASU and then from different symmetry-generated copy
-      # try taking each pair only once
+      # FR3D can report a pair both inside the asymmetric unit and between two copies related by
+      # the same operator; write it once
       if (syma != identity_id and symb != identity_id and syma == symb):
         print("Same symmetry pair converted to within ASU", pair, file=sys.stderr)
         syma = identity_id
@@ -252,7 +250,7 @@ print(f"[json_fr3d_mmcif] {rows_read} rows read: {base_pair_id} pairs written, {
 if rows_read != base_pair_id + len(skipped) + duplicates:
   print("[json_fr3d_mmcif] WARNING: rows read != written + skipped + duplicates", file=sys.stderr)
 
-# get also as string
+# print the document to stdout
 cif_in_string = doc.as_string(options)
 print(cif_in_string)
 

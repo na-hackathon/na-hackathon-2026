@@ -1,7 +1,7 @@
-"""Edge cases of the base-pairing exporters in bin/ (inputs that are unusual, not wrong).
+"""Edge-case inputs for the base-pair exporters in bin/.
 
 Each case starts from the stored 8XZN structure / RNApolis output and removes or alters one
-thing. Run with:  python -m pytest tests/test_exporters_robustness.py
+element. Run with:  python -m pytest tests/test_exporters_robustness.py
 """
 from __future__ import annotations
 
