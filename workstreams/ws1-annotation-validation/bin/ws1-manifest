@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+"""Write the manifest of a WS1 pipeline run as JSON.
+
+    ws1-manifest --input <structure> --run-info <run_info.json> --project-dir <dir>
+                 --provenance <file.json> [<file.json> ...] --out <run_manifest.json>
+
+The manifest holds
+  pipeline     git commit of the project directory, whether it has uncommitted changes, and the
+               sha256 of envs/ws1.yml
+  run          the Nextflow facts in run_info.json (version, command line, run name, profile,
+               start time, parameters)
+  input        name and sha256 of the input structure
+  annotators   the ws1-provenance record of every annotator that ran
+  environment  python version, every conda package (name, version, build, channel) and every
+               python distribution of the environment the script runs in
+"""
+import argparse
+import importlib.metadata
+import json
+import os
+import platform
+import sys
+from pathlib import Path
+
+from provenance_utils import git, sha256
+
+
+def conda_packages(prefix):
+    packages = {}
+    for meta in sorted(Path(prefix, "conda-meta").glob("*.json")):
+        data = json.loads(meta.read_text())
+        packages[data["name"]] = {"version": data["version"],
+                                  "build": data.get("build_string") or data.get("build"),
+                                  "channel": data.get("channel")}
+    return packages
+
+
+def environment():
+    prefix = os.environ.get("CONDA_PREFIX") or sys.prefix
+    distributions = {d.metadata["Name"]: d.version for d in importlib.metadata.distributions()}
+    return {"python": platform.python_version(),
+            "prefix": Path(prefix).name,
+            "conda_packages": conda_packages(prefix),
+            "python_distributions": dict(sorted(distributions.items(), key=lambda item: item[0].lower()))}
+
+
+def manifest(input_file, run_info, project_dir, provenance_files):
+    env_file = Path(project_dir) / "envs" / "ws1.yml"
+    commit = git(project_dir, "rev-parse", "HEAD")
+    changes = git(project_dir, "status", "--porcelain", "--", ".")      # None when clean
+    return {
+        "manifest_version": 1,
+        "pipeline": {
+            "commit": commit,
+            "modified": None if commit is None else changes is not None,
+            "env_file": "envs/ws1.yml",
+            "env_file_sha256": sha256(env_file) if env_file.exists() else None,
+        },
+        "run": run_info,
+        "input": {"name": Path(input_file).name, "sha256": sha256(input_file)},
+        "annotators": [json.loads(Path(p).read_text()) for p in sorted(provenance_files)],
+        "environment": environment(),
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Write the manifest of a WS1 pipeline run as JSON")
+    ap.add_argument("--input", required=True, help="input structure of the run")
+    ap.add_argument("--run-info", required=True, help="JSON with the Nextflow facts of the run")
+    ap.add_argument("--project-dir", required=True, help="pipeline directory (main.nf)")
+    ap.add_argument("--provenance", nargs="+", required=True, help="ws1-provenance files of the annotators")
+    ap.add_argument("--out", required=True)
+    args = ap.parse_args()
+    run_info = json.loads(Path(args.run_info).read_text())
+    Path(args.out).write_text(
+        json.dumps(manifest(args.input, run_info, args.project_dir, args.provenance), indent=2) + "\n")
+
+
+if __name__ == "__main__":
+    main()

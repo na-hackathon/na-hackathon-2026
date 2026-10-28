@@ -4,6 +4,7 @@
 //   structure (.pdb|.cif) -> T1 CONVERT (MaxIT) -> T2 ANNOTATE (fr3d|rnapolis)
 //   -> T2 PARSE -> standardized base-pairing mmCIF (per tool)
 //   -> T3 VALIDATE (cross-tool comparison) + optional VISUALIZE (--visualize: per-tool graphs)
+//   RUN_MANIFEST records versions, commits and checksums of the run.
 //
 // Usage:
 //   nextflow run main.nf <structure.pdb|.cif>                              # both tools, default
@@ -12,10 +13,11 @@
 //
 // The per-tool annotated mmCIF is published to ${params.outdir}/basepairs/${tool}_basepairs.cif.
 
-include { CONVERT  } from './modules/convert.nf'
-include { ANNOTATE } from './modules/annotate.nf'
-include { PARSE    } from './modules/parse.nf'
+include { CONVERT      } from './modules/convert.nf'
+include { ANNOTATE     } from './modules/annotate.nf'
+include { PARSE        } from './modules/parse.nf'
 include { VALIDATE; VISUALIZE } from './modules/validate.nf'
+include { RUN_MANIFEST } from './modules/manifest.nf'
 
 // "a=1, b=2" for a map of counts
 def formatCounts(counts) {
@@ -69,4 +71,14 @@ workflow {
     if( params.visualize )
         VISUALIZE( bp_ch )
 
+    // Run manifest: Nextflow facts of this run + the provenance of every annotator
+    run_info = Channel.of( groovy.json.JsonOutput.toJson([
+        nextflow    : workflow.nextflow.version.toString(),
+        command_line: workflow.commandLine,
+        run_name    : workflow.runName,
+        profile     : workflow.profile,
+        start       : workflow.start.toString(),
+        params      : params.collectEntries { k, v -> [k, v?.toString()] }
+    ]) ).collectFile(name: 'run_info.json')
+    RUN_MANIFEST( structure_ch, raw_ch.map { tool, raw, mmcif, provenance -> provenance }.collect(), run_info )
 }
