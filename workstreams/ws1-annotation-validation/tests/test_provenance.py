@@ -20,7 +20,7 @@ BIN = WS1 / "bin"
 DATA = WS1.parents[1] / "data" / "tests"
 FIXTURES = WS1 / "tests" / "fixtures"
 sys.path.insert(0, str(BIN))
-from mmcif_software import add_software_row  # noqa: E402
+from mmcif_software import add_provenance_row, add_software_row  # noqa: E402
 
 FR3D = {"name": "FR3D", "commit": "995de6cf5fb67e689ab8b6626988799ec4362f1e",
         "repository": "https://github.com/BGSU-RNA/fr3d-python.git"}
@@ -35,7 +35,7 @@ def test_row_is_appended_to_an_existing_loop():
     doc = gemmi.cif.read(str(DATA / "conversion_outputs/fr3d_mmcif_outputs/8xzn_fr3d_basepairs.cif"))
     block = doc.sole_block()
     before = len(block.get_mmcif_category("_software.")["name"])
-    assert add_software_row(block, FR3D, "base-pair annotation (WS1 pipeline)")
+    assert add_software_row(block, FR3D, "base-pair annotation (WS1 pipeline)") == before + 1      # its pdbx_ordinal
     table = gemmi.cif.read_string(doc.as_string()).sole_block().get_mmcif_category("_software.")
     assert len(table["name"]) == before + 1
     assert table["name"][:before] == ["PHENIX", "HKL-3000", "HKL-3000", "PHASER"]      # existing rows kept
@@ -76,6 +76,9 @@ def test_exporter_adds_the_annotator_and_keeps_the_pairs(script, raw, fixture, e
     assert [r["name"] for r in software_rows(with_prov)][-1:] == [expected[0]]
     assert software_rows(with_prov)[-1]["version"] == expected[1]
     assert len(software_rows(with_prov)) == len(software_rows(plain)) + 1
+    (row,) = provenance_rows(with_prov)                                  # points to the _software row just added
+    assert (row["software_id"], row["software_name"], row["software_version"]) == (software_rows(with_prov)[-1]["pdbx_ordinal"], expected[0], expected[1])
+    assert provenance_rows(plain) == []
     for category in ("_ndb_base_pair_list.", "_ndb_base_pair_annotation."):               # pairs unchanged
         assert (gemmi.cif.read(str(plain)).sole_block().get_mmcif_category(category)
                 == gemmi.cif.read(str(with_prov)).sole_block().get_mmcif_category(category))
@@ -112,3 +115,36 @@ def test_ws1_provenance_without_a_checkout_gives_null_values(tmp_path):
     software = json.loads(out.read_text())["software"]
     assert software["name"] == "RNApolis" and software["commit"] is None and software["package_version"] is None
 
+
+
+def provenance_rows(cif):
+    table = gemmi.cif.read(str(cif)).sole_block().get_mmcif_category("_ndb_base_pair_provenance.")
+    return [{k: table[k][i] for k in table} for i in range(len(next(iter(table.values()), [])))]
+
+
+def test_provenance_row_points_to_the_software_row():
+    doc = gemmi.cif.read_string("data_x\n_entry.id 1ABC\n")
+    block = doc.sole_block()
+    ordinal = add_software_row(block, FR3D, "d")
+    assert add_provenance_row(block, FR3D, ordinal, "annotated by FR3D")
+    (row,) = provenance_rows_of(doc)
+    assert row == {"entry_id": "1ABC", "software_id": "1", "software_name": "FR3D", "software_version": FR3D["commit"],
+                   "software_url": FR3D["repository"], "bp_params_version": None, "details": "annotated by FR3D"}
+
+
+def provenance_rows_of(doc):
+    table = gemmi.cif.read_string(doc.as_string()).sole_block().get_mmcif_category("_ndb_base_pair_provenance.")
+    return [{k: table[k][i] for k in table} for i in range(len(next(iter(table.values()), [])))]
+
+
+def test_provenance_row_without_entry_id_uses_the_block_name_and_extends_an_existing_loop():
+    doc = gemmi.cif.read_string("data_XYZ\nloop_\n_ndb_base_pair_provenance.entry_id\n_ndb_base_pair_provenance.software_id\n"
+                                "_ndb_base_pair_provenance.software_name\nXYZ 1 NAPAIR\n")
+    assert add_provenance_row(doc.sole_block(), FR3D, 2, "d")
+    rows = provenance_rows_of(doc)
+    assert [(r["entry_id"], r["software_id"], r["software_name"]) for r in rows] == [("XYZ", "1", "NAPAIR"), ("XYZ", "2", "FR3D")]
+
+
+def test_provenance_category_written_as_key_value_pairs_is_left_unchanged():
+    doc = gemmi.cif.read_string("data_x\n_ndb_base_pair_provenance.entry_id X\n_ndb_base_pair_provenance.software_id 1\n")
+    assert not add_provenance_row(doc.sole_block(), FR3D, 2, "d")

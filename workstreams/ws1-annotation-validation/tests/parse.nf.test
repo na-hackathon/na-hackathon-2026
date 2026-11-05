@@ -43,8 +43,9 @@ nextflow_process {
                 assert path(process.out.skipped[0].toString()).text.startsWith('reason\tunit_id_1\tfamily\tunit_id_2\tdetail')
 
                 def cif = out.text
-                // the annotator is appended to _software
+                // the annotator is appended to _software and _ndb_base_pair_provenance
                 assert cif.contains('FR3D') && cif.contains('995de6cf5fb67e689ab8b6626988799ec4362f1e')
+                assert cif.contains('_ndb_base_pair_provenance.software_id')
                 assert cif.contains('_ndb_base_pair_list.id')
                 assert cif.contains('_ndb_base_pair_annotation.id')
                 assert cif =~ /[ct][WHS][WHS]/
@@ -81,8 +82,9 @@ nextflow_process {
                 assert path(process.out.skipped[0].toString()).text.startsWith('reason\tresidue_1\tfamily\tresidue_2\tdetail')
 
                 def cif = out.text
-                // the annotator is appended to _software
+                // the annotator is appended to _software and _ndb_base_pair_provenance
                 assert cif.contains('RNApolis') && cif.contains('5ba519b5af6de0086d02e61640bdff56e2ef6bc5')
+                assert cif.contains('_ndb_base_pair_provenance.software_id')
                 assert cif.contains('_ndb_base_pair_list.id')
                 assert cif.contains('_ndb_base_pair_annotation.id')
                 assert cif =~ /[ct][WHS][WHS]/

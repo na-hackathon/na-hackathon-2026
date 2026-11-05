@@ -6,7 +6,7 @@ Usage: json_fr3d_mmcif.py basepairs.json structure.cif [out.cif] [--provenance p
 Writes a copy of structure.cif with the _ndb_base_pair_list and _ndb_base_pair_annotation
 categories added (items: ndb_names.py, definitions: docs/ndb-bp-ext.dic). The class label uses the
 parent bases of the residues; sub_class is '?'. With --provenance (JSON from ws1-provenance) the
-annotator is added to the _software category. Input rows that are not written are
+annotator is added to _software and _ndb_base_pair_provenance. Input rows that are not written are
 saved to <out minus .cif>.skipped.tsv with the reason; a summary line is printed to stderr.
 """
 
@@ -14,7 +14,7 @@ import sys, json, re
 import gemmi
 from collections import Counter
 from pathlib import Path
-from mmcif_software import add_software_row
+from mmcif_software import add_provenance_row, add_software_row
 from ndb_names import ANNOTATION_ITEMS, LIST_ITEMS, pair_class, parent_base_lookup
 
 bp_families = { "cWW": '1', "tWW": '2', "cWH": '3', "tWH": '4', "cWS": '5', "tWS": '6', "cHH": '7', "tHH": '8', "cHS": '9', "tHS": '10', "cSS": '11', "tSS": '12' }
@@ -245,8 +245,12 @@ except Exception as e:
 
 if provenance_file:
   with open(provenance_file) as f:
-    if not add_software_row(block, json.load(f)["software"], "base-pair annotation (WS1 pipeline)"):
-      print("[json_fr3d_mmcif] _software is written as key-value pairs: annotator not added", file=sys.stderr)
+    software = json.load(f)["software"]
+  software_id = add_software_row(block, software, "base-pair annotation (WS1 pipeline)")
+  if software_id:
+    add_provenance_row(block, software, software_id, f"base pairs annotated by {software['name']} in the WS1 pipeline")
+  else:
+    print("[json_fr3d_mmcif] _software is written as key-value pairs: annotator not added", file=sys.stderr)
 
 # set "nice output" writing options for gemmi
 options = gemmi.cif.WriteOptions()
