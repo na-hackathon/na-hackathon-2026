@@ -4,9 +4,10 @@
 Usage: json_fr3d_mmcif.py basepairs.json structure.cif [out.cif] [--provenance provenance.json]
 
 Writes a copy of structure.cif with the _ndb_base_pair_list and _ndb_base_pair_annotation
-categories added (layout at the end of this file). With --provenance (JSON from ws1-provenance)
-the annotator is added to the _software category. Input rows that are not written are saved
-to <out minus .cif>.skipped.tsv with the reason; a summary line is printed to stderr.
+categories added (items: ndb_names.py, definitions: docs/ndb-bp-ext.dic). The class label uses the
+parent bases of the residues; sub_class is '?'. With --provenance (JSON from ws1-provenance) the
+annotator is added to the _software category. Input rows that are not written are
+saved to <out minus .cif>.skipped.tsv with the reason; a summary line is printed to stderr.
 """
 
 import sys, json, re
@@ -14,6 +15,7 @@ import gemmi
 from collections import Counter
 from pathlib import Path
 from mmcif_software import add_software_row
+from ndb_names import ANNOTATION_ITEMS, LIST_ITEMS, pair_class, parent_base_lookup
 
 bp_families = { "cWW": '1', "tWW": '2', "cWH": '3', "tWH": '4', "cWS": '5', "tWS": '6', "cHH": '7', "tHH": '8', "cHS": '9', "tHS": '10', "cSS": '11', "tSS": '12' }
 long_names = {"W": "Watson-Crick", "H": "Hoogsteen", "S": "Sugar", "t": "trans", "c": "cis"}
@@ -78,8 +80,9 @@ try:
       if (gemmi.cif.as_string(struct_oper_list_loop['type'][idx]) == 'identity operation'):
         identity_id = str(sym_id)
 
-  ndb_base_pair_list_loop = block.init_mmcif_loop('_ndb_base_pair_list.', ['base_pair_id', 'PDB_model_number', 'asym_id_1', 'entity_id_1', 'seq_id_1', 'comp_id_1', 'PDB_ins_code_1', 'alt_id_1', 'struct_oper_id_1', 'asym_id_2', 'entity_id_2', 'seq_id_2', 'comp_id_2', 'PDB_ins_code_2', 'alt_id_2', 'struct_oper_id_2', 'auth_asym_id_1', 'auth_seq_id_1', 'auth_asym_id_2', 'auth_seq_id_2'])
-  ndb_base_pair_annotation_loop = block.init_mmcif_loop('_ndb_base_pair_annotation.', ['id', 'base_pair_id', 'orientation', 'base_1_edge', 'base_2_edge', 'l-w_family_num', 'l-w_family', 'class', 'subclass'])
+  ndb_base_pair_list_loop = block.init_mmcif_loop('_ndb_base_pair_list.', LIST_ITEMS)
+  ndb_base_pair_annotation_loop = block.init_mmcif_loop('_ndb_base_pair_annotation.', ANNOTATION_ITEMS)
+  parent_letter = parent_base_lookup(block)
 
 except:
   print("usage:",sys.argv[0],"basepairs.json","structure.cif","[out.cif]","[--provenance provenance.json]", file=sys.stderr)
@@ -231,8 +234,8 @@ try:
       # populate _ndb_base_pair_list loop
       ndb_base_pair_list_loop.add_row([str(base_pair_id), str(resa[1]), resulta['asym_id'], resulta['entity_id'], str(resulta['seq_id']), resulta['comp_id'], resulta['PDB_ins_code'], resulta['alt_id'], syma, resultb['asym_id'], resultb['entity_id'], str(resultb['seq_id']), resultb['comp_id'], resultb['PDB_ins_code'], resultb['alt_id'], symb, resa[2], resa[4], resb[2], resb[4]])
 
-      # populate _ndb_base_pair_annotation loop; subclass hardcoded to class_1
-      ndb_base_pair_annotation_loop.add_row([str(annotation_id), str(base_pair_id), long_names[fam[0]], long_names[fam[1]], long_names[fam[2]], bp_families[fam], fam, fam+'_'+resa[3]+'-'+resb[3], fam+'_'+resa[3]+'-'+resb[3]+'_1'])
+      # populate _ndb_base_pair_annotation loop; class uses the parent bases, sub_class is unknown (needs the geometry)
+      ndb_base_pair_annotation_loop.add_row([str(annotation_id), str(base_pair_id), long_names[fam[0]], long_names[fam[1]], long_names[fam[2]], bp_families[fam], fam, pair_class(fam, resulta['comp_id'], resultb['comp_id'], parent_letter), '?'])
     else:
       # the same pair listed in the other direction
       duplicates += 1
@@ -269,45 +272,5 @@ if rows_read != base_pair_id + len(skipped) + duplicates:
 cif_in_string = doc.as_string(options)
 print(cif_in_string)
 
-### base pairing mmCIF categories used here
-# TODO add the provenance
-
-# see ndb-bp-ext.dic
-# loop_
-# _ndb_base_pair_list.base_pair_id
-# _ndb_base_pair_list.PDB_model_number
-# _ndb_base_pair_list.asym_id_1
-# _ndb_base_pair_list.entity_id_1
-# _ndb_base_pair_list.seq_id_1
-# _ndb_base_pair_list.comp_id_1
-# _ndb_base_pair_list.PDB_ins_code_1
-# _ndb_base_pair_list.alt_id_1
-# _ndb_base_pair_list.struct_oper_id_1 → mandatory → _pdbx_struct_oper_list.id
-# _ndb_base_pair_list.asym_id_2
-# _ndb_base_pair_list.entity_id_2
-# _ndb_base_pair_list.seq_id_2
-# _ndb_base_pair_list.comp_id_2
-# _ndb_base_pair_list.PDB_ins_code_2
-# _ndb_base_pair_list.alt_id_2
-# _ndb_base_pair_list.struct_oper_id_2 → mandatory → _pdbx_struct_oper_list.id
-# _ndb_base_pair_list.auth_asym_id_1
-# _ndb_base_pair_list.auth_seq_id_1
-# _ndb_base_pair_list.auth_asym_id_2
-# _ndb_base_pair_list.auth_seq_id_2
-# 1 1 1 A 1 C . . 1 1 A 12 G . . 1 P 11 P 22
-
-# loop_
-# _ndb_base_pair_annotation.id
-# _ndb_base_pair_annotation.base_pair_id
-# _ndb_base_pair_annotation.orientation
-# _ndb_base_pair_annotation.base_1_edge
-# _ndb_base_pair_annotation.base_2_edge
-# _ndb_base_pair_annotation.l-w_family_num
-# _ndb_base_pair_annotation.l-w_family
-# _ndb_base_pair_annotation.class
-# _ndb_base_pair_annotation.subclass
-# 15 15 trans        Sugar        Sugar 12 tSS tSS_A-G tSS_A-G_1
-# 16 16   cis Watson-Crick Watson-Crick  1 cWW cWW_G-C cWW_G-C_1
-# 17 17 trans    Hoogsteen        Sugar 10 tHS tHS_A-G tHS_A-G_1
-# 18 18   cis Watson-Crick Watson-Crick  1 cWW cWW_G-U cWW_G-U_1
-# #
+### Output categories: _ndb_base_pair_list and _ndb_base_pair_annotation (item names in ndb_names.py)
+### as defined in docs/ndb-bp-ext.dic, plus _ndb_base_pair_provenance with --provenance.

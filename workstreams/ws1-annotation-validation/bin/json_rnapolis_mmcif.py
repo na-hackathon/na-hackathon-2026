@@ -14,6 +14,7 @@ import gemmi
 from collections import Counter
 from pathlib import Path
 from mmcif_software import add_software_row
+from ndb_names import ANNOTATION_ITEMS, LIST_ITEMS, pair_class, parent_base_lookup
 
 bp_families = { "cWW": '1', "tWW": '2', "cWH": '3', "tWH": '4', "cWS": '5', "tWS": '6', "cHH": '7', "tHH": '8', "cHS": '9', "tHS": '10', "cSS": '11', "tSS": '12' }
 long_names = {"W": "Watson-Crick", "H": "Hoogsteen", "S": "Sugar", "t": "trans", "c": "cis"}
@@ -69,8 +70,9 @@ try:
   # the JSON does not give the annotated model; use the first model of the structure
   model_number = structure[0].num
 
-  ndb_base_pair_list_loop = block.init_mmcif_loop('_ndb_base_pair_list.', ['base_pair_id', 'PDB_model_number', 'asym_id_1', 'entity_id_1', 'seq_id_1', 'comp_id_1', 'PDB_ins_code_1', 'alt_id_1', 'struct_oper_id_1', 'asym_id_2', 'entity_id_2', 'seq_id_2', 'comp_id_2', 'PDB_ins_code_2', 'alt_id_2', 'struct_oper_id_2', 'auth_asym_id_1', 'auth_seq_id_1', 'auth_asym_id_2', 'auth_seq_id_2'])
-  ndb_base_pair_annotation_loop = block.init_mmcif_loop('_ndb_base_pair_annotation.', ['id', 'base_pair_id', 'orientation', 'base_1_edge', 'base_2_edge', 'l-w_family_num', 'l-w_family', 'class', 'subclass'])
+  ndb_base_pair_list_loop = block.init_mmcif_loop('_ndb_base_pair_list.', LIST_ITEMS)
+  ndb_base_pair_annotation_loop = block.init_mmcif_loop('_ndb_base_pair_annotation.', ANNOTATION_ITEMS)
+  parent_letter = parent_base_lookup(block)
 
 except:
   print("usage:", sys.argv[0], "RNAPOLIS_OUTPUT.json", "structure.cif", "[out.cif]", "[--provenance provenance.json]", file=sys.stderr)
@@ -161,8 +163,8 @@ try:
     # populate _ndb_base_pair_list loop (struct_oper_id is always the identity operation)
     ndb_base_pair_list_loop.add_row([str(base_pair_id), str(model_number), resulta['asym_id'], resulta['entity_id'], str(resulta['seq_id']), resulta['comp_id'], resulta['PDB_ins_code'], resulta['alt_id'], identity_id, resultb['asym_id'], resultb['entity_id'], str(resultb['seq_id']), resultb['comp_id'], resultb['PDB_ins_code'], resultb['alt_id'], identity_id, res_a['chain'], str(res_a['number']), res_b['chain'], str(res_b['number'])])
 
-    # populate _ndb_base_pair_annotation loop
-    ndb_base_pair_annotation_loop.add_row([str(annotation_id), str(base_pair_id), long_names[fam[0]], long_names[fam[1]], long_names[fam[2]], bp_families[fam], fam, fam + '_' + res_a['name'] + '-' + res_b['name'], fam + '_' + res_a['name'] + '-' + res_b['name'] + '_1'])
+    # populate _ndb_base_pair_annotation loop; class uses the parent bases, sub_class is unknown (needs the geometry)
+    ndb_base_pair_annotation_loop.add_row([str(annotation_id), str(base_pair_id), long_names[fam[0]], long_names[fam[1]], long_names[fam[2]], bp_families[fam], fam, pair_class(fam, resulta['comp_id'], resultb['comp_id'], parent_letter), '?'])
 except Exception as e:
   print(f"error {e=}, {type(e)=}", file=sys.stderr)
   raise
