@@ -87,12 +87,35 @@ results/
 The end of a run prints a summary of the validation report (tools, pairs per tool, distinct,
 agreed, discordant and single-tool pairs, and the path of the full table).
 
+### Base-pair mmCIF
+
+`basepairs/<tool>_basepairs.cif` is a copy of the converted structure with the categories of the NDB
+base-pair dictionary `docs/ndb-bp-ext.dic` (version 0.07, the one used by NAPAIR). The output of both
+annotators validates against it (`tests/test_dictionary.py`).
+
+- **`_ndb_base_pair_list`:** one row per pair, with the model (`PDB_model_num`), both residues
+  (`label_*_1` / `_2`: entity, chain, sequence number, component, alternate position; `PDB_ins_code`,
+  `struct_oper_id`, `auth_asym_id`, `auth_seq_id`). A modified residue keeps its own component id here.
+- **`_ndb_base_pair_annotation`:** the Leontis-Westhof `orientation`, edges, `l-w_family_num` and
+  `l-w_family_name`, and the `class` label. `class` is `<family>_<base 1>-<base 2>` with the *parent*
+  base of each residue, so 2MG paired with C is `cWW_G-C`; for the families with equal edges (cWW, tWW,
+  cHH, tHH, cSS, tSS) the bases are listed in the order A, G, C, U. The parent comes from
+  `_pdbx_struct_mod_residue.parent_comp_id` or `_chem_comp.mon_nstd_parent_comp_id` of the structure,
+  else from the nucleotide table of gemmi, and nucleoside phosphates (GTP) take the letter of their
+  base; a residue with no known parent is `N`, which the dictionary does not allow. `sub_class` is `?`:
+  it is a geometric sub-class that FR3D and RNApolis do not give.
+- **`_ndb_base_pair_provenance`:** one row for the annotator (see below).
+- Files written before the dictionary (`data/tests/conversion_outputs`) use the earlier item names
+  (`base_pair_id`, `PDB_model_number`, `asym_id_1`, ..., `l-w_family`, `subclass`); `bin/parse_basepairs.py`
+  and the comparison read both.
+
 ### Provenance
 
-- **`_software` in `basepairs/<tool>_basepairs.cif`:** one row per annotator is appended to the
-  structure's `_software` category (name, `version` = git commit of the annotator submodule,
-  `type` = `program`, repository URL as `location`, and `pdbx_ordinal` = next free integer). The
-  rows of the input structure are kept.
+- **`_software` and `_ndb_base_pair_provenance` in `basepairs/<tool>_basepairs.cif`:** one row per
+  annotator is appended to the structure's `_software` category (name, `version` = git commit of the
+  annotator submodule, `type` = `program`, repository URL as `location`, and `pdbx_ordinal` = next free
+  integer; the rows of the input structure are kept), and one row to `_ndb_base_pair_provenance` whose
+  `software_id` is that `pdbx_ordinal` (`entry_id` is `_entry.id`).
 - **`annotations/<tool>/<tool>_provenance.json`:** annotator name, repository, git commit,
   `git describe`, version from its `pyproject.toml`, the command line, name and sha256 of the
   structure it ran on, and the python version. Values that cannot be determined are `null`.

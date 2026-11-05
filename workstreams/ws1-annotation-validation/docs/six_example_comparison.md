@@ -49,9 +49,12 @@ agreement between the two annotators, not accuracy against a reference.
 ## Reproduction of the stored files
 
 The full pipeline was run on all six inputs. For every case the regenerated FR3D table, the
-regenerated RNApolis JSON (pairs and families) and the `_ndb_base_pair_list` rows of both
-base-pair mmCIFs are identical to the files in `data/tests/fr3d_outputs`,
-`data/tests/rnapolis_outputs` and `data/tests/conversion_outputs`.
+regenerated RNApolis JSON (pairs and families) and the pairs of both base-pair mmCIFs (residues,
+model, family, symmetry operators) are identical to the files in `data/tests/fr3d_outputs`,
+`data/tests/rnapolis_outputs` and `data/tests/conversion_outputs`. The stored base-pair mmCIFs use the
+item names from before `docs/ndb-bp-ext.dic`; the files written by the pipeline use the dictionary names
+and the parent-base `class` labels (README, "Base-pair mmCIF"), so the comparison reads both through
+`bin/parse_basepairs.py`.
 
 ## Versions
 
