@@ -1,0 +1,2283 @@
+# -------------------------------------------------------------------------------------------------------------------------
+#
+#  File: ndb-bp-ext.dic
+#  Date: 19-AUG-2026
+#
+#  Dictionary extension for nucleic acids base pair definitions
+#
+# -------------------------------------------------------------------------------------------------------------------------
+#
+data_ndb-bp-ext.dic
+
+    _datablock.id                          ndb-bp-ext.dic
+    _datablock.description
+;
+     This data block holds the extension dictionary defining
+     nucleic acids base pairs for NDB. 
+;
+
+    _dictionary.title           ndb-bp-ext.dic
+    _dictionary.datablock_id    ndb-bp-ext.dic
+    _dictionary.version         0.07
+#
+     loop_
+    _dictionary_history.version
+    _dictionary_history.update
+    _dictionary_history.revision
+  0.07   2026-10-08
+;
+  Changes (js)
+  + Rename ndb_base_pair_overall.average_NAPASCO to NAPASCO_global
+    (pooled over all base pairs in all models)
+  + Add ndb_base_pair_overall_model with per-model NAPASCO_global_model and
+    base pair/unpaired counts
+;
+  0.06   2026-08-19
+;
+  Changes (js/bs/lb)
+  + Add ndb_base_pair_annotation_curated, giving the Leontis-Westhof
+    orientation/edge/family/class/sub_class for each curated base pair,
+    derived from the data/curated/ sub_class directory names
+  + Populate ndb_base_pair_annotation_curated in ndb-bp-ext-curated.cif
+    alongside ndb_base_pair_list_curated (4639 rows)
+;
+  0.05   2026-08-19
+;
+  Changes (js/bs/lb)
+  + Populate ndb_base_pair_list_curated in the external reference file
+    ndb-bp-ext-curated.cif
+  + Note in ndb_base_pair_list_curated.description that this category is
+    populated externally and is the target of
+    _ndb_base_pair_validation.nearest_curated_BP
+;
+  0.04   2026-08-19
+;
+  Changes (bv/bs/jc/lb)
+  + Add ndb_base_pair_overall
+  + Rename base_pair_annotation.family_num/family_name to l-w_family_num/l-w_family_name
+    to match generated mmCIF output, and drop the leading '#' from family number values
+  + Add ndb_base_pair_validation.details
+  + Rename ndb_base_pair_validation.nearest_curated_bp to nearest_curated_BP to match
+    generated mmCIF output
+  + Update ndb_base_pair_validation.napasco_annotation enumeration to
+    preferred/of_concern/not_applicable to match mmcif_parser.py output
+  + Fix label_entity_id_1/_2 (base_pair_list, base_pair_list_curated) and
+    label_entity_id (base_unpaired_list) item names that were missing the
+    'label_' prefix
+  + Add missing sub_class enumeration values observed in generated output
+    (cWW_A-C_2, cWW_C-U_2, cWH_A-G_2, cWS_A-G_2, cWS_G-G_2, cHS_A-G_2,
+    cHS_C-C_2, tHH_A-C_2, tWS_A-C_2, tWS_A-U_2)
+;
+  0.03   2026-01-08
+;
+  Changes (bv/bs/jc/lb)
+  + Add ndb_base_pair_list_curated
+  + Update ndb_base_pair_validation
+; 
+  0.02   2025-09-11
+;
+  Changes (bv/bs/jc/lb)
+  + Add ndb_base_unpaired_list
+;
+  0.01   2025-02-05
+;
+  Changes (bv/bs/jc/lb)
+  + Release as initial version 0.01
+;
+#########################
+## CATEGORY_GROUP_LIST ##
+#########################
+
+     loop_
+    _category_group_list.id
+    _category_group_list.parent_id
+    _category_group_list.description
+##
+              'inclusive_group'   .
+;              The parent category group containing all of the data categories in the macromolecular dictionary.
+;
+              'ndb_group'
+              'inclusive_group'
+;              Categories that describe nucleic acids for NDB.
+;
+####################
+## ITEM_TYPE_LIST ##
+####################
+#
+#
+#  The regular expressions defined here are not compliant
+#  with the POSIX 1003.2 standard as they include the
+#  '\n' and '\t' special characters.  These regular expressions
+#  have been tested using version 0.12 of Richard Stallman's
+#  GNU regular expression library in POSIX mode.
+#
+#
+##############################################################################
+
+     loop_
+    _item_type_list.code
+    _item_type_list.primitive_code
+    _item_type_list.construct
+    _item_type_list.detail
+               code      char
+               '[][_,.;:"&<>()/\{}'`~!@#$%A-Za-z0-9*|+-]*'
+;              code item types/single words ...
+;
+               ucode      uchar
+               '[][_,.;:"&<>()/\{}'`~!@#$%A-Za-z0-9*|+-]*'
+;              code item types/single words  (case insensitive) ...
+;
+               line      char
+               '[][ \t_(),.;:"&<>/\{}'`~!@#$%?+=*A-Za-z0-9|^-]*'
+;              char item types / multi-word items ...
+;
+               uline      uchar
+               '[][ \t_(),.;:"&<>/\{}'`~!@#$%?+=*A-Za-z0-9|^-]*'
+;              char item types / multi-word items (case insensitive)...
+;
+               text      char
+               '[][ \n\t()_,.;:"&<>/\{}'`~!@#$%?+=*A-Za-z0-9|^-]*'
+;              text item types / multi-line text ...
+;
+               int       numb
+               '[+-]?[0-9]+'
+;              int item types are the subset of numbers that are the negative
+               or positive integers.
+;
+               float     numb
+          '-?(([0-9]+)[.]?|([0-9]*[.][0-9]+))([(][0-9]+[)])?([eE][+-]?[0-9]+)?'
+;              float item types are the subset of numbers that are the floating
+               numbers.
+;
+               name      uchar
+               '_[_A-Za-z0-9]+\.[][_A-Za-z0-9%-]+'
+;              name item types take the form...
+;
+
+##############################
+## NDB_BASE_PAIR_PROVENANCE ##
+##############################
+
+save_ndb_base_pair_provenance
+    _category.description
+;              Data items in the NDB_BASE_PAIR_PROVENACE category provides
+               the provenance information for base pair identification. 
+;
+    _category.id                  ndb_base_pair_provenance
+    _category.mandatory_code      no
+     loop_
+    _category_key.name          '_ndb_base_pair_provenance.entry_id'
+
+    loop_
+    _category_group.id           'inclusive_group'
+                                 'ndb_group'
+    loop_
+    _category_examples.detail
+    _category_examples.case
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+;
+    Example 1 - 
+;
+;
+        loop_
+        _ndb_base_pair_provenance.entry_id
+        _ndb_base_pair_provenance.software_id
+        _ndb_base_pair_provenance.software_name
+        _ndb_base_pair_provenance.software_version
+        _ndb_base_pair_provenance.software_url
+        _ndb_base_pair_provenance.bp_params_version
+        _ndb_base_pair_provenance.details
+        7Z7W 4 standa_bp  1.0	https://github.com/ 1.0 ?
+         # ...  abbreviated ...
+;
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   _pdbx_category_context.type         CONTRIBUTED
+   _pdbx_category_context.category_id  ndb_base_pair_provenance
+     save_
+
+save__ndb_base_pair_provenance.entry_id
+    _item_description.description
+;     Entry identifier. 
+;
+    _item.name                  '_ndb_base_pair_provenance.entry_id'
+    _item.category_id             ndb_base_pair_provenance
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name     '_ndb_base_pair_provenance.entry_id'
+    _item_linked.parent_name    '_entry.id'
+     save_
+
+save__ndb_base_pair_provenance.software_id
+    _item_description.description
+;     Identifier for the software used for obtaining base pairs.
+      This data item is a pointer to _software.pdbx_ordinal in the SOFTWARE category.
+;
+    _item.name                  '_ndb_base_pair_provenance.software_id'
+    _item.category_id             ndb_base_pair_provenance
+    _item.mandatory_code          yes
+    _item_type.code               int
+    _item_linked.child_name     '_ndb_base_pair_provenance.software_id'
+    _item_linked.parent_name    '_software.pdbx_ordinal'
+     save_
+
+save__ndb_base_pair_provenance.software_name
+    _item_description.description
+;     Name of the software used for obtaining base pairs.
+;
+    _item.name                  '_ndb_base_pair_provenance.software_name'
+    _item.category_id             ndb_base_pair_provenance
+    _item.mandatory_code          no  
+    _item_type.code               line  
+     save_
+
+save__ndb_base_pair_provenance.software_version
+    _item_description.description
+;   Version of the software used.      
+;
+    _item.name                  '_ndb_base_pair_provenance.software_version'
+    _item.category_id             ndb_base_pair_provenance
+    _item.mandatory_code          no
+    _item_type.code               line
+     save_
+
+save__ndb_base_pair_provenance.software_url
+    _item_description.description
+;   URL to the software resource. 
+;
+    _item.name                  '_ndb_base_pair_provenance.software_url'
+    _item.category_id             ndb_base_pair_provenance
+    _item.mandatory_code          no
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_provenance.bp_params_version
+    _item_description.description
+;   Version of base pair parameters used.
+;
+    _item.name                  '_ndb_base_pair_provenance.bp_params_version'
+    _item.category_id             ndb_base_pair_provenance
+    _item.mandatory_code          no
+    _item_type.code               line
+     save_
+
+save__ndb_base_pair_provenance.details
+    _item_description.description
+;   Additional details about the software used and/or provenance information.
+;
+    _item.name                  '_ndb_base_pair_provenance.details'
+    _item.category_id             ndb_base_pair_provenance
+    _item.mandatory_code          no
+    _item_type.code               text
+     save_
+
+########################
+## NDB_BASE_PAIR_LIST ##
+########################
+
+save_ndb_base_pair_list
+    _category.description
+;              Data items in the NDB_BASE_PAIR_LIST category identifies
+               the nucleotides forming a base pair in the structure.
+;
+    _category.id                  ndb_base_pair_list
+    _category.mandatory_code      no
+     loop_
+    _category_key.name          '_ndb_base_pair_list.id'
+
+    loop_
+    _category_group.id           'inclusive_group'
+                                 'ndb_group'
+    loop_
+    _category_examples.detail
+    _category_examples.case
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+;
+    Example 1 -
+;
+;
+        loop_
+        _ndb_base_pair_list.id
+        _ndb_base_pair_list.PDB_model_num
+        _ndb_base_pair_list.label_asym_id_1
+        _ndb_base_pair_list.label_entity_id_1
+        _ndb_base_pair_list.label_seq_id_1
+        _ndb_base_pair_list.label_comp_id_1
+        _ndb_base_pair_list.PDB_ins_code_1
+        _ndb_base_pair_list.label_alt_id_1
+        _ndb_base_pair_list.struct_oper_id_1
+        _ndb_base_pair_list.label_asym_id_2
+        _ndb_base_pair_list.label_entity_id_2
+        _ndb_base_pair_list.label_seq_id_2
+        _ndb_base_pair_list.label_comp_id_2
+        _ndb_base_pair_list.PDB_ins_code_2
+        _ndb_base_pair_list.label_alt_id_2
+        _ndb_base_pair_list.struct_oper_id_2
+        _ndb_base_pair_list.auth_asym_id_1
+        _ndb_base_pair_list.auth_seq_id_1
+        _ndb_base_pair_list.auth_asym_id_2
+        _ndb_base_pair_list.auth_seq_id_2
+         1 1 A 1 1 C ? . 1 A 1 12 G ? . 1 P 11 P 22
+         # ...  abbreviated ...
+;
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   _pdbx_category_context.type         CONTRIBUTED
+   _pdbx_category_context.category_id  ndb_base_pair_list
+     save_
+
+save__ndb_base_pair_list.id
+    _item_description.description
+;     Unique identifier for the base pair.
+;
+    _item.name                  '_ndb_base_pair_list.id'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_list.PDB_model_num
+    _item_description.description
+;     The PDB model number. 
+;
+    _item.name                  '_ndb_base_pair_list.PDB_model_num'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               int
+    _item_linked.child_name       '_ndb_base_pair_list.PDB_model_num'
+    _item_linked.parent_name      '_atom_site.pdbx_PDB_model_num'
+     save_
+
+save__ndb_base_pair_list.label_entity_id_1
+    _item_description.description
+;     The entity identifier of the first nucleotide in the base pair. 
+;
+    _item.name                  '_ndb_base_pair_list.label_entity_id_1'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_list.label_entity_id_1'
+    _item_linked.parent_name      '_atom_site.label_entity_id'
+     save_
+
+save__ndb_base_pair_list.label_asym_id_1
+    _item_description.description
+;     The asym/chain identifier of the first nucleotide in the base pair. 
+;
+    _item.name                  '_ndb_base_pair_list.label_asym_id_1'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_list.label_asym_id_1'
+    _item_linked.parent_name      '_atom_site.label_asym_id'
+     save_
+
+save__ndb_base_pair_list.label_seq_id_1
+    _item_description.description
+;     The residue number identifier of the first nucleotide in the base pair. 
+;
+    _item.name                  '_ndb_base_pair_list.label_seq_id_1'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               int
+    _item_linked.child_name       '_ndb_base_pair_list.label_seq_id_1'
+    _item_linked.parent_name      '_atom_site.label_seq_id'
+     save_
+
+save__ndb_base_pair_list.label_comp_id_1
+    _item_description.description
+;     The component/residue name identifier of the first nucleotide in the base pair.  
+;
+    _item.name                  '_ndb_base_pair_list.label_comp_id_1'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               ucode
+    _item_linked.child_name       '_ndb_base_pair_list.label_comp_id_1'
+    _item_linked.parent_name      '_atom_site.label_comp_id'
+     save_
+
+save__ndb_base_pair_list.label_alt_id_1
+    _item_description.description
+;     The alternate conformation identifier of the first nucleotide in the base pair.  
+;
+    _item.name                  '_ndb_base_pair_list.label_alt_id_1'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_list.label_alt_id_1'
+    _item_linked.parent_name      '_atom_site.label_alt_id'
+     save_
+
+save__ndb_base_pair_list.PDB_ins_code_1
+    _item_description.description
+;     The residue insertion code of the first nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list.PDB_ins_code_1'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_list.PDB_ins_code_1'
+    _item_linked.parent_name      '_atom_site.pdbx_PDB_ins_code'
+     save_
+
+save__ndb_base_pair_list.struct_oper_id_1
+    _item_description.description
+;     Identifier for the symmetry operator for the first nucleotide in the base pair. 
+      If symmetry operation is not required, this data item should point to the
+      _pdbx_struct_oper_list.id value corresponding to the default identity operation (1_555) 
+      in _pdbx_struct_oper_list.type. 
+;
+    _item.name                  '_ndb_base_pair_list.struct_oper_id_1'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_list.struct_oper_id_1'
+    _item_linked.parent_name      '_pdbx_struct_oper_list.id'
+     save_
+
+save__ndb_base_pair_list.label_entity_id_2
+    _item_description.description
+;     The entity identifier of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list.label_entity_id_2'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_list.label_entity_id_2'
+    _item_linked.parent_name      '_atom_site.label_entity_id'
+     save_
+
+save__ndb_base_pair_list.label_asym_id_2
+    _item_description.description
+;     The asym/chain identifier of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list.label_asym_id_2'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_list.label_asym_id_2'
+    _item_linked.parent_name      '_atom_site.label_asym_id'
+     save_
+
+save__ndb_base_pair_list.label_seq_id_2
+    _item_description.description
+;     The residue number identifier of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list.label_seq_id_2'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               int
+    _item_linked.child_name       '_ndb_base_pair_list.label_seq_id_2'
+    _item_linked.parent_name      '_atom_site.label_seq_id'
+     save_
+
+save__ndb_base_pair_list.label_comp_id_2
+    _item_description.description
+;     The component/residue name identifier of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list.label_comp_id_2'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               ucode     
+    _item_linked.child_name       '_ndb_base_pair_list.label_comp_id_2'
+    _item_linked.parent_name      '_atom_site.label_comp_id'
+     save_
+
+save__ndb_base_pair_list.label_alt_id_2
+    _item_description.description
+;     The alternate conformation identifier of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list.label_alt_id_2'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_list.label_alt_id_2'
+    _item_linked.parent_name      '_atom_site.label_alt_id'
+     save_
+
+save__ndb_base_pair_list.PDB_ins_code_2
+    _item_description.description
+;     The residue insertion code of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list.PDB_ins_code_2'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_list.PDB_ins_code_2'
+    _item_linked.parent_name      '_atom_site.pdbx_PDB_ins_code'
+     save_
+
+save__ndb_base_pair_list.struct_oper_id_2
+    _item_description.description
+;     Identifier for the symmetry operator for the second nucleotide in the base pair. 
+      If symmetry operation is not required, this data item should point to the 
+      _pdbx_struct_oper_list.id value corresponding to the default identity operation (1_555)
+      in _pdbx_struct_oper_list.type.
+;
+    _item.name                  '_ndb_base_pair_list.struct_oper_id_2'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_list.struct_oper_id_2'
+    _item_linked.parent_name      '_pdbx_struct_oper_list.id'
+     save_
+
+save__ndb_base_pair_list.auth_asym_id_1
+    _item_description.description
+;     The author provided asym/chain identifier of the first nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list.auth_asym_id_1'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          no
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_list.auth_asym_id_1'
+    _item_linked.parent_name      '_atom_site.auth_asym_id'
+     save_
+
+save__ndb_base_pair_list.auth_seq_id_1
+    _item_description.description
+;     The author provided residue number identifier of the first nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list.auth_seq_id_1'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          no
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_list.auth_seq_id_1'
+    _item_linked.parent_name      '_atom_site.auth_seq_id'
+     save_
+
+save__ndb_base_pair_list.auth_asym_id_2
+    _item_description.description
+;     The author provided asym/chain identifier of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list.auth_asym_id_2'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          no
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_list.auth_asym_id_2'
+    _item_linked.parent_name      '_atom_site.auth_asym_id'
+     save_
+
+save__ndb_base_pair_list.auth_seq_id_2
+    _item_description.description
+;     The author provided residue number identifier of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list.auth_seq_id_2'
+    _item.category_id             ndb_base_pair_list
+    _item.mandatory_code          no
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_list.auth_seq_id_2'
+    _item_linked.parent_name      '_atom_site.auth_seq_id'
+     save_
+
+##############################
+## NDB_BASE_PAIR_ANNOTATION ##
+##############################
+
+save_ndb_base_pair_annotation
+    _category.description
+;              Data items in the NDB_BASE_PAIR_STEP_ANNOTATION category provides
+               annotations about base pairs.
+
+;
+    _category.id                  ndb_base_pair_annotation
+    _category.mandatory_code      no
+     loop_
+    _category_key.name          '_ndb_base_pair_annotation.id'
+
+    loop_
+    _category_group.id           'inclusive_group'
+                                 'ndb_group'
+    loop_
+    _category_examples.detail
+    _category_examples.case
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+;
+    Example 1 -
+;
+;
+        loop_
+        _ndb_base_pair_annotation.id
+        _ndb_base_pair_annotation.base_pair_id
+        _ndb_base_pair_annotation.orientation
+        _ndb_base_pair_annotation.base_1_edge
+        _ndb_base_pair_annotation.base_2_edge
+        _ndb_base_pair_annotation.l-w_family_num
+        _ndb_base_pair_annotation.l-w_family_name
+        _ndb_base_pair_annotation.class
+        _ndb_base_pair_annotation.sub_class
+        _ndb_base_pair_annotation.details
+         15 15 trans        Sugar        Sugar 12 tSS tSS_A-G tSS_A-G_1 ?
+         16 16   cis Watson-Crick Watson-Crick  1 cWW cWW_G-C cWW_G-C_1 ?
+         17 17 trans    Hoogsteen        Sugar 10 tHS tHS_A-G tHS_A-G_1 ?
+         18 18   cis Watson-Crick Watson-Crick  1 cWW cWW_G-U cWW_G-U_1 ?
+         # ...  abbreviated ...
+;
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   _pdbx_category_context.type         CONTRIBUTED
+   _pdbx_category_context.category_id  ndb_base_pair_annotation
+     save_
+
+save__ndb_base_pair_annotation.id
+    _item_description.description
+;     Identifier for the category.
+;
+    _item.name                  '_ndb_base_pair_annotation.id'
+    _item.category_id             ndb_base_pair_annotation
+    _item.mandatory_code          yes
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_annotation.base_pair_id
+    _item_description.description
+;     Identifier for the base pair.
+      This data item is a pointer to _ndb_base_pair_list.id. 
+;
+    _item.name                  '_ndb_base_pair_annotation.base_pair_id'
+    _item.category_id             ndb_base_pair_annotation
+    _item.mandatory_code          yes
+    _item_type.code               int  
+    _item_linked.child_name       '_ndb_base_pair_annotation.base_pair_id'
+    _item_linked.parent_name      '_ndb_base_pair_list.id'
+     save_
+
+save__ndb_base_pair_annotation.orientation
+    _item_description.description
+;     Orientation of bases in the base pair.
+;
+    _item.name                  '_ndb_base_pair_annotation.orientation'
+    _item.category_id             ndb_base_pair_annotation
+    _item.mandatory_code          yes
+    _item_type.code               code
+    loop_
+     _item_enumeration.value
+     _item_enumeration.detail
+     'cis'    'cis orientation'
+     'trans'  'trans orientation'
+     save_
+
+save__ndb_base_pair_annotation.base_1_edge
+    _item_description.description
+;     Edge of base 1 involved in base pairing.
+;
+    _item.name                  '_ndb_base_pair_annotation.base_1_edge'
+    _item.category_id             ndb_base_pair_annotation
+    _item.mandatory_code          yes
+    _item_type.code               code
+    loop_
+     _item_enumeration.value
+     _item_enumeration.detail
+     'Watson-Crick'    'Watson-Crick edge'
+     'Hoogsteen'       'Hoogsteen edge'
+     'Sugar'           'Sugar edge'
+     save_
+
+save__ndb_base_pair_annotation.base_2_edge
+    _item_description.description
+;     Edge of base 2 involved in base pairing.
+;
+    _item.name                  '_ndb_base_pair_annotation.base_2_edge'
+    _item.category_id             ndb_base_pair_annotation
+    _item.mandatory_code          yes
+    _item_type.code               code
+    loop_
+     _item_enumeration.value
+     _item_enumeration.detail
+     'Watson-Crick'    'Watson-Crick edge'
+     'Hoogsteen'       'Hoogsteen edge'
+     'Sugar'           'Sugar edge'
+     save_
+
+save__ndb_base_pair_annotation.l-w_family_num
+    _item_description.description
+;     Leontis-Westhof base pair family number based on (provide reference).
+;
+    _item.name                  '_ndb_base_pair_annotation.l-w_family_num'
+    _item.category_id             ndb_base_pair_annotation
+    _item.mandatory_code          yes
+    _item_type.code               code
+    loop_
+     _item_enumeration.value
+     '1'
+     '2'
+     '3'
+     '4'
+     '5'
+     '6'
+     '7'
+     '8'
+     '9'
+     '10'
+     '11'
+     '12'
+     save_
+
+save__ndb_base_pair_annotation.l-w_family_name
+    _item_description.description
+;     Leontis-Westhof base pair family based on (provide reference).
+;
+    _item.name                  '_ndb_base_pair_annotation.l-w_family_name'
+    _item.category_id             ndb_base_pair_annotation
+    _item.mandatory_code          yes
+    _item_type.code               code
+    loop_
+     _item_enumeration.value
+     _item_enumeration.detail
+     'cWW'  'cis Watson-Crick Watson-Crick'    
+     'tWW'  'trans Watson-Crick Watson-Crick'
+     'cWH'  'cis Watson-Crick Hoogsteen'
+     'tWH'  'trans Watson-Crick-Hoogsteen'
+     'cWS'  'cis Watson-Crick Sugar'
+     'tWS'  'trans Watson-Crick Sugar'
+     'cHH'  'cis Hoogsteen Hoogsteen'
+     'tHH'  'trans Hoogsteen Hoogsteen'
+     'cHS'  'cis Hoogsteen Sugar'
+     'tHS'  'trans Hoogsteen Sugar'
+     'cSS'  'cis Sugar Sugar'
+     'tSS'  'trans Sugar Sugar'
+     save_
+
+save__ndb_base_pair_annotation.class
+    _item_description.description
+;     Base pair class based on (provide reference).
+;
+    _item.name                  '_ndb_base_pair_annotation.class'
+    _item.category_id             ndb_base_pair_annotation
+    _item.mandatory_code          yes
+    _item_type.code               code
+    loop_
+     _item_enumeration.value
+     'cWW_A-A'
+     'cWW_A-G'
+     'cWW_A-C'
+     'cWW_A-U'
+     'cWW_G-G'
+     'cWW_G-C'
+     'cWW_G-U'
+     'cWW_C-C'
+     'cWW_C-U'
+     'cWW_U-U'
+     'tWW_A-A'
+     'tWW_A-G'
+     'tWW_A-C'
+     'tWW_A-U'
+     'tWW_G-G'
+     'tWW_G-C'
+     'tWW_G-U'
+     'tWW_C-C'
+     'tWW_C-U'
+     'tWW_U-U'
+     'cWH_A-A'
+     'cWH_A-G'
+     'cWH_A-C'
+     'cWH_A-U'
+     'cWH_G-A'
+     'cWH_G-G'
+     'cWH_G-C'
+     'cWH_G-U'
+     'cWH_C-A'
+     'cWH_C-G'
+     'cWH_C-C'
+     'cWH_C-U'
+     'cWH_U-A'
+     'cWH_U-G'
+     'cWH_U-C'
+     'cWH_U-U'
+     'tWH_A-A'
+     'tWH_A-G'
+     'tWH_A-C'
+     'tWH_A-U'
+     'tWH_G-A'
+     'tWH_G-G'
+     'tWH_G-C'
+     'tWH_G-U'
+     'tWH_C-A'
+     'tWH_C-G'
+     'tWH_C-C'
+     'tWH_C-U'
+     'tWH_U-A'
+     'tWH_U-G'
+     'tWH_U-C'
+     'tWH_U-U'
+     'cWS_A-A'
+     'cWS_A-G'
+     'cWS_A-C'
+     'cWS_A-U'
+     'cWS_G-A'
+     'cWS_G-G'
+     'cWS_G-C'
+     'cWS_G-U'
+     'cWS_C-A'
+     'cWS_C-G'
+     'cWS_C-C'
+     'cWS_C-U'
+     'cWS_U-A'
+     'cWS_U-G'
+     'cWS_U-C'
+     'cWS_U-U'
+     'tWS_A-A'
+     'tWS_A-G'
+     'tWS_A-C'
+     'tWS_A-U'
+     'tWS_G-A'
+     'tWS_G-G'
+     'tWS_G-C'
+     'tWS_G-U'
+     'tWS_C-A'
+     'tWS_C-G'
+     'tWS_C-C'
+     'tWS_C-U'
+     'tWS_U-A'
+     'tWS_U-G'
+     'tWS_U-C'
+     'tWS_U-U'
+     'cHH_A-A'
+     'cHH_A-G'
+     'cHH_A-C'
+     'cHH_A-U'
+     'cHH_G-G'
+     'cHH_G-C'
+     'cHH_G-U'
+     'cHH_C-C'
+     'cHH_C-U'
+     'cHH_U-U'
+     'tHH_A-A'
+     'tHH_A-G'
+     'tHH_A-C'
+     'tHH_A-U'
+     'tHH_G-G'
+     'tHH_G-C'
+     'tHH_G-U'
+     'tHH_C-C'
+     'tHH_C-U'
+     'tHH_U-U'
+     'cHS_A-A'
+     'cHS_A-G'
+     'cHS_A-C'
+     'cHS_A-U'
+     'cHS_G-A'
+     'cHS_G-G'
+     'cHS_G-C'
+     'cHS_G-U'
+     'cHS_C-A'
+     'cHS_C-G'
+     'cHS_C-C'
+     'cHS_C-U'
+     'cHS_U-A'
+     'cHS_U-G'
+     'cHS_U-C'
+     'cHS_U-U'
+     'tHS_A-A'
+     'tHS_A-G'
+     'tHS_A-C'
+     'tHS_A-U'
+     'tHS_G-A'
+     'tHS_G-G'
+     'tHS_G-C'
+     'tHS_G-U'
+     'tHS_C-A'
+     'tHS_C-G'
+     'tHS_C-C'
+     'tHS_C-U'
+     'tHS_U-A'
+     'tHS_U-G'
+     'tHS_U-C'
+     'tHS_U-U'
+     'cSS_A-A'
+     'cSS_A-G'
+     'cSS_A-C'
+     'cSS_A-U'
+     'cSS_G-G'
+     'cSS_G-C'
+     'cSS_G-U'
+     'cSS_C-C'
+     'cSS_C-U'
+     'cSS_U-U'
+     'tSS_A-A'
+     'tSS_A-G'
+     'tSS_A-C'
+     'tSS_A-U'
+     'tSS_G-G'
+     'tSS_G-C'
+     'tSS_G-U'
+     'tSS_C-C'
+     'tSS_C-U'
+     'tSS_U-U'
+     save_
+
+save__ndb_base_pair_annotation.sub_class
+    _item_description.description
+;     Base pair sub-class based on (provide reference).
+;
+    _item.name                  '_ndb_base_pair_annotation.sub_class'
+    _item.category_id             ndb_base_pair_annotation
+    _item.mandatory_code          yes
+    _item_type.code               code
+    loop_
+     _item_enumeration.value
+     'cWW_A-A_1'
+     'cWW_A-G_1'
+     'cWW_A-C_1'
+     'cWW_A-C_2'
+     'cWW_A-U_1'
+     'cWW_G-G_1'
+     'cWW_G-C_1'
+     'cWW_G-U_1'
+     'cWW_G-U_2'
+     'cWW_C-C_1'
+     'cWW_C-U_1'
+     'cWW_C-U_2'
+     'cWW_U-U_1'
+     'tWW_A-A_1'
+     'tWW_A-G_1'
+     'tWW_A-C_1'
+     'tWW_A-U_1'
+     'tWW_G-G_1'
+     'tWW_G-C_1'
+     'tWW_G-U_1'
+     'tWW_C-C_1'
+     'tWW_C-C_2'
+     'tWW_C-U_1'
+     'tWW_U-U_1'
+     'tWW_U-U_2'
+     'cWH_A-A_1'
+     'cWH_A-G_1'
+     'cWH_A-G_2'
+     'cWH_A-C_1'
+     'cWH_A-U_1'
+     'cWH_G-A_1'
+     'cWH_G-G_1'
+     'cWH_G-C_1'
+     'cWH_G-U_1'
+     'cWH_C-A_1'
+     'cWH_C-G_1'
+     'cWH_C-C_1'
+     'cWH_C-U_1'
+     'cWH_U-A_1'
+     'cWH_U-G_1'
+     'cWH_U-C_1'
+     'cWH_U-U_1'
+     'tWH_A-A_1'
+     'tWH_A-G_1'
+     'tWH_A-C_1'
+     'tWH_A-U_1'
+     'tWH_G-A_1'
+     'tWH_G-G_1'
+     'tWH_G-C_1'
+     'tWH_G-U_1'
+     'tWH_C-A_1'
+     'tWH_C-G_1'
+     'tWH_C-C_1'
+     'tWH_C-U_1'
+     'tWH_U-A_1'
+     'tWH_U-G_1'
+     'tWH_U-C_1'
+     'tWH_U-U_1'
+     'cWS_A-A_1'
+     'cWS_A-G_1'
+     'cWS_A-G_2'
+     'cWS_A-C_1'
+     'cWS_A-U_1'
+     'cWS_G-A_1'
+     'cWS_G-G_1'
+     'cWS_G-G_2'
+     'cWS_G-C_1'
+     'cWS_G-U_1'
+     'cWS_C-A_1'
+     'cWS_C-G_1'
+     'cWS_C-C_1'
+     'cWS_C-U_1'
+     'cWS_U-A_1'
+     'cWS_U-G_1'
+     'cWS_U-C_1'
+     'cWS_U-U_1'
+     'tWS_A-A_1'
+     'tWS_A-G_1'
+     'tWS_A-G_2'
+     'tWS_A-C_1'
+     'tWS_A-C_2'
+     'tWS_A-U_1'
+     'tWS_A-U_2'
+     'tWS_G-A_1'
+     'tWS_G-G_1'
+     'tWS_G-C_1'
+     'tWS_G-C_2'
+     'tWS_G-U_1'
+     'tWS_C-A_1'
+     'tWS_C-G_1'
+     'tWS_C-C_1'
+     'tWS_C-U_1'
+     'tWS_U-A_1'
+     'tWS_U-G_1'
+     'tWS_U-C_1'
+     'tWS_U-U_1'
+     'cHH_A-A_1'
+     'cHH_A-G_1'
+     'cHH_A-C_1'
+     'cHH_A-U_1'
+     'cHH_G-G_1'
+     'cHH_G-C_1'
+     'cHH_G-U_1'
+     'cHH_C-C_1'
+     'cHH_C-U_1'
+     'cHH_U-U_1'
+     'tHH_A-A_1'
+     'tHH_A-G_1'
+     'tHH_A-C_1'
+     'tHH_A-C_2'
+     'tHH_A-U_1'
+     'tHH_G-G_1'
+     'tHH_G-C_1'
+     'tHH_G-U_1'
+     'tHH_C-C_1'
+     'tHH_C-U_1'
+     'tHH_U-U_1'
+     'cHS_A-A_1'
+     'cHS_A-G_1'
+     'cHS_A-G_2'
+     'cHS_A-C_1'
+     'cHS_A-U_1'
+     'cHS_G-A_1'
+     'cHS_G-G_1'
+     'cHS_G-C_1'
+     'cHS_G-U_1'
+     'cHS_C-A_1'
+     'cHS_C-G_1'
+     'cHS_C-C_1'
+     'cHS_C-C_2'
+     'cHS_C-U_1'
+     'cHS_U-A_1'
+     'cHS_U-G_1'
+     'cHS_U-C_1'
+     'cHS_U-U_1'
+     'tHS_A-A_1'
+     'tHS_A-G_1'
+     'tHS_A-C_1'
+     'tHS_A-U_1'
+     'tHS_G-A_1'
+     'tHS_G-G_1'
+     'tHS_G-C_1'
+     'tHS_G-U_1'
+     'tHS_C-A_1'
+     'tHS_C-G_1'
+     'tHS_C-C_1'
+     'tHS_C-U_1'
+     'tHS_C-U_2'
+     'tHS_U-A_1'
+     'tHS_U-G_1'
+     'tHS_U-C_1'
+     'tHS_U-U_1'
+     'cSS_A-A_1'
+     'cSS_A-G_1'
+     'cSS_A-G_2'
+     'cSS_A-C_1'
+     'cSS_A-C_2'
+     'cSS_A-U_1'
+     'cSS_A-U_2'
+     'cSS_G-G_1'
+     'cSS_G-C_1'
+     'cSS_G-C_2'
+     'cSS_G-U_1'
+     'cSS_G-U_2'
+     'cSS_C-C_1'
+     'cSS_C-U_1'
+     'cSS_C-U_2'
+     'cSS_U-U_1'
+     'tSS_A-A_1'
+     'tSS_A-G_1'
+     'tSS_A-G_2'
+     'tSS_A-C_1'
+     'tSS_A-U_1'
+     'tSS_G-G_1'
+     'tSS_G-C_1'
+     'tSS_G-U_1'
+     'tSS_C-C_1'
+     'tSS_C-U_1'
+     'tSS_U-U_1'
+     save_
+
+save__ndb_base_pair_annotation.details
+    _item_description.description
+;     Additional details about the base pair annotation.
+;
+    _item.name                  '_ndb_base_pair_annotation.details'
+    _item.category_id             ndb_base_pair_annotation
+    _item.mandatory_code          no
+    _item_type.code               text
+     save_
+
+#######################
+## NDB_MOTIF_SUMMARY ##
+#######################
+
+save_ndb_motif_summary
+    _category.description
+;              Data items in the NDB_MOTIF_SUMMARY category summarizes
+               the number of base pairs and how they are arranged into 
+               double, triple, and quadruple helices in a given structure 
+               model.
+
+;
+    _category.id                  ndb_motif_summary
+    _category.mandatory_code      no
+     loop_
+    _category_key.name          '_ndb_motif_summary.PDB_model_num'
+
+    loop_
+    _category_group.id           'inclusive_group'
+                                 'ndb_group'
+    loop_
+    _category_examples.detail
+    _category_examples.case
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+;
+    Example 1 -
+;
+;
+        loop_
+        _ndb_motif_summary.PDB_model_num
+        _ndb_motif_summary.num_all_base_pairs
+        _ndb_motif_summary.num_canonical
+        _ndb_motif_summary.num_non_canonical
+        _ndb_motif_summary.num_triplets
+        _ndb_motif_summary.num_quartets
+        _ndb_motif_summary.num_duplexes
+        _ndb_motif_summary.num_triplexes
+        _ndb_motif_summary.num_quadruplexes
+        _ndb_motif_summary.details
+         1  41  23   18  ?  ?  ?  ?  ?  ?
+         # ...  abbreviated ...
+;
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   _pdbx_category_context.type         CONTRIBUTED
+   _pdbx_category_context.category_id  ndb_motif_summary
+     save_
+
+save__ndb_motif_summary.PDB_model_num
+    _item_description.description
+;     The PDB model number.
+;
+    _item.name                  '_ndb_motif_summary.PDB_model_num'
+    _item.category_id             ndb_motif_summary
+    _item.mandatory_code          yes
+    _item_type.code               int
+    _item_linked.child_name       '_ndb_motif_summary.PDB_model_num'
+    _item_linked.parent_name      '_atom_site.pdbx_PDB_model_num'
+     save_
+
+save__ndb_motif_summary.num_all_base_pairs
+    _item_description.description
+;     Number of all base pairs in the model identified using (provide reference).
+;
+    _item.name                  '_ndb_motif_summary.num_all_base_pairs'
+    _item.category_id             ndb_motif_summary
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_motif_summary.num_canonical
+    _item_description.description
+;     Number of canonical base pairs in the model identified using (provide reference).
+;
+    _item.name                  '_ndb_motif_summary.num_canonical'
+    _item.category_id             ndb_motif_summary
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_motif_summary.num_non_canonical
+    _item_description.description
+;     Number of non-canonical base pairs in the model identified using (provide reference).
+;
+    _item.name                  '_ndb_motif_summary.num_non_canonical'
+    _item.category_id             ndb_motif_summary
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_motif_summary.num_triplets
+    _item_description.description
+;     Number of triplets in the model identified using (provide reference).
+;
+    _item.name                  '_ndb_motif_summary.num_triplets'
+    _item.category_id             ndb_motif_summary
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_motif_summary.num_quartets
+    _item_description.description
+;     Number of quartets in the model identified using (provide reference).
+;
+    _item.name                  '_ndb_motif_summary.num_quartets'
+    _item.category_id             ndb_motif_summary
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_motif_summary.num_duplexes
+    _item_description.description
+;     Number of duplexes in the model identified using (provide reference).
+;
+    _item.name                  '_ndb_motif_summary.num_duplexes'
+    _item.category_id             ndb_motif_summary
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_motif_summary.num_triplexes
+    _item_description.description
+;     Number of triplexes in the model identified using (provide reference).
+;
+    _item.name                  '_ndb_motif_summary.num_triplexes'
+    _item.category_id             ndb_motif_summary
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_motif_summary.num_quadruplexes
+    _item_description.description
+;     Number of quadruplexes in the model identified using (provide reference).
+;
+    _item.name                  '_ndb_motif_summary.num_quadruplexes'
+    _item.category_id             ndb_motif_summary
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_motif_summary.details
+    _item_description.description
+;     Additional details about the motif summary.
+;
+    _item.name                  '_ndb_motif_summary.details'
+    _item.category_id             ndb_motif_summary
+    _item.mandatory_code          no   
+    _item_type.code               text 
+     save_
+
+##############################
+## NDB_BASE_PAIR_VALIDATION ##
+##############################
+
+save_ndb_base_pair_validation
+    _category.description
+;              Data items in the NDB_BASE_PAIR_VALIDATION category provides
+               validation information regarding the base pairs.
+
+;
+    _category.id                  ndb_base_pair_validation
+    _category.mandatory_code      no
+     loop_
+    _category_key.name          '_ndb_base_pair_validation.id'
+
+    loop_
+    _category_group.id           'inclusive_group'
+                                 'ndb_group'
+    loop_
+    _category_examples.detail
+    _category_examples.case
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+;
+    Example 1 -
+;
+;
+        loop_
+        _ndb_base_pair_validation.id
+        _ndb_base_pair_validation.base_pair_id
+        _ndb_base_pair_validation.napair_rmsd
+        _ndb_base_pair_validation.napasco_metric
+        _ndb_base_pair_validation.napasco_annotation
+        _ndb_base_pair_validation.nearest_curated_BP
+        _ndb_base_pair_validation.details
+         1 31 0.22 0.74 preferred 1abc_A_G_2544_B_C_1558 ?
+         # ...  abbreviated ...
+;
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   _pdbx_category_context.type         CONTRIBUTED
+   _pdbx_category_context.category_id  ndb_base_pair_validation
+     save_
+
+save__ndb_base_pair_validation.id
+    _item_description.description
+;     Identifier for the category.
+;
+    _item.name                  '_ndb_base_pair_validation.id'
+    _item.category_id             ndb_base_pair_validation
+    _item.mandatory_code          yes
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_validation.base_pair_id
+    _item_description.description
+;     Identifier for the base pair.
+      This data item is a pointer to _ndb_base_pair_list.id.
+;
+    _item.name                  '_ndb_base_pair_validation.base_pair_id'
+    _item.category_id             ndb_base_pair_validation
+    _item.mandatory_code          yes
+    _item_type.code               int
+    _item_linked.child_name       '_ndb_base_pair_validation.base_pair_id'
+    _item_linked.parent_name      '_ndb_base_pair_list.id'
+     save_
+
+save__ndb_base_pair_validation.napair_rmsd
+    _item_description.description
+;     RMSD with the best match in the curated base pair dataset based on (provide reference). 
+      This is the average between two values where the individual rmsds are calculated after 
+      bodyframe superposition of each base in the pair with the best match in the curated dataset. 
+;
+    _item.name                  '_ndb_base_pair_validation.napair_rmsd'
+    _item.category_id             ndb_base_pair_validation
+    _item.mandatory_code          no
+    _item_type.code               float
+     save_
+
+save__ndb_base_pair_validation.napasco_metric
+    _item_description.description
+;     Napasco validation metric as calculated by (provide reference).               
+;
+    _item.name                  '_ndb_base_pair_validation.napasco_metric'
+    _item.category_id             ndb_base_pair_validation
+    _item.mandatory_code          no
+    _item_type.code               float
+     save_
+
+save__ndb_base_pair_validation.nearest_curated_BP
+    _item_description.description
+;     The best match from the curated base pair dataset as defined in (provide reference).
+      This data item is a pointer to ndb_base_pair_list_curated.id.
+;
+    _item.name                  '_ndb_base_pair_validation.nearest_curated_BP'
+    _item.category_id             ndb_base_pair_validation
+    _item.mandatory_code          no
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_validation.nearest_curated_BP'
+    _item_linked.parent_name      '_ndb_base_pair_list_curated.id'
+     save_
+
+save__ndb_base_pair_validation.napasco_annotation
+    _item_description.description
+;     Additional napasco annotation as described in (provide reference).
+;
+    _item.name                  '_ndb_base_pair_validation.napasco_annotation'
+    _item.category_id             ndb_base_pair_validation
+    _item.mandatory_code          no
+    _item_type.code               line
+    loop_
+     _item_enumeration.value
+     _item_enumeration.detail
+     'preferred'       'NAPASCO metric indicates a preferred (favorable) geometry'
+     'of_concern'       'NAPASCO metric indicates a geometry of concern'
+     'not_applicable'   'NAPASCO metric could not be calculated'
+     save_
+
+save__ndb_base_pair_validation.details
+    _item_description.description
+;     Additional details about the base pair validation.
+;
+    _item.name                  '_ndb_base_pair_validation.details'
+    _item.category_id             ndb_base_pair_validation
+    _item.mandatory_code          no
+    _item_type.code               text
+     save_
+
+##############################
+## NDB_BASE_PAIR_OVERALL ##
+##############################
+
+save_ndb_base_pair_overall
+    _category.description
+;              Data items in the NDB_BASE_PAIR_OVERALL category summarize
+               the NAPASCO validation metric and base pair/unpaired counts
+               for an entry.
+;
+    _category.id                  ndb_base_pair_overall
+    _category.mandatory_code      no
+     loop_
+    _category_key.name          '_ndb_base_pair_overall.entry_id'
+
+    loop_
+    _category_group.id           'inclusive_group'
+                                 'ndb_group'
+    loop_
+    _category_examples.detail
+    _category_examples.case
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+;
+    Example 1 -
+;
+;
+        loop_
+        _ndb_base_pair_overall.entry_id
+        _ndb_base_pair_overall.NAPASCO_global
+        _ndb_base_pair_overall.number_of_basepairs
+        _ndb_base_pair_overall.number_of_preferred
+        _ndb_base_pair_overall.number_of_of_concern
+        _ndb_base_pair_overall.number_of_not_applicable
+        _ndb_base_pair_overall.number_of_unpaired
+         1ABC 47.93 18 18 0 0 0
+         # ...  abbreviated ...
+;
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   _pdbx_category_context.type         CONTRIBUTED
+   _pdbx_category_context.category_id  ndb_base_pair_overall
+     save_
+
+save__ndb_base_pair_overall.entry_id
+    _item_description.description
+;     Entry identifier.
+;
+    _item.name                  '_ndb_base_pair_overall.entry_id'
+    _item.category_id             ndb_base_pair_overall
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name     '_ndb_base_pair_overall.entry_id'
+    _item_linked.parent_name    '_entry.id'
+     save_
+
+save__ndb_base_pair_overall.NAPASCO_global
+    _item_description.description
+;     Trimmed geometric mean of the NAPASCO metric (provide reference) across
+      all base pairs identified in the entry, pooled over all models,
+      discarding the lowest and highest five percent of values before
+      averaging.
+;
+    _item.name                  '_ndb_base_pair_overall.NAPASCO_global'
+    _item.category_id             ndb_base_pair_overall
+    _item.mandatory_code          no
+    _item_type.code               float
+     save_
+
+save__ndb_base_pair_overall.number_of_basepairs
+    _item_description.description
+;     The total number of unique base pairs identified in the entry.
+;
+    _item.name                  '_ndb_base_pair_overall.number_of_basepairs'
+    _item.category_id             ndb_base_pair_overall
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_overall.number_of_preferred
+    _item_description.description
+;     The number of base pairs with a NAPASCO annotation of 'preferred'.
+      This data item is a pointer to _ndb_base_pair_validation.napasco_annotation.
+;
+    _item.name                  '_ndb_base_pair_overall.number_of_preferred'
+    _item.category_id             ndb_base_pair_overall
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_overall.number_of_of_concern
+    _item_description.description
+;     The number of base pairs with a NAPASCO annotation of 'of_concern'.
+      This data item is a pointer to _ndb_base_pair_validation.napasco_annotation.
+;
+    _item.name                  '_ndb_base_pair_overall.number_of_of_concern'
+    _item.category_id             ndb_base_pair_overall
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_overall.number_of_not_applicable
+    _item_description.description
+;     The number of base pairs with a NAPASCO annotation of 'not_applicable'.
+      This data item is a pointer to _ndb_base_pair_validation.napasco_annotation.
+;
+    _item.name                  '_ndb_base_pair_overall.number_of_not_applicable'
+    _item.category_id             ndb_base_pair_overall
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_overall.number_of_unpaired
+    _item_description.description
+;     The number of unpaired nucleotides in the entry.
+      This data item is a pointer to _ndb_base_unpaired_list.id.
+;
+    _item.name                  '_ndb_base_pair_overall.number_of_unpaired'
+    _item.category_id             ndb_base_pair_overall
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+####################################
+## NDB_BASE_PAIR_OVERALL_MODEL ##
+####################################
+
+save_ndb_base_pair_overall_model
+    _category.description
+;              Data items in the NDB_BASE_PAIR_OVERALL_MODEL category summarize
+               the NAPASCO validation metric and base pair/unpaired counts
+               for each model in an entry.
+;
+    _category.id                  ndb_base_pair_overall_model
+    _category.mandatory_code      no
+     loop_
+    _category_key.name          '_ndb_base_pair_overall_model.entry_id'
+                                '_ndb_base_pair_overall_model.PDB_model_num'
+
+    loop_
+    _category_group.id           'inclusive_group'
+                                 'ndb_group'
+    loop_
+    _category_examples.detail
+    _category_examples.case
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+;
+    Example 1 -
+;
+;
+        loop_
+        _ndb_base_pair_overall_model.entry_id
+        _ndb_base_pair_overall_model.PDB_model_num
+        _ndb_base_pair_overall_model.NAPASCO_global_model
+        _ndb_base_pair_overall_model.number_of_basepairs
+        _ndb_base_pair_overall_model.number_of_preferred
+        _ndb_base_pair_overall_model.number_of_of_concern
+        _ndb_base_pair_overall_model.number_of_not_applicable
+        _ndb_base_pair_overall_model.number_of_unpaired
+         1ABC 1 48.12 9 9 0 0 0
+         1ABC 2 47.75 9 9 0 0 0
+         # ...  abbreviated ...
+;
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   _pdbx_category_context.type         CONTRIBUTED
+   _pdbx_category_context.category_id  ndb_base_pair_overall_model
+     save_
+
+save__ndb_base_pair_overall_model.entry_id
+    _item_description.description
+;     Entry identifier.
+;
+    _item.name                  '_ndb_base_pair_overall_model.entry_id'
+    _item.category_id             ndb_base_pair_overall_model
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name     '_ndb_base_pair_overall_model.entry_id'
+    _item_linked.parent_name    '_entry.id'
+     save_
+
+save__ndb_base_pair_overall_model.PDB_model_num
+    _item_description.description
+;     The PDB model number.
+;
+    _item.name                  '_ndb_base_pair_overall_model.PDB_model_num'
+    _item.category_id             ndb_base_pair_overall_model
+    _item.mandatory_code          yes
+    _item_type.code               int
+    _item_linked.child_name       '_ndb_base_pair_overall_model.PDB_model_num'
+    _item_linked.parent_name      '_atom_site.pdbx_PDB_model_num'
+     save_
+
+save__ndb_base_pair_overall_model.NAPASCO_global_model
+    _item_description.description
+;     Trimmed geometric mean of the NAPASCO metric (provide reference) across
+      all base pairs identified in this model, discarding the lowest and
+      highest five percent of values before averaging.
+;
+    _item.name                  '_ndb_base_pair_overall_model.NAPASCO_global_model'
+    _item.category_id             ndb_base_pair_overall_model
+    _item.mandatory_code          no
+    _item_type.code               float
+     save_
+
+save__ndb_base_pair_overall_model.number_of_basepairs
+    _item_description.description
+;     The number of unique base pairs identified in this model.
+;
+    _item.name                  '_ndb_base_pair_overall_model.number_of_basepairs'
+    _item.category_id             ndb_base_pair_overall_model
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_overall_model.number_of_preferred
+    _item_description.description
+;     The number of base pairs in this model with a NAPASCO annotation of
+      'preferred'.
+      This data item is a pointer to _ndb_base_pair_validation.napasco_annotation.
+;
+    _item.name                  '_ndb_base_pair_overall_model.number_of_preferred'
+    _item.category_id             ndb_base_pair_overall_model
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_overall_model.number_of_of_concern
+    _item_description.description
+;     The number of base pairs in this model with a NAPASCO annotation of
+      'of_concern'.
+      This data item is a pointer to _ndb_base_pair_validation.napasco_annotation.
+;
+    _item.name                  '_ndb_base_pair_overall_model.number_of_of_concern'
+    _item.category_id             ndb_base_pair_overall_model
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_overall_model.number_of_not_applicable
+    _item_description.description
+;     The number of base pairs in this model with a NAPASCO annotation of
+      'not_applicable'.
+      This data item is a pointer to _ndb_base_pair_validation.napasco_annotation.
+;
+    _item.name                  '_ndb_base_pair_overall_model.number_of_not_applicable'
+    _item.category_id             ndb_base_pair_overall_model
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_overall_model.number_of_unpaired
+    _item_description.description
+;     The number of unpaired nucleotides in this model.
+      This data item is a pointer to _ndb_base_unpaired_list.id.
+;
+    _item.name                  '_ndb_base_pair_overall_model.number_of_unpaired'
+    _item.category_id             ndb_base_pair_overall_model
+    _item.mandatory_code          no
+    _item_type.code               int
+     save_
+
+############################
+## NDB_BASE_UNPAIRED_LIST ##
+############################
+
+save_ndb_base_unpaired_list
+    _category.description
+;              Data items in the NDB_BASE_UNPAIRED_LIST category identifies
+               the nucleotides in the structure that remain unpaired after
+               applying all symmetry operations.
+;
+    _category.id                  ndb_base_unpaired_list
+    _category.mandatory_code      no
+     loop_
+    _category_key.name          '_ndb_base_unpaired_list.id'
+
+    loop_
+    _category_group.id           'inclusive_group'
+                                 'ndb_group'
+    loop_
+    _category_examples.detail
+    _category_examples.case
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+;
+    Example 1 -
+;
+;
+        loop_
+        _ndb_base_unpaired_list.id
+        _ndb_base_unpaired_list.PDB_model_num
+        _ndb_base_unpaired_list.label_entity_id
+        _ndb_base_unpaired_list.label_asym_id
+        _ndb_base_unpaired_list.label_seq_id
+        _ndb_base_unpaired_list.label_comp_id
+        _ndb_base_unpaired_list.label_alt_id
+        _ndb_base_unpaired_list.PDB_ins_code
+        _ndb_base_unpaired_list.auth_asym_id
+        _ndb_base_unpaired_list.auth_seq_id
+         1 1 1 A 1 C . . P 11
+         # ...  abbreviated ...
+;
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   _pdbx_category_context.type         CONTRIBUTED
+   _pdbx_category_context.category_id  ndb_base_unpaired_list
+     save_
+
+save__ndb_base_unpaired_list.id
+    _item_description.description
+;     Unique identifier for the unpaired nucleotide. 
+;
+    _item.name                  '_ndb_base_unpaired_list.id'
+    _item.category_id             ndb_base_unpaired_list
+    _item.mandatory_code          yes
+    _item_type.code               int
+     save_
+
+save__ndb_base_unpaired_list.PDB_model_num
+    _item_description.description
+;     The PDB model number. 
+;
+    _item.name                  '_ndb_base_unpaired_list.PDB_model_num'
+    _item.category_id             ndb_base_unpaired_list
+    _item.mandatory_code          yes
+    _item_type.code               int
+    _item_linked.child_name       '_ndb_base_unpaired_list.PDB_model_num'
+    _item_linked.parent_name      '_atom_site.pdbx_PDB_model_num'
+     save_
+
+save__ndb_base_unpaired_list.label_entity_id
+    _item_description.description
+;     The entity identifier of the unpaired nucleotide. 
+;
+    _item.name                  '_ndb_base_unpaired_list.label_entity_id'
+    _item.category_id             ndb_base_unpaired_list
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_unpaired_list.label_entity_id'
+    _item_linked.parent_name      '_atom_site.label_entity_id'
+     save_
+
+save__ndb_base_unpaired_list.label_asym_id
+    _item_description.description
+;     The asym/chain identifier of the unpaired nucleotide. 
+;
+    _item.name                  '_ndb_base_unpaired_list.label_asym_id'
+    _item.category_id             ndb_base_unpaired_list
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_unpaired_list.label_asym_id'
+    _item_linked.parent_name      '_atom_site.label_asym_id'
+     save_
+
+save__ndb_base_unpaired_list.label_seq_id
+    _item_description.description
+;     The residue number identifier of the unpaired nucleotide. 
+;
+    _item.name                  '_ndb_base_unpaired_list.label_seq_id'
+    _item.category_id             ndb_base_unpaired_list
+    _item.mandatory_code          yes
+    _item_type.code               int
+    _item_linked.child_name       '_ndb_base_unpaired_list.label_seq_id'
+    _item_linked.parent_name      '_atom_site.label_seq_id'
+     save_
+
+save__ndb_base_unpaired_list.label_comp_id
+    _item_description.description
+;     The component/residue name identifier of the unpaired nucleotide.  
+;
+    _item.name                  '_ndb_base_unpaired_list.label_comp_id'
+    _item.category_id             ndb_base_unpaired_list
+    _item.mandatory_code          yes
+    _item_type.code               ucode
+    _item_linked.child_name       '_ndb_base_unpaired_list.label_comp_id'
+    _item_linked.parent_name      '_atom_site.label_comp_id'
+     save_
+
+save__ndb_base_unpaired_list.label_alt_id
+    _item_description.description
+;     The alternate conformation identifier of the unpaired nucleotide.  
+;
+    _item.name                  '_ndb_base_unpaired_list.label_alt_id'
+    _item.category_id             ndb_base_unpaired_list
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_unpaired_list.label_alt_id'
+    _item_linked.parent_name      '_atom_site.label_alt_id'
+     save_
+
+save__ndb_base_unpaired_list.PDB_ins_code
+    _item_description.description
+;     The residue insertion code of the unpaired nucleotide.
+;
+    _item.name                  '_ndb_base_unpaired_list.PDB_ins_code'
+    _item.category_id             ndb_base_unpaired_list
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_unpaired_list.PDB_ins_code'
+    _item_linked.parent_name      '_atom_site.pdbx_PDB_ins_code'
+     save_
+
+save__ndb_base_unpaired_list.auth_asym_id
+    _item_description.description
+;     The author provided asym/chain identifier of the unpaired nucleotide.
+;
+    _item.name                  '_ndb_base_unpaired_list.auth_asym_id'
+    _item.category_id             ndb_base_unpaired_list
+    _item.mandatory_code          no
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_unpaired_list.auth_asym_id'
+    _item_linked.parent_name      '_atom_site.auth_asym_id'
+     save_
+
+save__ndb_base_unpaired_list.auth_seq_id
+    _item_description.description
+;     The author provided residue number identifier of the unpaired nucleotide.
+;
+    _item.name                  '_ndb_base_unpaired_list.auth_seq_id'
+    _item.category_id             ndb_base_unpaired_list
+    _item.mandatory_code          no
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_unpaired_list.auth_seq_id'
+    _item_linked.parent_name      '_atom_site.auth_seq_id'
+     save_
+
+save__ndb_base_unpaired_list.details
+    _item_description.description
+;     Additional details about the unpaired nucleotide. 
+;
+    _item.name                  '_ndb_base_unpaired_list.details'
+    _item.category_id             ndb_base_unpaired_list
+    _item.mandatory_code          no
+    _item_type.code               text
+     save_
+
+################################
+## NDB_BASE_PAIR_LIST_CURATED ##
+################################
+
+save_ndb_base_pair_list_curated
+    _category.description
+;              Data items in the NDB_BASE_PAIR_LIST_CURATED category identifies
+               the nucleotide base pairs identified in the curated dataset as
+               described in (provide reference). This category is populated in
+               an external reference file, ndb-bp-ext-curated.cif, generated
+               from the curated base pair coordinate fragments in data/curated/.
+               It is not part of the mmCIF output produced by mmcif_parser.py;
+               it is instead the target of _ndb_base_pair_validation.nearest_curated_BP.
+;
+    _category.id                  ndb_base_pair_list_curated
+    _category.mandatory_code      no
+     loop_
+    _category_key.name          '_ndb_base_pair_list_curated.id'
+
+    loop_
+    _category_group.id           'inclusive_group'
+                                 'ndb_group'
+    loop_
+    _category_examples.detail
+    _category_examples.case
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+;
+    Example 1 -
+;
+;
+        loop_
+        _ndb_base_pair_list_curated.id
+        _ndb_base_pair_list_curated.PDB_accession_code
+        _ndb_base_pair_list_curated.PDB_model_num
+        _ndb_base_pair_list_curated.label_entity_id_1
+        _ndb_base_pair_list_curated.label_asym_id_1
+        _ndb_base_pair_list_curated.label_seq_id_1
+        _ndb_base_pair_list_curated.label_comp_id_1
+        _ndb_base_pair_list_curated.label_alt_id_1
+        _ndb_base_pair_list_curated.PDB_ins_code_1
+        _ndb_base_pair_list_curated.struct_oper_id_1
+        _ndb_base_pair_list_curated.label_entity_id_2
+        _ndb_base_pair_list_curated.label_asym_id_2
+        _ndb_base_pair_list_curated.label_seq_id_2
+        _ndb_base_pair_list_curated.label_comp_id_2
+        _ndb_base_pair_list_curated.label_alt_id_2
+        _ndb_base_pair_list_curated.PDB_ins_code_2
+        _ndb_base_pair_list_curated.struct_oper_id_2
+        _ndb_base_pair_list_curated.auth_asym_id_1
+        _ndb_base_pair_list_curated.auth_seq_id_1
+        _ndb_base_pair_list_curated.auth_asym_id_2
+        _ndb_base_pair_list_curated.auth_seq_id_2
+        1abc_A_G_2544_B_C_1558 1abc 1 1 A 2544 G . . 1 2 B 1558 C . . 1 P 2544 Q 1558
+         # ...  abbreviated ...
+;
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   _pdbx_category_context.type         CONTRIBUTED
+   _pdbx_category_context.category_id  ndb_base_pair_list_curated
+     save_
+
+save__ndb_base_pair_list_curated.id
+    _item_description.description
+;     Unique identifier for the base pair in the curated dataset. 
+      Convention is to use a concatenated string that identifies the PDB ID,
+      chain, residue name, and number (e.g., 1abc_A_G_2544_B_C_1558). 
+;
+    _item.name                  '_ndb_base_pair_list_curated.id'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.PDB_accession_code
+    _item_description.description
+;     The PDB accession code for the entry in the curated dataset. 
+;
+    _item.name                  '_ndb_base_pair_list_curated.PDB_accession_code'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.PDB_model_num
+    _item_description.description
+;     The PDB model number. 
+;
+    _item.name                  '_ndb_base_pair_list_curated.PDB_model_num'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_list_curated.label_entity_id_1
+    _item_description.description
+;     The entity identifier of the first nucleotide in the base pair. 
+;
+    _item.name                  '_ndb_base_pair_list_curated.label_entity_id_1'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.label_asym_id_1
+    _item_description.description
+;     The asym/chain identifier of the first nucleotide in the base pair. 
+;
+    _item.name                  '_ndb_base_pair_list_curated.label_asym_id_1'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.label_seq_id_1
+    _item_description.description
+;     The residue number identifier of the first nucleotide in the base pair. 
+;
+    _item.name                  '_ndb_base_pair_list_curated.label_seq_id_1'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_list_curated.label_comp_id_1
+    _item_description.description
+;     The component/residue name identifier of the first nucleotide in the base pair.  
+;
+    _item.name                  '_ndb_base_pair_list_curated.label_comp_id_1'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               ucode
+     save_
+
+save__ndb_base_pair_list_curated.label_alt_id_1
+    _item_description.description
+;     The alternate conformation identifier of the first nucleotide in the base pair.  
+;
+    _item.name                  '_ndb_base_pair_list_curated.label_alt_id_1'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.PDB_ins_code_1
+    _item_description.description
+;     The residue insertion code of the first nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list_curated.PDB_ins_code_1'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.struct_oper_id_1
+    _item_description.description
+;     Identifier for the symmetry operator for the first nucleotide in the base pair. 
+      If symmetry operation is not required, this data item should point to the
+      _pdbx_struct_oper_list.id value corresponding to the default identity operation (1_555) 
+      in _pdbx_struct_oper_list.type for this entry. 
+;
+    _item.name                  '_ndb_base_pair_list_curated.struct_oper_id_1'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.label_entity_id_2
+    _item_description.description
+;     The entity identifier of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list_curated.label_entity_id_2'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.label_asym_id_2
+    _item_description.description
+;     The asym/chain identifier of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list_curated.label_asym_id_2'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.label_seq_id_2
+    _item_description.description
+;     The residue number identifier of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list_curated.label_seq_id_2'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_list_curated.label_comp_id_2
+    _item_description.description
+;     The component/residue name identifier of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list_curated.label_comp_id_2'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               ucode     
+     save_
+
+save__ndb_base_pair_list_curated.label_alt_id_2
+    _item_description.description
+;     The alternate conformation identifier of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list_curated.label_alt_id_2'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.PDB_ins_code_2
+    _item_description.description
+;     The residue insertion code of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list_curated.PDB_ins_code_2'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.struct_oper_id_2
+    _item_description.description
+;     Identifier for the symmetry operator for the second nucleotide in the base pair. 
+      If symmetry operation is not required, this data item should point to the 
+      _pdbx_struct_oper_list.id value corresponding to the default identity operation (1_555)
+      in _pdbx_struct_oper_list.type for this entry.
+;
+    _item.name                  '_ndb_base_pair_list_curated.struct_oper_id_2'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.auth_asym_id_1
+    _item_description.description
+;     The author provided asym/chain identifier of the first nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list_curated.auth_asym_id_1'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          no
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.auth_seq_id_1
+    _item_description.description
+;     The author provided residue number identifier of the first nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list_curated.auth_seq_id_1'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          no
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.auth_asym_id_2
+    _item_description.description
+;     The author provided asym/chain identifier of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list_curated.auth_asym_id_2'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          no
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_list_curated.auth_seq_id_2
+    _item_description.description
+;     The author provided residue number identifier of the second nucleotide in the base pair.
+;
+    _item.name                  '_ndb_base_pair_list_curated.auth_seq_id_2'
+    _item.category_id             ndb_base_pair_list_curated
+    _item.mandatory_code          no
+    _item_type.code               code
+     save_
+
+#########################################
+## NDB_BASE_PAIR_ANNOTATION_CURATED ##
+#########################################
+
+save_ndb_base_pair_annotation_curated
+    _category.description
+;              Data items in the NDB_BASE_PAIR_ANNOTATION_CURATED category
+               provide the Leontis-Westhof orientation, edge, family, class
+               and sub-class annotation for each base pair in the curated
+               dataset (provide reference). This category is populated, along
+               with ndb_base_pair_list_curated, in the external reference file
+               ndb-bp-ext-curated.cif, generated from the directory structure
+               of data/curated/ (each sub-directory name is the sub_class of
+               the curated base pairs it contains).
+;
+    _category.id                  ndb_base_pair_annotation_curated
+    _category.mandatory_code      no
+     loop_
+    _category_key.name          '_ndb_base_pair_annotation_curated.id'
+
+    loop_
+    _category_group.id           'inclusive_group'
+                                 'ndb_group'
+    loop_
+    _category_examples.detail
+    _category_examples.case
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+;
+    Example 1 -
+;
+;
+        loop_
+        _ndb_base_pair_annotation_curated.id
+        _ndb_base_pair_annotation_curated.base_pair_id
+        _ndb_base_pair_annotation_curated.orientation
+        _ndb_base_pair_annotation_curated.base_1_edge
+        _ndb_base_pair_annotation_curated.base_2_edge
+        _ndb_base_pair_annotation_curated.l-w_family_num
+        _ndb_base_pair_annotation_curated.l-w_family_name
+        _ndb_base_pair_annotation_curated.class
+        _ndb_base_pair_annotation_curated.sub_class
+         1 1abc_A_G_2544_B_C_1558 cis Watson-Crick Watson-Crick 1 cWW cWW_G-C cWW_G-C_1
+         # ...  abbreviated ...
+;
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   _pdbx_category_context.type         CONTRIBUTED
+   _pdbx_category_context.category_id  ndb_base_pair_annotation_curated
+     save_
+
+save__ndb_base_pair_annotation_curated.id
+    _item_description.description
+;     Identifier for the category.
+;
+    _item.name                  '_ndb_base_pair_annotation_curated.id'
+    _item.category_id             ndb_base_pair_annotation_curated
+    _item.mandatory_code          yes
+    _item_type.code               int
+     save_
+
+save__ndb_base_pair_annotation_curated.base_pair_id
+    _item_description.description
+;     Identifier for the curated base pair.
+      This data item is a pointer to _ndb_base_pair_list_curated.id.
+;
+    _item.name                  '_ndb_base_pair_annotation_curated.base_pair_id'
+    _item.category_id             ndb_base_pair_annotation_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+    _item_linked.child_name       '_ndb_base_pair_annotation_curated.base_pair_id'
+    _item_linked.parent_name      '_ndb_base_pair_list_curated.id'
+     save_
+
+save__ndb_base_pair_annotation_curated.orientation
+    _item_description.description
+;     Orientation of bases in the base pair.
+;
+    _item.name                  '_ndb_base_pair_annotation_curated.orientation'
+    _item.category_id             ndb_base_pair_annotation_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+    loop_
+     _item_enumeration.value
+     _item_enumeration.detail
+     'cis'    'cis orientation'
+     'trans'  'trans orientation'
+     save_
+
+save__ndb_base_pair_annotation_curated.base_1_edge
+    _item_description.description
+;     Edge of base 1 involved in base pairing.
+;
+    _item.name                  '_ndb_base_pair_annotation_curated.base_1_edge'
+    _item.category_id             ndb_base_pair_annotation_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+    loop_
+     _item_enumeration.value
+     _item_enumeration.detail
+     'Watson-Crick'    'Watson-Crick edge'
+     'Hoogsteen'       'Hoogsteen edge'
+     'Sugar'           'Sugar edge'
+     save_
+
+save__ndb_base_pair_annotation_curated.base_2_edge
+    _item_description.description
+;     Edge of base 2 involved in base pairing.
+;
+    _item.name                  '_ndb_base_pair_annotation_curated.base_2_edge'
+    _item.category_id             ndb_base_pair_annotation_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+    loop_
+     _item_enumeration.value
+     _item_enumeration.detail
+     'Watson-Crick'    'Watson-Crick edge'
+     'Hoogsteen'       'Hoogsteen edge'
+     'Sugar'           'Sugar edge'
+     save_
+
+save__ndb_base_pair_annotation_curated.l-w_family_num
+    _item_description.description
+;     Leontis-Westhof base pair family number based on (provide reference).
+;
+    _item.name                  '_ndb_base_pair_annotation_curated.l-w_family_num'
+    _item.category_id             ndb_base_pair_annotation_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+    loop_
+     _item_enumeration.value
+     '1'
+     '2'
+     '3'
+     '4'
+     '5'
+     '6'
+     '7'
+     '8'
+     '9'
+     '10'
+     '11'
+     '12'
+     save_
+
+save__ndb_base_pair_annotation_curated.l-w_family_name
+    _item_description.description
+;     Leontis-Westhof base pair family based on (provide reference).
+;
+    _item.name                  '_ndb_base_pair_annotation_curated.l-w_family_name'
+    _item.category_id             ndb_base_pair_annotation_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+    loop_
+     _item_enumeration.value
+     _item_enumeration.detail
+     'cWW'  'cis Watson-Crick Watson-Crick'
+     'tWW'  'trans Watson-Crick Watson-Crick'
+     'cWH'  'cis Watson-Crick Hoogsteen'
+     'tWH'  'trans Watson-Crick-Hoogsteen'
+     'cWS'  'cis Watson-Crick Sugar'
+     'tWS'  'trans Watson-Crick Sugar'
+     'cHH'  'cis Hoogsteen Hoogsteen'
+     'tHH'  'trans Hoogsteen Hoogsteen'
+     'cHS'  'cis Hoogsteen Sugar'
+     'tHS'  'trans Hoogsteen Sugar'
+     'cSS'  'cis Sugar Sugar'
+     'tSS'  'trans Sugar Sugar'
+     save_
+
+save__ndb_base_pair_annotation_curated.class
+    _item_description.description
+;     Base pair class based on (provide reference).
+      Takes the same enumerated values as _ndb_base_pair_annotation.class.
+;
+    _item.name                  '_ndb_base_pair_annotation_curated.class'
+    _item.category_id             ndb_base_pair_annotation_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+     save_
+
+save__ndb_base_pair_annotation_curated.sub_class
+    _item_description.description
+;     Base pair sub-class based on (provide reference). This is the sub_class
+      that names the data/curated/ sub-directory the curated base pair
+      belongs to.
+      Takes the same enumerated values as _ndb_base_pair_annotation.sub_class.
+;
+    _item.name                  '_ndb_base_pair_annotation_curated.sub_class'
+    _item.category_id             ndb_base_pair_annotation_curated
+    _item.mandatory_code          yes
+    _item_type.code               code
+     save_
+
