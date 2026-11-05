@@ -4,12 +4,16 @@
 parse_basepairs(cif) returns one dict per pair: base_pair_id, family (Leontis-Westhof, '?' if
 missing), model, and for each residue (suffix _1 / _2) auth_asym_id, auth_seq_id, comp_id,
 label_asym_id, label_seq_id, ins_code, alt_id and struct_oper_id. Missing values are ''.
+The items are read under the names of docs/ndb-bp-ext.dic, or under the names used before it
+(base_pair_id, PDB_model_number, asym_id_1, ..., l-w_family) when a file has those.
 
 Usage: parse_basepairs.py structure_basepairs.cif   (prints a sorted pair table to stdout)
 """
 
 import sys
 import gemmi
+
+from ndb_names import LEGACY_ANNOTATION_ITEMS, LEGACY_LIST_ITEMS
 
 
 def _text(value):
@@ -43,31 +47,44 @@ def parse_basepairs(cif_file):
   bp_list = _category(block, '_ndb_base_pair_list.')
   bp_annot = _category(block, '_ndb_base_pair_annotation.')
 
-  # map base_pair_id -> Leontis-Westhof family
-  family = dict(zip(bp_annot.get('base_pair_id', []), bp_annot.get('l-w_family', [])))
+  def column(columns, item, legacy):
+    for tag in (item, legacy.get(item)):
+      if tag and tag.lower() in columns:
+        return columns[tag.lower()]
+    return None
 
-  def optional(tag, i):
-    # columns missing from older files read as '' instead of raising
-    column = bp_list.get(tag)
-    return _text(column[i]) if column else ''
+  def optional(item, i):
+    # items missing from a file read as '' instead of raising
+    values = column(bp_list, item, LEGACY_LIST_ITEMS)
+    return _text(values[i]) if values else ''
+
+  def required(item, i):
+    values = column(bp_list, item, LEGACY_LIST_ITEMS)
+    if values is None:
+      raise KeyError(f'_ndb_base_pair_list.{item}')
+    return values[i]
+
+  # map base pair id -> Leontis-Westhof family
+  family = dict(zip(bp_annot.get('base_pair_id', []),
+                    column(bp_annot, 'l-w_family_name', LEGACY_ANNOTATION_ITEMS) or []))
 
   pairs = []
-  ids = bp_list.get('base_pair_id', [])
+  ids = column(bp_list, 'id', LEGACY_LIST_ITEMS) or []
   for i, pid in enumerate(ids):
     pair = {
       'base_pair_id': pid,
       'family': family.get(pid, '?'),
-      'model': optional('pdb_model_number', i),
+      'model': optional('PDB_model_num', i),
     }
     for side in ('1', '2'):
-      pair[f'auth_asym_id_{side}'] = bp_list[f'auth_asym_id_{side}'][i]
-      pair[f'auth_seq_id_{side}'] = bp_list[f'auth_seq_id_{side}'][i]
-      pair[f'comp_id_{side}'] = bp_list[f'comp_id_{side}'][i]
+      pair[f'auth_asym_id_{side}'] = required(f'auth_asym_id_{side}', i)
+      pair[f'auth_seq_id_{side}'] = required(f'auth_seq_id_{side}', i)
+      pair[f'comp_id_{side}'] = required(f'label_comp_id_{side}', i)
       # full residue identity as written by the exporters
-      pair[f'label_asym_id_{side}'] = optional(f'asym_id_{side}', i)
-      pair[f'label_seq_id_{side}'] = optional(f'seq_id_{side}', i)
-      pair[f'ins_code_{side}'] = optional(f'pdb_ins_code_{side}', i)
-      pair[f'alt_id_{side}'] = optional(f'alt_id_{side}', i)
+      pair[f'label_asym_id_{side}'] = optional(f'label_asym_id_{side}', i)
+      pair[f'label_seq_id_{side}'] = optional(f'label_seq_id_{side}', i)
+      pair[f'ins_code_{side}'] = optional(f'PDB_ins_code_{side}', i)
+      pair[f'alt_id_{side}'] = optional(f'label_alt_id_{side}', i)
       pair[f'struct_oper_id_{side}'] = optional(f'struct_oper_id_{side}', i)
     pairs.append(pair)
   return pairs
