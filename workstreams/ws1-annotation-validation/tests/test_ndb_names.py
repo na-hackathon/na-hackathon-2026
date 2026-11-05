@@ -66,6 +66,7 @@ def test_parent_base_from_the_structure_mapping_takes_precedence():
     ("cWW", "U", "A", "cWW_A-U"), ("tSS", "C", "A", "tSS_A-C"), ("cWW", "C", "U", "cWW_C-U"),
     ("tWH", "U", "A", "tWH_U-A"), ("cWS", "C", "G", "cWS_C-G"),          # asymmetric: first base has the first edge
     ("cWW", "2MG", "C", "cWW_G-C"),                                       # the example of 1EHZ (A10 2MG - A25 C)
+    ("cWW", "DA", "DT", "?"), ("cWW", "G", "QQQ", "?"),                  # T and unknown parents are not in the dictionary
 ])
 def test_pair_class(family, a, b, expected):
     assert nn.pair_class(family, a, b, nn.parent_base_lookup(block_from("_cell.length_a 1\n"))) == expected
