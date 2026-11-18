@@ -42,6 +42,12 @@ agreement between the two annotators, not accuracy against a reference.
   alternate positions (`alt_position_mismatch`). The 17 written FR3D rows include four contacts
   listed once per conformer (A/A and B/B); the alternate position is not part of the key, so each
   counts once (`duplicate_keys`) and 13 distinct pairs remain.
+  The pair key is not canonical for symmetry-equivalent contacts: the same contact can be written
+  with different operator pairs, and each key counts separately (`A|3~A|3@4` and `A|3@2~A|3@3`
+  are both in the FR3D output). The difference in pair counts between the tools therefore reflects
+  the scope of the annotations (symmetry mates against the asymmetric unit) as well as the matching
+  rule, and does not by itself mean disagreement; `--asu-only` of `bin/compare_basepairs.py` restricts
+  the comparison to the pairs inside the asymmetric unit.
 - **9hrf:** two RNApolis pairs are skipped because a residue has no `label_seq_id`
   (`no_label_seq_id`).
 - **9e5i, 9sfq:** the discordant pairs have the same residues and different families.
