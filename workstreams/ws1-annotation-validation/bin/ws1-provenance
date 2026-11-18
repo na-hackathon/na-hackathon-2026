@@ -5,9 +5,10 @@
                    --command "<command line>" --out <provenance.json>
 
 Records the annotator (name, repository, git commit and `git describe` of its submodule under
---src, version in its pyproject.toml), the command line, the sha256 of the structure it ran on
-and the python version. Values that cannot be determined (git missing, submodule not a git
-checkout) are null. ws1-parse hands the file to the exporters, which add the annotator to the
+--src, the state of the checkout, version in its pyproject.toml), the command line, the sha256 of
+the structure it ran on and the python version. The state is clean, modified (changes to tracked
+files) or unavailable (git missing, submodule not initialised or not a git checkout); the git
+values of an unavailable checkout are null, as are other values that cannot be determined. ws1-parse hands the file to the exporters, which add the annotator to the
 _software category of the base-pair mmCIF; ws1-manifest collects it into the run manifest.
 """
 import argparse
@@ -16,7 +17,7 @@ import platform
 import re
 from pathlib import Path
 
-from provenance_utils import git, sha256
+from provenance_utils import checkout_state, git, sha256
 
 # tool -> (name in _software, submodule directory under --src)
 TOOLS = {"fr3d": ("FR3D", "fr3d-python"), "rnapolis": ("RNApolis", "rnapolis-py")}
@@ -34,13 +35,16 @@ def package_version(directory):
 def provenance(tool, src, structure, command):
     name, submodule = TOOLS[tool]
     directory = Path(src) / submodule
+    state = checkout_state(directory)
+    available = state != "unavailable"
     return {
         "tool": tool,
         "software": {
             "name": name,
-            "repository": git(directory, "remote", "get-url", "origin"),
-            "commit": git(directory, "rev-parse", "HEAD"),
-            "describe": git(directory, "describe", "--tags", "--always"),
+            "repository": git(directory, "remote", "get-url", "origin") if available else None,
+            "commit": git(directory, "rev-parse", "HEAD") if available else None,
+            "describe": git(directory, "describe", "--tags", "--always") if available else None,
+            "state": state,
             "package_version": package_version(directory),
         },
         "command": command,

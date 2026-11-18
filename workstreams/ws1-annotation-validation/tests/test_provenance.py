@@ -20,7 +20,8 @@ BIN = WS1 / "bin"
 DATA = WS1.parents[1] / "data" / "tests"
 FIXTURES = WS1 / "tests" / "fixtures"
 sys.path.insert(0, str(BIN))
-from mmcif_software import add_provenance_row, add_software_row  # noqa: E402
+from mmcif_software import add_provenance_row, add_software_row, provenance_details  # noqa: E402
+from provenance_utils import checkout_state  # noqa: E402
 
 FR3D = {"name": "FR3D", "commit": "995de6cf5fb67e689ab8b6626988799ec4362f1e",
         "repository": "https://github.com/BGSU-RNA/fr3d-python.git"}
@@ -102,6 +103,7 @@ def test_ws1_provenance_reads_the_submodule_checkout(tmp_path):
     data = json.loads(out.read_text())
     assert data["software"]["name"] == "FR3D" and data["software"]["commit"] == commit
     assert data["software"]["package_version"] == "1.2.3" and data["software"]["repository"] is None   # no remote
+    assert data["software"]["state"] == "clean"
     assert data["structure"] == {"name": "s.cif", "sha256": hashlib.sha256(b"data_x\n").hexdigest()}
     assert data["command"] == "python annotate s.cif" and data["tool"] == "fr3d"
 
@@ -114,6 +116,7 @@ def test_ws1_provenance_without_a_checkout_gives_null_values(tmp_path):
                     "--structure", str(structure), "--command", "c", "--out", str(out)], check=True)
     software = json.loads(out.read_text())["software"]
     assert software["name"] == "RNApolis" and software["commit"] is None and software["package_version"] is None
+    assert software["state"] == "unavailable"
 
 
 
@@ -148,3 +151,46 @@ def test_provenance_row_without_entry_id_uses_the_block_name_and_extends_an_exis
 def test_provenance_category_written_as_key_value_pairs_is_left_unchanged():
     doc = gemmi.cif.read_string("data_x\n_ndb_base_pair_provenance.entry_id X\n_ndb_base_pair_provenance.software_id 1\n")
     assert not add_provenance_row(doc.sole_block(), FR3D, 2, "d")
+
+
+def init_repo(path, files=("pyproject.toml",)):
+    path.mkdir(parents=True, exist_ok=True)
+    for name in files:
+        (path / name).write_text('version = "1"\n')
+    git = ["git", "-C", str(path), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run([*git[:3], "init", "-q"], check=True)
+    subprocess.run([*git, "add", "."], check=True)
+    subprocess.run([*git, "commit", "-q", "-m", "x"], check=True)
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
+def test_checkout_state_clean_modified_and_untracked(tmp_path):
+    repo = tmp_path / "annotator"
+    init_repo(repo)
+    assert checkout_state(repo) == "clean"
+    (repo / "build.log").write_text("x")                     # untracked files are not changes
+    assert checkout_state(repo) == "clean"
+    (repo / "pyproject.toml").write_text('version = "2"\n')
+    assert checkout_state(repo) == "modified"
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
+def test_submodule_directory_that_is_not_a_checkout_does_not_report_the_parent_repository(tmp_path):
+    init_repo(tmp_path / "parent")
+    (tmp_path / "parent" / "src" / "fr3d-python").mkdir(parents=True)          # submodule that was not initialised
+    assert checkout_state(tmp_path / "parent" / "src" / "fr3d-python") == "unavailable"
+    assert checkout_state(tmp_path / "missing") == "unavailable"
+    structure = tmp_path / "s.cif"
+    structure.write_text("data_x\n")
+    out = tmp_path / "p.json"
+    subprocess.run([sys.executable, str(BIN / "ws1-provenance"), "--tool", "fr3d", "--src", str(tmp_path / "parent" / "src"),
+                    "--structure", str(structure), "--command", "c", "--out", str(out)], check=True)
+    software = json.loads(out.read_text())["software"]
+    assert software["state"] == "unavailable" and software["commit"] is None and software["describe"] is None
+    assert software["repository"] is None
+
+
+def test_provenance_details_name_a_modified_checkout():
+    assert provenance_details({"name": "FR3D"}) == "base pairs annotated by FR3D in the WS1 pipeline"
+    assert provenance_details({"name": "FR3D", "state": "clean"}) == "base pairs annotated by FR3D in the WS1 pipeline"
+    assert provenance_details({"name": "FR3D", "state": "modified"}).endswith("; the annotator checkout has uncommitted changes")

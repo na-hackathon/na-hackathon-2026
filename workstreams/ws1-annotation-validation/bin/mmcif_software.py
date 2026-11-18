@@ -40,6 +40,14 @@ def add_software_row(block, software, description):
   return int(values['pdbx_ordinal'])
 
 
+def provenance_details(software):
+  """details of the _ndb_base_pair_provenance row: the annotator, and its checkout when it has local changes."""
+  text = f"base pairs annotated by {software['name']} in the WS1 pipeline"
+  if software.get('state') == 'modified':
+    text += "; the annotator checkout has uncommitted changes"
+  return text
+
+
 def add_provenance_row(block, software, software_id, details):
   """Add a row to _ndb_base_pair_provenance for the annotator (software_id = its _software.pdbx_ordinal).
 

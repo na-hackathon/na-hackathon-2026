@@ -13,7 +13,7 @@ import sys, json, re
 import gemmi
 from collections import Counter
 from pathlib import Path
-from mmcif_software import add_provenance_row, add_software_row
+from mmcif_software import add_provenance_row, add_software_row, provenance_details
 from ndb_names import ANNOTATION_ITEMS, LIST_ITEMS, pair_class, parent_base_lookup
 
 bp_families = { "cWW": '1', "tWW": '2', "cWH": '3', "tWH": '4', "cWS": '5', "tWS": '6', "cHH": '7', "tHH": '8', "cHS": '9', "tHS": '10', "cSS": '11', "tSS": '12' }
@@ -181,7 +181,7 @@ if provenance_file:
     software = json.load(f)["software"]
   software_id = add_software_row(block, software, "base-pair annotation (WS1 pipeline)")
   if software_id:
-    add_provenance_row(block, software, software_id, f"base pairs annotated by {software['name']} in the WS1 pipeline")
+    add_provenance_row(block, software, software_id, provenance_details(software))
   else:
     print("[json_rnapolis_mmcif] _software is written as key-value pairs: annotator not added", file=sys.stderr)
 

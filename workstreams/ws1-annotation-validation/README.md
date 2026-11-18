@@ -118,8 +118,11 @@ annotators validates against it (`tests/test_dictionary.py`).
   integer; the rows of the input structure are kept), and one row to `_ndb_base_pair_provenance` whose
   `software_id` is that `pdbx_ordinal` (`entry_id` is `_entry.id`).
 - **`annotations/<tool>/<tool>_provenance.json`:** annotator name, repository, git commit,
-  `git describe`, version from its `pyproject.toml`, the command line, name and sha256 of the
-  structure it ran on, and the python version. Values that cannot be determined are `null`.
+  `git describe`, state of the annotator checkout, version from its `pyproject.toml`, the command line,
+  name and sha256 of the structure it ran on, and the python version. The state is `clean`, `modified`
+  (changes to tracked files; the exporter notes it in `_ndb_base_pair_provenance.details`) or
+  `unavailable` (submodule not initialised, or not a git checkout: the git values are then `null`
+  instead of those of the enclosing repository). Other values that cannot be determined are `null`.
 - **`run_manifest.json`:** commit of the pipeline directory and whether it has uncommitted changes,
   sha256 of `envs/ws1.yml`, Nextflow version, command line, run name, profile, start time and
   parameters, name and sha256 of the input, the provenance of every annotator, and the version of
