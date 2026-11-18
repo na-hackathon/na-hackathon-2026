@@ -166,9 +166,12 @@ or symmetry operator).
 `basepairs/<tool>_basepairs.skipped.tsv` lists the annotator rows that were not written to the
 base-pair mmCIF, with columns `reason`, the two residues, the family and `detail`. Reasons:
 `unsupported_family` (for example FR3D "near" pairs), `alt_position_mismatch`,
-`symmetry_code_not_found`, `residue_not_found` and `no_label_seq_id`. A pair listed in both
-directions, or already written, is counted but not listed. Each exporter prints a summary line:
-rows read = pairs written + skipped + duplicates.
+`symmetry_code_not_found`, `residue_not_found`, `no_label_seq_id` and `conflicting_family`. A pair
+listed again with the same interaction (also in the other direction) is counted but not listed. A pair
+that is already written and is listed again with another family is not written a second time: the first
+family is kept and the row is listed with `conflicting_family` and the written family in `detail`
+(`unsupported_family` when the other family is not one of the twelve). Each exporter prints a summary
+line: rows read = pairs written + skipped + duplicates.
 
 ### Visualization (`--visualize`)
 

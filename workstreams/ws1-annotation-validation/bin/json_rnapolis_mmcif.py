@@ -19,10 +19,13 @@ from ndb_names import ANNOTATION_ITEMS, LIST_ITEMS, pair_class, parent_base_look
 bp_families = { "cWW": '1', "tWW": '2', "cWH": '3', "tWH": '4', "cWS": '5', "tWS": '6', "cHH": '7', "tHH": '8', "cHS": '9', "tHS": '10', "cSS": '11', "tSS": '12' }
 long_names = {"W": "Watson-Crick", "H": "Hoogsteen", "S": "Sugar", "t": "trans", "c": "cis"}
 
-processed = []
+# written pairs: "residue_1_residue_2" -> family read from residue 1, for both directions of the pair
+processed = {}
 
 # input pairs that are not written to the output, with the reason; saved next to the output
-# as <out>.skipped.tsv. Pairs listed in both directions are only counted (duplicates).
+# as <out>.skipped.tsv. A pair listed again with the same interaction (also in the other
+# direction) is only counted (duplicates); one listed with another family is skipped
+# (conflicting_family) and the family that was written is named in the detail.
 skipped = []
 duplicates = 0
 
@@ -115,7 +118,11 @@ try:
 
     key12 = residue_key(res1) + "_" + residue_key(res2)
     if key12 in processed:
-      duplicates += 1
+      if processed[key12] == lw:
+        duplicates += 1
+      else:
+        reason = 'conflicting_family' if pattern.fullmatch(lw) else 'unsupported_family'
+        skipped.append((reason, residue_key(res1), lw, residue_key(res2), f"{processed[key12]} written for this pair"))
       continue
 
     # same family check as the FR3D exporter: anything but the 12 [ct][WHS][WHS] classes is skipped
@@ -154,8 +161,8 @@ try:
       continue
 
     # add both directions to processed
-    processed.append(key12)
-    processed.append(residue_key(res2) + "_" + residue_key(res1))
+    processed[key12] = lw
+    processed[residue_key(res2) + "_" + residue_key(res1)] = lw[0] + lw[2] + lw[1]
 
     base_pair_id += 1
     annotation_id += 1

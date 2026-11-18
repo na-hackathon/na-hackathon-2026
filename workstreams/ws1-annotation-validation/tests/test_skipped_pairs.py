@@ -65,6 +65,36 @@ def test_rnapolis_every_pair_is_written_skipped_or_a_duplicate(tmp_path):
     assert [r["reason"] for r in skipped_rows(out)] == ["unsupported_family", "residue_not_found"]
 
 
+def test_fr3d_another_family_for_a_written_pair_is_skipped_as_conflicting(tmp_path):
+    a, b = "8XZN|1|A|G|2", "8XZN|1|A|C|52"
+    stderr, out = fr3d(tmp_path, [
+        (a, "cWS", b, "0"),                       # written
+        (b, "cSW", a, "0"),                       # same interaction listed from the other residue: duplicate
+        (a, "tWH", b, "0"),                       # another interaction between the same residues
+        (b, "cWS", a, "0"),                       # cWS from the other residue is not the written interaction
+        (a, "ncWW", b, "0"),                      # near pair for a written pair
+    ], DATA / "Inputs" / "8xzn.cif")
+    assert "5 rows read: 1 pairs written, 3 skipped" in stderr and "1 duplicates" in stderr and "WARNING" not in stderr
+    rows = skipped_rows(out)
+    assert [r["reason"] for r in rows] == ["conflicting_family", "conflicting_family", "unsupported_family"]
+    assert [r["family"] for r in rows] == ["tWH", "cWS", "ncWW"]
+    assert [r["detail"] for r in rows] == ["cWS written for this pair", "cSW written for this pair", "cWS written for this pair"]
+
+
+def test_rnapolis_another_family_for_a_written_pair_is_skipped_as_conflicting(tmp_path):
+    first = {**json.loads((DATA / "rnapolis_outputs" / "8xzn.json").read_text())["base_pairs"][0], "lw": "cWS"}
+    def listed(lw, swap=False):
+        return {**first, "nt1": first["nt2"], "nt2": first["nt1"], "lw": lw} if swap else {**first, "lw": lw}
+    raw, out = tmp_path / "raw.json", tmp_path / "rnapolis_basepairs.cif"
+    raw.write_text(json.dumps({"base_pairs": [listed("cWS"), listed("cSW", swap=True), listed("tWH"),
+                                              listed("cWS", swap=True), listed("n/a")]}))
+    stderr = run("json_rnapolis_mmcif.py", raw, DATA / "Inputs" / "8xzn.cif", out)
+    assert "5 pairs read: 1 written, 3 skipped" in stderr and "1 duplicates" in stderr and "WARNING" not in stderr
+    rows = skipped_rows(out)
+    assert [r["reason"] for r in rows] == ["conflicting_family", "conflicting_family", "unsupported_family"]
+    assert [r["detail"] for r in rows] == ["cWS written for this pair", "cSW written for this pair", "cWS written for this pair"]
+
+
 def test_nothing_skipped_gives_a_header_only_file(tmp_path):
     raw = DATA / "fr3d_outputs" / "8xzn" / "8xzn_basepair.txt"
     js, out = tmp_path / "bp.json", tmp_path / "fr3d_basepairs.cif"

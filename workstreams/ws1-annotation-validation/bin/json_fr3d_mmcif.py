@@ -20,16 +20,31 @@ from ndb_names import ANNOTATION_ITEMS, LIST_ITEMS, pair_class, parent_base_look
 bp_families = { "cWW": '1', "tWW": '2', "cWH": '3', "tWH": '4', "cWS": '5', "tWS": '6', "cHH": '7', "tHH": '8', "cHS": '9', "tHS": '10', "cSS": '11', "tSS": '12' }
 long_names = {"W": "Watson-Crick", "H": "Hoogsteen", "S": "Sugar", "t": "trans", "c": "cis"}
 
-processed = []
+# written pairs: "unit_1_unit_2" -> family read from unit 1, for both directions of the pair
+processed = {}
 
 # input rows that are not written to the output, one per row with the reason; saved next to
 # the output as <out>.skipped.tsv (FR3D lists each pair in both directions, so a skipped
-# pair usually appears twice). Rows whose pair is already written are only counted.
+# pair usually appears twice). Rows whose pair is already written with the same interaction
+# are only counted; a row with another family for such a pair is skipped (conflicting_family)
+# and the family that was written is named in the detail.
 skipped = []
 duplicates = 0
 
 def skip(reason, pair, detail=''):
   skipped.append((reason, pair[0], pair[1], pair[2], detail))
+
+def reverse_family(family):
+  return family[0] + family[2] + family[1]
+
+def repeat(key, family, pair):
+  """Account for a row whose pair is already written (key in processed)."""
+  global duplicates
+  if processed[key] == family:
+    duplicates += 1
+  else:
+    skip('conflicting_family' if pattern.fullmatch(family) else 'unsupported_family', pair,
+         f"{processed[key]} written for this pair")
 
 # fr3d  unit_id reference
 #unit_id_parts = ['pdb', 'model', 'chain', 'component_id', 'component_number', 'atom_name', 'alt_id', 'insertion_code', 'symmetry']
@@ -193,8 +208,8 @@ try:
         continue
 
       # add both directions to processed
-      processed.append(pair[0]+"_"+pair[2])
-      processed.append(pair[2]+"_"+pair[0])
+      processed[pair[0]+"_"+pair[2]] = pair[1]
+      processed[pair[2]+"_"+pair[0]] = reverse_family(pair[1])
 
       # FR3D can report a pair both inside the asymmetric unit and between two copies related by
       # the same operator; write it once
@@ -216,16 +231,16 @@ try:
           else:
             break
         if ('|'.join(resa)+"_"+'|'.join(resb) not in processed):
-          processed.append('|'.join(resa)+"_"+'|'.join(resb))
+          processed['|'.join(resa)+"_"+'|'.join(resb)] = fam
         else:
           print("Skipping, the within-ASU variant is already written", pair, file=sys.stderr)
-          duplicates += 1
+          repeat('|'.join(resa)+"_"+'|'.join(resb), fam, pair)
           continue
         if ('|'.join(resb)+"_"+'|'.join(resa) not in processed):
-          processed.append('|'.join(resb)+"_"+'|'.join(resa))
+          processed['|'.join(resb)+"_"+'|'.join(resa)] = reverse_family(fam)
         else:
           print("Skipping, the reversed within-ASU variant is already written", pair, file=sys.stderr)
-          duplicates += 1
+          repeat('|'.join(resb)+"_"+'|'.join(resa), reverse_family(fam), pair)
           continue
 
       base_pair_id += 1
@@ -237,8 +252,8 @@ try:
       # populate _ndb_base_pair_annotation loop; class uses the parent bases, sub_class is unknown (needs the geometry)
       ndb_base_pair_annotation_loop.add_row([str(annotation_id), str(base_pair_id), long_names[fam[0]], long_names[fam[1]], long_names[fam[2]], bp_families[fam], fam, pair_class(fam, resulta['comp_id'], resultb['comp_id'], parent_letter), '?'])
     else:
-      # the same pair listed in the other direction
-      duplicates += 1
+      # the pair is already written: the other direction of the same row, or another annotation
+      repeat(pair[0]+"_"+pair[2], pair[1], pair)
 except Exception as e:
   print(f"error {e=}, {type(e)=}", file=sys.stderr)
   raise
