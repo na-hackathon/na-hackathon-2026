@@ -157,3 +157,37 @@ def test_default_key_keeps_models_apart(tmp_path):
     assert report["rows"] == {"8bwt_annotated": 12, "8bwt_fr3d": 120}
     assert report["model"] == "1" and report["rows_outside_compared_model"]["8bwt_fr3d"] == 108
     assert report["total_distinct_pairs"] == 12 and report["agreed_by_all_tools"] == 12
+
+
+@pytest.mark.parametrize("first, second", [("cWS", "cSW"), ("cWH", "cHW"), ("cHS", "cSH"),
+                                           ("tWS", "tSW"), ("tWH", "tHW"), ("tHS", "tSH")])
+@pytest.mark.parametrize("mode", ["label", "auth"])
+def test_asymmetric_family_is_compared_from_the_same_residue(first, second, mode):
+    forward = pair(("A", 5), ("A", 9), fam=first)
+    reverse = pair(("A", 9), ("A", 5), fam=second, names=("C", "G"))      # same interaction, residues listed the other way
+    one, two = (cb.index_pairs([p], mode) for p in (forward, reverse))
+    assert one.keys() == two.keys()
+    assert cb.families(next(iter(one.values())), mode) == cb.families(next(iter(two.values())), mode)
+
+
+@pytest.mark.parametrize("mode", ["label", "auth"])
+def test_same_family_in_the_other_residue_order_is_a_different_interaction(mode):
+    forward = pair(("A", 5), ("A", 9), fam="cWS")
+    reverse = pair(("A", 9), ("A", 5), fam="cWS", names=("C", "G"))      # Sugar edge of A5, Watson-Crick edge of A9
+    one, two = (cb.index_pairs([p], mode) for p in (forward, reverse))
+    assert cb.families(next(iter(one.values())), mode) != cb.families(next(iter(two.values())), mode)
+
+
+@pytest.mark.parametrize("family", ["cWW", "tWW", "cHH", "tHH", "cSS", "tSS", "?"])
+def test_symmetric_and_unknown_families_are_not_changed(family):
+    assert cb.oriented_family(pair(("A", 9), ("A", 5), fam=family)) == family
+
+
+def test_summary_counts_the_reversed_listing_as_agreement():
+    per_tool = {"a": cb.index_pairs([pair(("A", 5), ("A", 9), fam="cWS")], "label"),
+                "b": cb.index_pairs([pair(("A", 9), ("A", 5), fam="cSW")], "label")}
+    stats, _ = cb.summarize(per_tool, "label", compare=True)
+    assert (stats["shared_by_all_tools"], stats["agreed_by_all_tools"], stats["discordant_family"]) == (1, 1, 0)
+    per_tool["b"] = cb.index_pairs([pair(("A", 9), ("A", 5), fam="cWS")], "label")
+    stats, _ = cb.summarize(per_tool, "label", compare=True)
+    assert (stats["agreed_by_all_tools"], stats["discordant_family"]) == (0, 1)

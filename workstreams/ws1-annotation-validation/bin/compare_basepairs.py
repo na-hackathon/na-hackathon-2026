@@ -7,7 +7,9 @@
 Always writes per-tool pair-count stats. With --compare (which ws1-validate passes only
 when more than one tool is present) it additionally matches base pairs across tools and
 reports which pairs every tool agreed on (same residues AND same L-W family), which differ
-in family (discordant) and which only one tool reports. The >1-tool gate lives in
+in family (discordant) and which only one tool reports. The family of an asymmetric class
+(cWS, cWH, cHS, ...) depends on which residue comes first, so it is compared from the first
+residue of the order-independent key: (A5, A9, cWS) and (A9, A5, cSW) are the same interaction. The >1-tool gate lives in
 ws1-validate, not here.
 
 Pair identity (--key label, the default): the model plus, for each of the two residues,
@@ -61,6 +63,24 @@ def pair_key(p, key="label"):
     return f"m{p['model']}:{text(lo)}~{text(hi)}", (lo_name, hi_name)
 
 
+SYMMETRIC_FAMILIES = {"cWW", "tWW", "cHH", "tHH", "cSS", "tSS"}    # both edges alike: no orientation
+
+
+def oriented_family(p, key="label"):
+    """Family of a pair seen from the first residue of its order-independent key.
+
+    The exporters write the edge of the first residue first (cWS: Watson-Crick edge of residue 1,
+    Sugar edge of residue 2). When the key puts residue 2 first, the two edges are swapped (cSW), so the
+    same interaction has the same family whatever the order of the residues in the annotation.
+    """
+    family = p["family"]
+    if len(family) != 3 or family in SYMMETRIC_FAMILIES:
+        return family
+    if residue_ref(p, "2", key) < residue_ref(p, "1", key):
+        return family[0] + family[2] + family[1]
+    return family
+
+
 def normalize_operators(pairs, identity):
     """Write the identity operator as '' so it compares equal across tools."""
     for p in pairs:
@@ -94,7 +114,7 @@ def index_pairs(pairs, key):
     idx = {}
     for p in pairs:
         k, names = pair_key(p, key)
-        idx.setdefault(k, []).append((p["family"], names))
+        idx.setdefault(k, []).append((oriented_family(p, key), names))
     return idx
 
 

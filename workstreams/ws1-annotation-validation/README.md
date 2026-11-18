@@ -130,7 +130,9 @@ annotators validates against it (`tests/test_dictionary.py`).
 `validation/validation_report.{json,tsv}` compares the tools pair by pair when more than one
 annotator ran. Two tools report the same pair when the model, both residues (label chain, label
 sequence number, insertion code) and the symmetry operator match; residue names are compared
-separately.
+separately. The family of an asymmetric class (cWS, cWH, cHS and their trans forms) is compared from
+the first residue of the pair key, so `A5, A9, cWS` and `A9, A5, cSW` are the same interaction and
+`A5, A9, cWS` and `A9, A5, cWS` are not.
 
 | Field | Meaning |
 |---|---|
