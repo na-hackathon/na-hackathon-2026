@@ -1,52 +1,50 @@
-%% RNA structure analysis workflow
-%% Translated from whiteboard sketch — edit on https://mermaid.live
+%% WS1 annotation and validation workflow (Nextflow, main.nf)
+%% Stages and outputs as run by `nextflow run main.nf`; edit on https://mermaid.live
 
 flowchart TD
-    subgraph Skeleton["🔵 Workflow Skeleton — Nextflow + UI + Tests"]
+    Input(["Input structure<br/>.pdb or .cif"])
+
+    subgraph T1["T1 Conversion"]
         direction TB
-        Input([Input])
-
-        subgraph T1["🟢 Conversion"]
-            direction TB
-            InHandler[Input Handler]
-            MAxIT[MAxIT]
-            Val1[Validation]
-            InHandler -->|PDB| MAxIT
-            MAxIT -.->|mmCIF?| Val1
-        end
-
-        subgraph T2["🔴 Core Module"]
-            direction TB
-            Tools["FR3D · NApair · RNAview · RNApolis"]
-            Parser[Parser]
-            Tools --> Parser
-        end
-
-        subgraph T3["⚫ Exploration"]
-            direction TB
-            Val2[Validation]
-            Dashboard["User Data /<br/>Dashboard Display"]
-            Val2 --> Dashboard
-        end
-
-        Input --> InHandler
-        InHandler -->|mmCIF| Tools
-        Val1 -.->|mmCIF| Tools
-        Parser -->|mmCIF| Val2
+        Convert["CONVERT<br/>MAXIT (conda or tzok/maxit container)<br/>standardized mmCIF"]
     end
 
-    %% Brainstorm-only group, no implementation ownership
-    Downstream["🟡 Downstream Task<br/>(brainstorming)"]
-    Downstream -.->|informs| Dashboard
+    subgraph T2["T2 Annotation and base-pair mmCIF"]
+        direction TB
+        Annotate["ANNOTATE<br/>one process per annotator<br/>FR3D, RNApolis (pinned submodules)"]
+        Raw["Raw annotator output<br/>fr3d_raw.txt, rnapolis_raw.json<br/>and {tool}_provenance.json"]
+        Parse["PARSE<br/>exporters: raw output to base-pair mmCIF<br/>_ndb_base_pair_list, _ndb_base_pair_annotation,<br/>_ndb_base_pair_provenance, _software"]
+        BP["{tool}_basepairs.cif<br/>{tool}_basepairs.skipped.tsv"]
+        Annotate --> Raw
+        Raw --> Parse
+        Parse --> BP
+    end
+
+    subgraph T3["T3 Comparison and inspection"]
+        direction TB
+        Validate["VALIDATE<br/>pair-level comparison of the annotators<br/>validation_report.json and .tsv"]
+        Visualize["VISUALIZE (optional, --visualize)<br/>pair tables, per-chain forgi graphs"]
+    end
+
+    Manifest["RUN_MANIFEST<br/>run_manifest.json<br/>commits, command lines, checksums, package versions"]
+    Further["Further annotators<br/>NAPAIR, RNAview: not implemented"]
+    Downstream["WS2 viewers (downstream)<br/>layered notation, R2DT and Mol*"]
+
+    Input --> Convert
+    Convert -->|"standardized mmCIF"| Annotate
+    Further -.-> Annotate
+    BP --> Validate
+    BP --> Visualize
+    BP -.->|"base-pair mmCIF"| Downstream
+    Input -.->|"sha256"| Manifest
+    Raw -.->|"provenance"| Manifest
 
     classDef green fill:#d4f4dd,stroke:#2a9d4a,stroke-width:2px,color:#000
     classDef red fill:#fde2e2,stroke:#c0392b,stroke-width:2px,color:#000
-    classDef black fill:#eaeaea,stroke:#333,stroke-width:2px,color:#000
+    classDef gray fill:#eaeaea,stroke:#333,stroke-width:2px,color:#000
     classDef yellow fill:#fff4cc,stroke:#d4a017,stroke-width:2px,stroke-dasharray: 5 5,color:#000
-    classDef blue fill:#d6e4ff,stroke:#2c5aa0,stroke-width:3px,color:#000
 
     class T1 green
     class T2 red
-    class T3 black
-    class Downstream yellow
-    class Skeleton blue
+    class T3 gray
+    class Further,Downstream yellow
