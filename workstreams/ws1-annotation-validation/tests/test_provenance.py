@@ -132,7 +132,7 @@ def test_provenance_row_points_to_the_software_row():
     assert add_provenance_row(block, FR3D, ordinal, "annotated by FR3D")
     (row,) = provenance_rows_of(doc)
     assert row == {"entry_id": "1ABC", "software_id": "1", "software_name": "FR3D", "software_version": FR3D["commit"],
-                   "software_url": FR3D["repository"], "bp_params_version": None, "details": "annotated by FR3D"}
+                   "software_url": FR3D["repository"], "bp_params_version": False, "details": "annotated by FR3D"}      # '.' reads as False
 
 
 def provenance_rows_of(doc):

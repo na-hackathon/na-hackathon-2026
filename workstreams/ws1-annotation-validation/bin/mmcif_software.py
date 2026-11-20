@@ -9,7 +9,12 @@ PROVENANCE_COLUMNS = ['entry_id', 'software_id', 'software_name', 'software_vers
 
 
 def _cell(value):
-  return '?' if value is None else gemmi.cif.quote(value)
+  """CIF text of a value: None is unknown ('?'), False is not applicable ('.')."""
+  if value is None:
+    return '?'
+  if value is False:
+    return '.'
+  return gemmi.cif.quote(value)
 
 
 def add_software_row(block, software, description):
@@ -61,7 +66,7 @@ def add_provenance_row(block, software, software_id, details):
     'software_name': software['name'],
     'software_version': software.get('commit'),
     'software_url': software.get('repository'),
-    'bp_params_version': None,
+    'bp_params_version': False,        # no separately versioned parameter set; the annotator version is software_version
     'details': details,
   }
   table = block.find_mmcif_category('_ndb_base_pair_provenance.')

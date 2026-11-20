@@ -117,7 +117,8 @@ annotators validates against it (`tests/test_dictionary.py`).
   annotator is appended to the structure's `_software` category (name, `version` = git commit of the
   annotator submodule, `type` = `program`, repository URL as `location`, and `pdbx_ordinal` = next free
   integer; the rows of the input structure are kept), and one row to `_ndb_base_pair_provenance` whose
-  `software_id` is that `pdbx_ordinal` (`entry_id` is `_entry.id`).
+  `software_id` is that `pdbx_ordinal` (`entry_id` is `_entry.id`; `bp_params_version` is `.`, as no separately
+  versioned parameter set applies, and the annotator version is `software_version`).
 - **`annotations/<tool>/<tool>_provenance.json`:** annotator name, repository, git commit,
   `git describe`, state of the annotator checkout, version from its `pyproject.toml`, the command line,
   name and sha256 of the structure it ran on, and the python version. The state is `clean`, `modified`
