@@ -2,7 +2,7 @@
 // branches against every sample input under data/tests/Inputs and asserts
 // the process emits the expected (tool, raw, mmcif) tuple with a non-empty
 // raw output file.
-// it can be ran using nf-test test tests/annotate.nf.test
+// Run with: nf-test test tests/annotate.nf.test
 nextflow_process {
 
     name "Test Process ANNOTATE"
@@ -40,6 +40,12 @@ nextflow_process {
                 def raw = path(emitted[1].toString())
                 assert raw.exists()
                 assert raw.text.size() > 0
+
+                def provenance = new groovy.json.JsonSlurper().parseText(path(emitted[3].toString()).text)
+                assert provenance.software.name == 'FR3D'
+                assert provenance.software.commit ==~ /[0-9a-f]{40}/
+                assert provenance.structure.name == "${pdbId}.cif"
+                assert provenance.structure.sha256 ==~ /[0-9a-f]{64}/
             }
         }
 
@@ -71,6 +77,11 @@ nextflow_process {
                 assert raw.exists()
                 // rnapolis -e -j emits a JSON envelope with a base_pairs key
                 assert raw.text.contains('base_pairs')
+
+                def provenance = new groovy.json.JsonSlurper().parseText(path(emitted[3].toString()).text)
+                assert provenance.software.name == 'RNApolis'
+                assert provenance.software.commit ==~ /[0-9a-f]{40}/
+                assert provenance.structure.sha256 ==~ /[0-9a-f]{64}/
             }
         }
     }

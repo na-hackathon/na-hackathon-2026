@@ -1,11 +1,7 @@
-// nf-test for the CONVERT module — runs MaxIT (tzok/maxit docker image) on
-// every sample structure under data/tests/Inputs/ and asserts the process
-// emits a normalized <id>.std.cif file with the expected mmCIF preamble.
-//
-// Requires:
-//   - the docker daemon reachable as the current user (e.g. `usermod -aG docker $USER`)
-//   - the `tzok/maxit` image (pulled lazily on first run)
-//
+// nf-test for the CONVERT module: runs maxit (default converter, from envs/ws1.yml) on every
+// sample structure under data/tests/Inputs/ and checks that the process emits <id>.std.cif,
+// an mmCIF document with an _atom_site category.
+// The docker converter (--converter maxit-docker) is covered by tests/pipeline.nf.test.
 // Run with: nf-test test tests/convert.nf.test
 
 nextflow_process {
