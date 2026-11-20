@@ -3,8 +3,8 @@
 LIST_ITEMS and ANNOTATION_ITEMS are the items the exporters write, in the order of the dictionary.
 pair_class() builds the `class` label of a pair from the parent bases of its two residues: a modified
 residue keeps its own identity in _ndb_base_pair_list and is labelled with its parent base in `class`
-(2MG paired with C is cWW_G-C). The class values of the dictionary use the bases A, C, G and U only: a pair
-with another parent base (T of DNA, N when unknown) has class '?'.
+(2MG paired with C is cWW_G-C). The class uses the bases A, C, G and U of the dictionary: thymine counts as
+U (a DNA A-T pair is cWW_A-U), and a pair whose parent base is unknown (N) has class '?'.
 """
 import re
 
@@ -31,6 +31,7 @@ for _side in ('1', '2'):
 LEGACY_ANNOTATION_ITEMS = {'l-w_family_name': 'l-w_family', 'sub_class': 'subclass'}
 
 STANDARD = {'A': 'A', 'C': 'C', 'G': 'G', 'U': 'U', 'T': 'T', 'DA': 'A', 'DC': 'C', 'DG': 'G', 'DT': 'T', 'DU': 'U'}
+CLASS_BASE = {'T': 'U'}              # the class labels of the dictionary have no T: the parent of T is U
 BASE_ORDER = 'AGCU'                  # the bases of the class values, in the order of the dictionary (A-G, G-C, C-U, ...)
 NUCLEOTIDE_PHOSPHATE = re.compile(r'^([ACGUT])[MDT]P$')    # AMP, GDP, GTP, ...: a 5'-terminal residue of a transcript
 SYMMETRIC_FAMILIES = {'cWW', 'tWW', 'cHH', 'tHH', 'cSS', 'tSS'}      # both edges alike: the class lists the bases in BASE_ORDER
@@ -70,11 +71,11 @@ def parent_base_lookup(block):
 
 
 def pair_class(family, comp_id_1, comp_id_2, letter):
-  """class label of a pair, e.g. cWW_G-C, or '?' when a parent base is not in BASE_ORDER.
+  """class label of a pair, e.g. cWW_G-C, or '?' when a parent base is unknown (not in BASE_ORDER).
 
-  `letter` is the function from parent_base_lookup.
+  `letter` is the function from parent_base_lookup; T is written as U (CLASS_BASE).
   """
-  first, second = letter(comp_id_1), letter(comp_id_2)
+  first, second = (CLASS_BASE.get(base, base) for base in (letter(comp_id_1), letter(comp_id_2)))
   if first not in BASE_ORDER or second not in BASE_ORDER:
     return '?'
   if family in SYMMETRIC_FAMILIES and _rank(first) > _rank(second):

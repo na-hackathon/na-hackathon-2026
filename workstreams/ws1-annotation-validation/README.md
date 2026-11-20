@@ -102,8 +102,9 @@ annotators validates against it (`tests/test_dictionary.py`).
   cHH, tHH, cSS, tSS) the bases are listed in the order A, G, C, U. The parent comes from
   `_pdbx_struct_mod_residue.parent_comp_id` or `_chem_comp.mon_nstd_parent_comp_id` of the structure,
   else from the nucleotide table of gemmi, and nucleoside phosphates (GTP) take the letter of their
-  base. The `class` values of the dictionary use the bases A, C, G and U only, so a pair with another parent
-  base (T of DNA, or `N` when the parent is unknown) has `class` `?`. `sub_class` is `?`:
+  base. The `class` labels use the bases A, C, G and U of the dictionary: thymine counts as U (a DNA A-T pair is
+  `cWW_A-U`, the pair list keeps the real residues), and a pair whose parent base is unknown (`N`) has `class` `?`.
+  `sub_class` is `?`:
   it is a geometric sub-class that FR3D and RNApolis do not give.
 - **`_ndb_base_pair_provenance`:** one row for the annotator (see below).
 - Files written before the dictionary (`data/tests/conversion_outputs`) use the earlier item names
