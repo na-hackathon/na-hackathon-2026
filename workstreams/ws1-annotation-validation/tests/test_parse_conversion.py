@@ -1,16 +1,21 @@
-"""Simple unit test for the base-pairing parsers in bin/.
-you can run it with pytest using python -m pytest tests/test_parse_conversion.py
-Runs the FR3D and RNApolis conversion scripts on the sample inputs under
-data/tests/{fr3d_outputs,rnapolis_outputs} (with structures from
-data/tests/Inputs/) and compares the produced _ndb_base_pair_* rows
+"""Regression test for the base-pair exporters in bin/.
+
+Runs the FR3D and RNApolis exporters on the sample inputs under
+data/tests/{fr3d_outputs,rnapolis_outputs} (structures in data/tests/Inputs/) and compares the pairs
+with those of data/tests/conversion_outputs: family, model, both residues (auth and label ids,
+component, insertion code, alternate position) and symmetry operators, with their multiplicity. The
+references use the item names from before docs/ndb-bp-ext.dic, so the comparison goes through
+parse_basepairs, which reads both; class labels and the dictionary conformance are in
+tests/test_dictionary.py.
+Run with:  python -m pytest tests/test_parse_conversion.py
 """
 from __future__ import annotations
 
 import subprocess
 import sys
+from collections import Counter
 from pathlib import Path
 
-import gemmi
 import pytest
 
 REPO = Path(__file__).resolve().parents[3]
@@ -26,20 +31,17 @@ RNAPOLIS_REF = DATA / "conversion_outputs" / "rnapolis_mmcif_outputs"
 
 PDB_IDS = ["8bwt", "8vjt", "8xzn", "9e5i", "9hrf", "9sfq"]
 
-BP_LIST = "_ndb_base_pair_list."
-BP_ANNOT = "_ndb_base_pair_annotation."
+sys.path.insert(0, str(SCRIPTS))
+from parse_basepairs import parse_basepairs  # noqa: E402
+
+FIELDS = ("family", "model") + tuple(
+    f"{item}_{side}" for side in "12"
+    for item in ("auth_asym_id", "auth_seq_id", "comp_id", "label_asym_id", "label_seq_id", "ins_code", "alt_id", "struct_oper_id"))
 
 
-def _rows(cif_path: Path, category: str) -> set[tuple[str, ...]]:
-    """Return the rows of `category` as a set of tuples (order-independent)."""
-    block = gemmi.cif.read(str(cif_path)).sole_block()
-    cat = block.get_mmcif_category(category)
-    if not cat:
-        return set()
-    key_drop = {BP_LIST: {"base_pair_id"}, BP_ANNOT: {"id", "base_pair_id"}}[category]
-    keys = [k for k in cat.keys() if k not in key_drop]
-    n = len(next(iter(cat.values())))
-    return {tuple(str(cat[k][i]) for k in keys) for i in range(n)}
+def _pairs(cif_path: Path) -> Counter:
+    """The pairs of a base-pair mmCIF with their multiplicity (order-independent, ids dropped)."""
+    return Counter(tuple(pair[field] for field in FIELDS) for pair in parse_basepairs(str(cif_path)))
 
 
 def _run(*cmd: str) -> None:
@@ -79,8 +81,7 @@ def test_fr3d_conversion(pdb_id: str, workdir: Path) -> None:
     )
 
     assert out_cif.exists(), f"parser did not produce {out_cif}"
-    assert _rows(out_cif, BP_LIST) == _rows(reference, BP_LIST)
-    assert _rows(out_cif, BP_ANNOT) == _rows(reference, BP_ANNOT)
+    assert _pairs(out_cif) == _pairs(reference)
 
 
 @pytest.mark.parametrize("pdb_id", PDB_IDS)
@@ -103,5 +104,4 @@ def test_rnapolis_conversion(pdb_id: str, workdir: Path) -> None:
     )
 
     assert out_cif.exists(), f"parser did not produce {out_cif}"
-    assert _rows(out_cif, BP_LIST) == _rows(reference, BP_LIST)
-    assert _rows(out_cif, BP_ANNOT) == _rows(reference, BP_ANNOT)
+    assert _pairs(out_cif) == _pairs(reference)

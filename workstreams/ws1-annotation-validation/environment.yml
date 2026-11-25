@@ -1,7 +1,6 @@
-# Development environment for the WS1 annotation & validation skeleton.
-# This is the developer's toolchain shell env. It is NOT the per-process
-# pipeline environment(s); those live in envs/*.yml and are built by Nextflow
-# when you run with -profile conda / -profile mamba.
+# ws1-dev: toolchain for developing WS1 (Nextflow + JVM, nf-test, pytest, gemmi).
+# Pipeline processes run in envs/ws1.yml, which Nextflow builds on first use
+# into the conda cache shared by runs and tests (NXF_CONDA_CACHEDIR, default ~/.cache/ws1-conda).
 #
 #   mamba env create -f environment.yml      # (or: conda env create -f ...)
 #   conda activate ws1-dev
@@ -15,6 +14,7 @@ dependencies:
   - nextflow>=24.04      # workflow engine
   - gemmi                # mmCIF/PDB IO for parser + validator development
   - nf-test              # pipeline tests
-  - pytest               # unit tests for the stub stage CLIs
-# Per-tool dependencies (rnapolis, fr3d, ...) are NOT here — they live in the
-# per-process pipeline envs under envs/*.yml and are built by Nextflow.
+  - pytest               # unit tests (tests/test_*.py)
+# Dependencies of maxit, FR3D, RNApolis and forgi are in envs/ws1.yml.
+variables:
+  NXF_LOG_FILE: .nextflow/nextflow.log    # Nextflow log inside .nextflow/ instead of .nextflow.log in the cwd

@@ -16,8 +16,35 @@ from .models import RunInfo, RunStatus, TaskProgress
 PROJECT_DIR = Path(__file__).resolve().parent.parent   # the Nextflow project (main.nf)
 RUNS_DIR = PROJECT_DIR / ".api_runs"
 UPLOAD_DIR = RUNS_DIR / "_uploads"
-RESERVED_ENVS = {"convert", "parse"}                   # stage envs, not annotators
-PROFILES = ["conda", "mamba", "docker", "singularity", "test"]
+ANNOTATORS = ("fr3d", "rnapolis")                      # keep in sync with bin/ws1-annotate and bin/ws1-parse
+PROFILES = ["test"]                                    # profiles defined in nextflow.config
+
+
+ENV_SCRIPT = PROJECT_DIR / "bin" / "ws1-env"           # builds the pipeline conda env once and prints its prefix
+
+
+def build_command(run_id: str, run_dir: Path, base_url: str, profile: str | None = None,
+                  input_path: str | None = None, annotators: list[str] | None = None,
+                  env_file: str | None = None) -> list[str]:
+    """The `nextflow run` command line of one run; `-profile` is passed only when a profile is set and
+    `--env_file` when the conda env is already built (the run then never creates one).
+    The Nextflow log goes to the run directory instead of .nextflow.log in the project directory."""
+    cmd = ["nextflow", "-log", str(run_dir / ".nextflow.log"), "run", "main.nf"]
+    if profile:
+        cmd += ["-profile", profile]
+    cmd += [
+        "-name", f"ws1-{run_id}",
+        "-work-dir", str(run_dir / "work"),
+        "--outdir", str(run_dir / "results"),
+        "-with-weblog", f"{base_url}/runs/{run_id}/_weblog",
+    ]
+    if input_path:
+        cmd += ["--input", input_path]
+    if annotators:
+        cmd += ["--annotators", ",".join(annotators)]
+    if env_file:
+        cmd += ["--env_file", env_file]
+    return cmd
 
 
 class Run:
@@ -42,8 +69,7 @@ class RunManager:
 
     # ---- discovery (so the UI can build its form) ----
     def list_annotators(self) -> list[str]:
-        envs = (PROJECT_DIR / "envs").glob("*.yml")
-        return sorted(p.stem for p in envs if p.stem not in RESERVED_ENVS)
+        return list(ANNOTATORS)
 
     def list_profiles(self) -> list[str]:
         return list(PROFILES)
@@ -58,9 +84,19 @@ class RunManager:
         return upload_id
 
     # ---- run lifecycle ----
+    async def ensure_env(self) -> str:
+        """Prefix of the pipeline conda env, built first if needed (bin/ws1-env serialises builds with a
+        lock, so concurrent runs wait for one build instead of racing on the conda cache)."""
+        proc = await asyncio.create_subprocess_exec(
+            str(ENV_SCRIPT), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        out, err = await proc.communicate()
+        if proc.returncode != 0:
+            raise RuntimeError(f"the conda env could not be built: {err.decode(errors='replace')[-500:]}")
+        return out.decode().strip()
+
     async def launch(self, req) -> RunInfo:
         # Validate every user-supplied value before it reaches the command line.
-        if req.profile not in PROFILES:
+        if req.profile is not None and req.profile not in PROFILES:
             raise ValueError(f"unknown profile {req.profile!r}")
         annotators = req.annotators
         if annotators:
@@ -75,22 +111,13 @@ class RunManager:
                 raise ValueError("unknown upload id")
             input_path = str(stored)            # trusted path from the upload registry
 
+        env_prefix = await self.ensure_env()    # takes minutes the first time, later runs reuse the env
+
         run_id = uuid.uuid4().hex[:12]
         run_dir = RUNS_DIR / run_id
         run_dir.mkdir(parents=True, exist_ok=True)
 
-        cmd = [
-            "nextflow", "run", "main.nf",
-            "-profile", req.profile,
-            "-name", f"ws1-{run_id}",
-            "-work-dir", str(run_dir / "work"),
-            "--outdir", str(run_dir / "results"),
-            "-with-weblog", f"{self.base_url}/runs/{run_id}/_weblog",
-        ]
-        if input_path:
-            cmd += ["--input", input_path]
-        if annotators:
-            cmd += ["--annotators", ",".join(annotators)]
+        cmd = build_command(run_id, run_dir, self.base_url, req.profile, input_path, annotators, env_prefix)
 
         info = RunInfo(
             id=run_id, status=RunStatus.running, profile=req.profile,

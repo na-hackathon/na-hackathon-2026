@@ -1,0 +1,13 @@
+{
+  "tool": "rnapolis",
+  "software": {
+    "name": "RNApolis",
+    "repository": "https://github.com/tzok/rnapolis-py.git",
+    "commit": "5ba519b5af6de0086d02e61640bdff56e2ef6bc5",
+    "describe": "0.0.3-548-g5ba519b",
+    "package_version": "0.16.7"
+  },
+  "command": "python annotations_tools/rnapolis-py/src/rnapolis/annotator.py structure.cif -j rnapolis_raw.json -e",
+  "structure": {"name": "structure.cif", "sha256": null},
+  "python": "3.12.16"
+}

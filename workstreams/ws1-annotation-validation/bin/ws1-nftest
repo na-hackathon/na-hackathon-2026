@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# nf-test test with its log in .nf-test/ instead of .nf-test.log in the project root.
+# nf-test has no config or environment setting for the log location, only the --log option.
+#
+#     bin/ws1-nftest [nf-test test arguments]       e.g. bin/ws1-nftest tests/parse.nf.test --tag conda
+set -euo pipefail
+
+mkdir -p .nf-test
+exec nf-test test --log .nf-test/nf-test.log "$@"

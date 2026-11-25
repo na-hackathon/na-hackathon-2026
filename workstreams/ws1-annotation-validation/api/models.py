@@ -29,7 +29,9 @@ class RunRequest(BaseModel):
     annotators: list[str] | None = Field(
         default=None, description="Annotator names; defaults to the pipeline's config."
     )
-    profile: str = Field(default="conda", description="Nextflow -profile to use.")
+    profile: str | None = Field(
+        default=None, description="Nextflow -profile (see GET /profiles); no -profile when omitted."
+    )
 
 
 class TaskProgress(BaseModel):
@@ -41,7 +43,7 @@ class TaskProgress(BaseModel):
 class RunInfo(BaseModel):
     id: str
     status: RunStatus
-    profile: str
+    profile: str | None = None
     annotators: list[str] | None = None
     input: str | None = None
     started_at: float

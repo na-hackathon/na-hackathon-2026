@@ -1,0 +1,36 @@
+# Conda env shared by all WS1 processes: T1 MAXIT, T2 FR3D / RNApolis annotation and parsing,
+# T3 validation and --visualize. Built by Nextflow on first use.
+# FR3D and RNApolis run from the pinned submodules under annotations_tools/ via PYTHONPATH;
+# this env provides their dependencies only.
+# Versions are the minor versions resolved on 2026-10-28 (linux-64) by the passing nf-test run and
+# the six-example runs; run_manifest.json of each pipeline run records the exact versions installed.
+name: ws1
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.12          # unpinned resolved to 3.15, for which mmcif has no wheel (its source build needs CMake)
+  - gemmi=0.7
+  - tcsh=6.24            # maxit
+  - bioconda::maxit==11.400
+  - viennarna=2.7        # provides the `RNA` python module that forgi.plot_rna imports
+  - pip
+  - pip:
+      - appdirs==1.4.*
+      - apricot-select==0.6.*
+      - forgi==2.2.*     # cytvec extension is built against NumPy 1.x: import logs an ABI warning, python fallback is used
+      - graphviz==0.21.*
+      - matplotlib==3.11.*
+      - mmcif==1.2.*
+      - mmcif-pdbx==2.1.*
+      - numpy==2.5.*
+      - ordered-set==4.1.*
+      - orjson==3.13.*
+      - pandas==3.1.*
+      - pulp==3.3.*      # pulp 4 ships no solver and changed the LpVariable API; the pinned rnapolis-py needs <4
+      - pycircstat2==0.1.*
+      - requests==2.34.*
+      - scikit-learn==1.9.*
+      - scipy==1.18.*
+      - shapely==2.2.*
+      - tqdm==4.70.*
